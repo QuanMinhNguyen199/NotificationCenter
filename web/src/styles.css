@@ -1215,6 +1215,15 @@ a { text-decoration: none; }
 
 /* Nút: đổi màu nhanh, nhấn thu nhẹ 2%. Chỉ định rõ thuộc tính thay cho transition-all của component. */
 :root [data-slot="button"] { transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast); }
+/* Hover theo loại nút; đủ specificity để không bị nền outline mặc định ghi đè. */
+@media (hover: hover) and (pointer: fine) {
+  :root [data-slot="button"][data-variant="default"]:not(:disabled):not([aria-disabled="true"]):hover:not(:active) { background-color: var(--brand-hover); }
+  :root [data-slot="button"][data-variant="outline"]:not(:disabled):not([aria-disabled="true"]):hover { background-color: var(--rule); border-color: var(--border-hover); color: var(--text); }
+  :root [data-slot="button"][data-variant="secondary"]:not(:disabled):not([aria-disabled="true"]):hover { background-color: var(--border); color: var(--text); }
+  :root [data-slot="button"][data-variant="ghost"]:not(:disabled):not([aria-disabled="true"]):hover { background-color: var(--rule); color: var(--text); }
+  :root [data-slot="button"][data-variant="destructive"]:not(:disabled):not([aria-disabled="true"]):hover { background-color: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+  :root [data-slot="button"][data-variant="link"]:not(:disabled):not([aria-disabled="true"]):hover { color: var(--brand-hover); }
+}
 :root [data-slot="button"]:not(:disabled):active { transform: scale(0.98); }
 /* Switch: nền đổi màu và núm trượt cùng nhịp chuyển trạng thái. */
 :root [data-slot="switch"] { transition: background-color var(--dur-state) var(--ease-out), border-color var(--dur-state) var(--ease-out); }
