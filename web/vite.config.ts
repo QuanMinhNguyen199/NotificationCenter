@@ -6,6 +6,8 @@ import { chartColorsApi } from './chartColorsApi.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages serves the site under /NotificationCenter/; local dev and preview stay at /.
+  base: process.env.GITHUB_PAGES ? '/NotificationCenter/' : '/',
   plugins: [react(), tailwindcss(), chartColorsApi()],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
   // Listen on every interface and allow VS Code / Dev Tunnels forwarded hosts

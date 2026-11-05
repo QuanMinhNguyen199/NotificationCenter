@@ -41,7 +41,7 @@ function readPinned() {
 function Brand({ size = 32 }: { size?: number }) {
   return (
     <span className="brand">
-      <img className="mark" src="/logo-thue-ha-noi.png" width={size} height={size} alt="" />
+      <img className="mark" src={`${import.meta.env.BASE_URL}logo-thue-ha-noi.png`} width={size} height={size} alt="" />
       <span className="brand__text">
         <span className="brand__name">Quản trị thông báo</span>
         <span className="brand__org">Thuế thành phố Hà Nội</span>
