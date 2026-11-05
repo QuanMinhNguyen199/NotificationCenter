@@ -1,0 +1,103 @@
+import type { ReactNode } from 'react';
+import type { Summary } from '../api/mockApi';
+import { Skel } from '../components/Blocks';
+import { duration, durationParts, num, pct } from '../lib/format';
+import { useTween } from '../lib/useTween';
+import type { StatsParams } from './useStatsParams';
+
+export type KpiKey = 'total' | 'sent' | 'delivered' | 'pending' | 'failed' | 'unique' | 'response';
+
+interface Def {
+  key: KpiKey;
+  label: string;
+  value: (s: Summary) => number | null;
+  /** Mặc định hiển thị số đếm; thời gian phản hồi hiển thị giờ/phút. */
+  render?: (v: number) => ReactNode;
+  note: (s: Summary) => string;
+  selected: (p: StatsParams) => boolean;
+}
+
+const Duration = ({ min }: { min: number }) => (
+  <span aria-label={duration(min)}>
+    {durationParts(min).map((d, i) => (
+      <span key={i}>
+        {i > 0 && ' '}
+        {d.value}
+        <small className="kpi__unit"> {d.unit}</small>
+      </span>
+    ))}
+  </span>
+);
+
+/** Số KPI chạy từ giá trị cũ sang mới khi bộ lọc đổi. */
+const TweenNum = ({ value, k }: { value: number; k: string }) => <>{num(useTween(value, `kpi:${k}`))}</>;
+
+const DEFS: Def[] = [
+  { key: 'total', label: 'Tổng thông báo', value: (s) => s.total, note: () => '', selected: () => false },
+  { key: 'sent', label: 'Đã gửi Noti', value: (s) => s.sent, note: (s) => (s.total ? `${pct(s.sent, s.total)} tổng số` : ''), selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
+  {
+    key: 'delivered',
+    label: 'Đã giao',
+    value: (s) => s.delivered,
+    note: (s) => (s.delivered == null ? 'Chưa có dữ liệu giao' : s.sent ? `${pct(s.delivered, s.sent)} số đã gửi` : ''),
+    selected: (p) => p.tab === 'notifications' && p.nd === 'DELIVERED',
+  },
+  { key: 'pending', label: 'Chờ gửi', value: (s) => s.pending, note: () => '', selected: (p) => p.tab === 'notifications' && p.ns === 'PENDING' },
+  { key: 'failed', label: 'Gửi thất bại', value: (s) => s.failed, note: () => '', selected: (p) => p.tab === 'notifications' && p.ns === 'FAILED' },
+  { key: 'unique', label: 'NNT duy nhất', value: (s) => s.uniqueTaxpayers, note: () => '', selected: (p) => p.tab === 'taxpayers' && p.notified },
+  {
+    key: 'response',
+    label: 'Thời gian phản hồi',
+    value: (s) => s.avgResponse,
+    render: (v) => <Duration min={v} />,
+    note: (s) => (s.avgResponse == null ? 'Chưa có thông báo đã giao' : 'TB, tạo → đã giao'),
+    selected: (p) => p.detail === 'x:response',
+  },
+];
+
+const NS: Partial<Record<KpiKey, { ns: StatsParams['ns']; nd: StatsParams['nd'] }>> = {
+  total: { ns: 'all', nd: 'all' },
+  sent: { ns: 'SENT', nd: 'all' },
+  delivered: { ns: 'all', nd: 'DELIVERED' },
+  pending: { ns: 'PENDING', nd: 'all' },
+  failed: { ns: 'FAILED', nd: 'all' },
+};
+
+export function Kpis({ s, p, onPick, unused }: { s?: Summary; p: StatsParams; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string }) {
+  return (
+    <div className="kpis" role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
+      {DEFS.map((d) => {
+        const v = s ? d.value(s) : undefined;
+        const sel = d.selected(p);
+        return (
+          <button
+            key={d.key}
+            type="button"
+            className={`kpi${sel ? ' kpi--selected' : ''}${d.key === 'total' ? ' kpi--lead' : ''}`}
+            aria-pressed={d.key === 'response' ? undefined : sel}
+            aria-haspopup={d.key === 'response' ? 'dialog' : undefined}
+            onClick={() => onPick(d.key, NS[d.key])}
+          >
+            <span className="kpi__label">{d.label}</span>
+            {s === undefined ? (
+              <>
+                <Skel w={96} h={30} />
+                <Skel w={120} h={12} />
+              </>
+            ) : v === null || unused ? (
+              <>
+                <span className="kpi__value kpi__value--missing" aria-label="Không có dữ liệu">—</span>
+                <span className="kpi__note">{unused ? '' : d.note(s)}</span>
+              </>
+            ) : (
+              <>
+                <span className={`kpi__value kpi__value--${d.key}`}>{d.render ? d.render(v!) : <TweenNum value={v!} k={d.key} />}</span>
+                <span className="kpi__note">{d.note(s)}</span>
+              </>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

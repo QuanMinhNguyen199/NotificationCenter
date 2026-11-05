@@ -1,0 +1,14 @@
+{
+  "colors": {
+    "bar": "#FEE2E2",
+    "barDim": "#F0F0F0",
+    "barHover": "#FFD4D4",
+    "sent": "#9A3412",
+    "overdue": "#DC2626",
+    "dueSoon": "#FACC15",
+    "dueSoonInk": "#0F172A",
+    "inTerm": "#5D9C59",
+    "inTermInk": "#FFFFFF"
+  },
+  "updatedAt": "2026-11-03T02:35:58.262Z"
+}
