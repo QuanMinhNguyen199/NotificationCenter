@@ -232,7 +232,6 @@ export default function AccountsPage() {
             {q.data ? <span className="num">{q.data.length} tài khoản</span> : <Skel w={90} h={14} />}
             {!canEditAccounts && <StatusPill tone="neutral">Chỉ xem</StatusPill>}
           </p>
-          {!canEditAccounts && <p className="chart-note">Chỉ lãnh đạo cơ sở đổi vai trò, tổ và trạng thái tài khoản.</p>}
         </div>
         <label className="acct-search">
           <Search className="size-4" aria-hidden="true" />

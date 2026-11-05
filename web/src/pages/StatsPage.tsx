@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchActiveRun, fetchObligations, fetchSummary } from '../api/mockApi';
 import { RUN } from '../components/Status';
 import { num } from '../lib/format';
@@ -22,9 +22,10 @@ export default function StatsPage() {
   const f = filterOf(p);
 
   // Số liệu đang gửi làm mới mỗi 30 giây khi tab Thống kê đang mở.
-  const summary = useQuery({ queryKey: ['summary', f], queryFn: () => fetchSummary(f), refetchInterval: 30_000 });
+  // Đổi bộ lọc: giữ số cũ (làm mờ tại vùng kết quả) tới khi có số mới, khung không nhảy về skeleton; lần tải đầu vẫn là skeleton.
+  const summary = useQuery({ queryKey: ['summary', f], queryFn: () => fetchSummary(f), refetchInterval: 30_000, placeholderData: keepPreviousData });
   const active = useQuery({ queryKey: ['active-run', f.unit], queryFn: () => fetchActiveRun(f), refetchInterval: 30_000 });
-  const ob = useQuery({ queryKey: ['obligations', f.unit], queryFn: () => fetchObligations(f) });
+  const ob = useQuery({ queryKey: ['obligations', f.unit], queryFn: () => fetchObligations(f), placeholderData: keepPreviousData });
 
   const scrollToList = () => document.getElementById('detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const resetFilters = () => set({ unit: null, from: null, to: null, group: null, day: null, ns: null, nd: null, nq: null, tq: null, notified: null, kind: null, prio: null, rs: null, rq: null, page: 1 });
@@ -78,6 +79,7 @@ export default function StatsPage() {
         </div>
       ) : (
         <Kpis
+          stale={summary.isPlaceholderData}
           s={s}
           p={p}
           unused={unusedGroup ? unusedGroup.name : undefined}
@@ -90,7 +92,7 @@ export default function StatsPage() {
         />
       )}
 
-      <div className="charts">
+      <div className={`charts${summary.isPlaceholderData || ob.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={summary.isPlaceholderData || ob.isPlaceholderData}>
         <TrendChart
           s={s}
           day={p.day}

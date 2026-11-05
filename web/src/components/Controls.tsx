@@ -1,5 +1,6 @@
 import { useId, useState, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import { motion } from 'motion/react';
+import { DUR, tween } from '../lib/motion';
 import { CircleCheck, Info, TriangleAlert } from 'lucide-react';
 import { vi } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
@@ -102,7 +103,7 @@ export function ViewTabs({ value, onValueChange, items, className, extra }: {
       <div className="view-tabs__scroll"><TabsList variant="line" className="view-tabs__list">
         {items.map((item) => <TabsTrigger key={item.key} value={item.key} className="view-tabs__trigger">
           {item.label}
-          {item.key === current && <motion.span layoutId={`tab-ind-${indicator}`} className="view-tabs__ind" transition={{ type: 'spring', stiffness: 480, damping: 40 }} aria-hidden="true" />}
+          {item.key === current && <motion.span layoutId={`tab-ind-${indicator}`} className="view-tabs__ind" transition={tween(DUR.state)} aria-hidden="true" />}
         </TabsTrigger>)}
       </TabsList></div>
       {extra && <div className="view-tabs__extra">{extra}</div>}
@@ -116,7 +117,8 @@ export function Feedback({ severity = 'info', title, description, action, classN
 }) {
   const Icon = severity === 'warning' || severity === 'error' ? TriangleAlert : severity === 'success' ? CircleCheck : Info;
   const ink = severity === 'error' ? 'var(--danger)' : severity === 'warning' ? 'var(--warning)' : severity === 'success' ? 'var(--success)' : 'var(--text-muted)';
-  return <Alert role={severity === 'info' || severity === 'success' ? 'status' : 'alert'} className={className}>
+  // feedback-in: hiện dần một lần khi cảnh báo mới xuất hiện, không nhấp nháy hay lặp.
+  return <Alert role={severity === 'info' || severity === 'success' ? 'status' : 'alert'} className={`feedback-in${className ? ` ${className}` : ''}`}>
     <Icon style={{ color: ink }} aria-hidden="true" />
     <AlertTitle>{title}</AlertTitle>
     {(description || action) && <AlertDescription>{description}{action && <div className="mt-2">{action}</div>}</AlertDescription>}

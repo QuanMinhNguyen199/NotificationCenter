@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import type { Summary } from '../api/mockApi';
 import { Skel } from '../components/Blocks';
 import { duration, durationParts, num, pct } from '../lib/format';
-import { useTween } from '../lib/useTween';
 import type { StatsParams } from './useStatsParams';
 
 export type KpiKey = 'total' | 'sent' | 'delivered' | 'pending' | 'failed' | 'unique' | 'response';
@@ -29,17 +28,15 @@ const Duration = ({ min }: { min: number }) => (
   </span>
 );
 
-/** Số KPI chạy từ giá trị cũ sang mới khi bộ lọc đổi. */
-const TweenNum = ({ value, k }: { value: number; k: string }) => <>{num(useTween(value, `kpi:${k}`))}</>;
 
 const DEFS: Def[] = [
   { key: 'total', label: 'Tổng thông báo', value: (s) => s.total, note: () => '', selected: () => false },
   { key: 'sent', label: 'Đã gửi Noti', value: (s) => s.sent, note: (s) => (s.total ? `${pct(s.sent, s.total)} tổng số` : ''), selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
   {
     key: 'delivered',
-    label: 'Đã giao',
+    label: 'Đã tiếp nhận',
     value: (s) => s.delivered,
-    note: (s) => (s.delivered == null ? 'Chưa có dữ liệu giao' : s.sent ? `${pct(s.delivered, s.sent)} số đã gửi` : ''),
+    note: (s) => (s.delivered == null ? 'Chưa có dữ liệu tiếp nhận' : s.sent ? `${pct(s.delivered, s.sent)} số đã gửi` : ''),
     selected: (p) => p.tab === 'notifications' && p.nd === 'DELIVERED',
   },
   { key: 'pending', label: 'Chờ gửi', value: (s) => s.pending, note: () => '', selected: (p) => p.tab === 'notifications' && p.ns === 'PENDING' },
@@ -50,7 +47,7 @@ const DEFS: Def[] = [
     label: 'Thời gian phản hồi',
     value: (s) => s.avgResponse,
     render: (v) => <Duration min={v} />,
-    note: (s) => (s.avgResponse == null ? 'Chưa có thông báo đã giao' : 'TB, tạo → đã giao'),
+    note: (s) => (s.avgResponse == null ? 'Chưa có mốc tiếp nhận' : 'Tạo → tiếp nhận'),
     selected: (p) => p.detail === 'x:response',
   },
 ];
@@ -63,9 +60,9 @@ const NS: Partial<Record<KpiKey, { ns: StatsParams['ns']; nd: StatsParams['nd'] 
   failed: { ns: 'FAILED', nd: 'all' },
 };
 
-export function Kpis({ s, p, onPick, unused }: { s?: Summary; p: StatsParams; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string }) {
+export function Kpis({ s, p, onPick, unused, stale }: { s?: Summary; p: StatsParams; stale?: boolean; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string }) {
   return (
-    <div className="kpis" role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
+    <div className={`kpis${stale ? ' is-stale' : ''}`} aria-busy={stale} role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
       {DEFS.map((d) => {
         const v = s ? d.value(s) : undefined;
         const sel = d.selected(p);
@@ -91,7 +88,7 @@ export function Kpis({ s, p, onPick, unused }: { s?: Summary; p: StatsParams; on
               </>
             ) : (
               <>
-                <span className={`kpi__value kpi__value--${d.key}`}>{d.render ? d.render(v!) : <TweenNum value={v!} k={d.key} />}</span>
+                <span className={`kpi__value kpi__value--${d.key}`}>{d.render ? d.render(v!) : num(v!)}</span>
                 <span className="kpi__note">{d.note(s)}</span>
               </>
             )}

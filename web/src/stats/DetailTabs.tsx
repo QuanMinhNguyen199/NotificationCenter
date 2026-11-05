@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, RotateCcw, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTable, type DataColumns } from '@/components/DataTable';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { fetchNotifications, fetchRuns, fetchTaxpayers, type DeliveryFilter, type NotificationRow, type SendFilter } from '../api/mockApi';
 import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
@@ -138,6 +138,8 @@ const DELIVERY_OPTIONS: { value: DeliveryFilter; label: string }[] = [
 function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
   const bp = useBreakpoint();
   const q = useQuery({
+    // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
+    placeholderData: keepPreviousData,
     queryKey: ['notifications', filterOf(p), p.day, p.ns, p.nd, p.nq, p.page, p.size],
     queryFn: () => fetchNotifications({ ...filterOf(p), day: p.day, send: p.ns, delivery: p.nd, q: p.nq, page: p.page, size: p.size }),
   });
@@ -222,6 +224,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
         <ListReset show={!!(p.nq || p.ns !== 'all' || p.nd !== 'all' || p.day)} onReset={() => set({ nq: null, ns: null, nd: null, day: null, page: 1 })} />
         <span className="detail__count">{q.data ? `${num(q.data.total)} thông báo` : ''}</span>
       </div>
+      <div className={q.isPlaceholderData ? 'pane-results is-stale' : 'pane-results'} aria-busy={q.isPlaceholderData}>
       {q.isError ? (
         <div style={{ paddingBottom: 20 }}>
           <BlockError message="Không tải được danh sách thông báo." onRetry={() => q.refetch()} />
@@ -264,6 +267,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
       ) : (
         <DataTable<NotificationRow> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(r) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`n:${r.id}`) })} pagination={pagination(p, q.data.total, set)} />
       )}
+      </div>
     </>
   );
 }
@@ -273,6 +277,8 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
 function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
   const bp = useBreakpoint();
   const q = useQuery({
+    // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
+    placeholderData: keepPreviousData,
     queryKey: ['taxpayers', filterOf(p), p.tq, p.notified, p.kind, p.prio, p.page, p.size],
     queryFn: () => fetchTaxpayers({ ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, page: p.page, size: p.size }),
   });
@@ -349,6 +355,7 @@ function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; op
       <p className="caption-line" style={{ margin: '0 0 8px' }}>
         Nghĩa vụ chốt {dmyhm(OBLIGATION_CUTOFF)}.
       </p>
+      <div className={q.isPlaceholderData ? 'pane-results is-stale' : 'pane-results'} aria-busy={q.isPlaceholderData}>
       {q.isError ? (
         <div style={{ paddingBottom: 20 }}>
           <BlockError message="Không tải được danh sách NNT." onRetry={() => q.refetch()} />
@@ -391,6 +398,7 @@ function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; op
       ) : (
         <DataTable<Taxpayer> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(t) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`t:${t.id}`) })} pagination={pagination(p, q.data.total, set)} />
       )}
+      </div>
     </>
   );
 }
@@ -415,6 +423,8 @@ export function RunProgress({ r }: { r: SendRun }) {
 function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
   const bp = useBreakpoint();
   const q = useQuery({
+    // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
+    placeholderData: keepPreviousData,
     queryKey: ['runs', filterOf(p), p.rs, p.rq, p.page, p.size],
     queryFn: () => fetchRuns({ ...filterOf(p), status: p.rs, q: p.rq, page: p.page, size: p.size }),
   });
@@ -468,6 +478,7 @@ function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (
         <ListReset show={!!(p.rq || p.rs !== 'all')} onReset={() => set({ rq: null, rs: null, page: 1 })} />
         <span className="detail__count">{q.data ? `${num(q.data.total)} đợt` : ''}</span>
       </div>
+      <div className={q.isPlaceholderData ? 'pane-results is-stale' : 'pane-results'} aria-busy={q.isPlaceholderData}>
       {q.isError ? (
         <div style={{ paddingBottom: 20 }}>
           <BlockError message="Không tải được danh sách đợt gửi." onRetry={() => q.refetch()} />
@@ -503,6 +514,7 @@ function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (
       ) : (
         <DataTable<SendRun> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(r) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`r:${r.id}`) })} pagination={pagination(p, q.data.total, set)} />
       )}
+      </div>
     </>
   );
 }

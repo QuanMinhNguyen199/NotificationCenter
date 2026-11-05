@@ -18,8 +18,9 @@ export const SEND: Record<SendStatus, { label: string; tone: Tone }> = {
 };
 
 export const DELIVERY: Record<DeliveryStatus, { label: string; tone: Tone }> = {
-  DELIVERED: { label: 'Đã giao', tone: 'success' },
-  ACCEPTED: { label: 'iHanoi đã tiếp nhận', tone: 'info' },
+  // iHanoi chưa xác minh có xác nhận đã giao tới máy (tài liệu Notification Center 7.2): gộp DELIVERED và ACCEPTED thành "Đã tiếp nhận".
+  DELIVERED: { label: 'Đã tiếp nhận', tone: 'success' },
+  ACCEPTED: { label: 'Đã tiếp nhận', tone: 'success' },
   DELIVERY_FAILED: { label: 'Giao thất bại', tone: 'danger' },
   NO_FINAL: { label: 'Chưa có kết quả cuối', tone: 'neutral' },
   NA: { label: 'Chưa áp dụng', tone: 'neutral' },

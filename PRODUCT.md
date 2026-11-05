@@ -22,12 +22,12 @@ Bối cảnh: cán bộ thuế làm việc trên máy bàn tại cơ quan, đôi
 
 ## Product Purpose
 
-"Quản trị thông báo" — web riêng để thiết lập và theo dõi hệ thống thông báo Engagement gửi tới người nộp thuế (NNT) hộ kinh doanh qua iHanoi. Ba màn: **Thống kê**, **Thiết lập** (trước đây gọi là Cấu hình, đổi tên 04/11/2026; đường dẫn `#/thiet-lap`, link cũ `#/cau-hinh` vẫn mở đúng màn) và **Tài khoản** (màn Tài khoản thêm ngày 03/11/2026, chỉ lãnh đạo thấy). Thành công là cán bộ trả lời được: nhóm nào đang bật, job chạy lúc nào, gửi lúc nào, đợt nào đang gửi/lỗi, và thay đổi có hiệu lực khi nào.
+"Quản trị thông báo" — web riêng để thiết lập và theo dõi hệ thống thông báo Engagement gửi tới người nộp thuế (NNT) hộ kinh doanh qua iHanoi. Sáu màn: **Thống kê**, **Gửi thông báo**, **Mẫu tin**, **Kênh gửi**, **Thiết lập** (trước đây gọi là Cấu hình, đổi tên 04/11/2026; đường dẫn `#/thiet-lap`, link cũ `#/cau-hinh` vẫn mở đúng màn) và **Tài khoản** (màn Tài khoản thêm ngày 03/11/2026, chỉ lãnh đạo thấy). Thành công là cán bộ trả lời được: nhóm nào đang bật, job chạy lúc nào, gửi lúc nào, đợt nào đang gửi/lỗi, và thay đổi có hiệu lực khi nào.
 
 ## Operating Context
 
 - Chi tiết, xem trước, lịch sử, xác nhận mở bằng drawer/modal/overlay trong hai màn; không có trang phụ.
-- Mẫu thông báo chỉ xem trước; không soạn–duyệt mẫu.
+- Thông báo tự động (Engagement) dùng mẫu cố định, chỉ xem trước. Gửi chủ động dùng màn Mẫu tin: soạn nháp → xuất bản phiên bản (05/11/2026).
 - Giờ Việt Nam, số `10.000`, ngày `dd/MM/yyyy`, giờ 24h.
 
 ## Capabilities and Constraints
@@ -39,7 +39,18 @@ Bối cảnh: cán bộ thuế làm việc trên máy bàn tại cơ quan, đôi
 - **Thời gian phản hồi trung bình** = từ lúc tạo thông báo tới khi iHanoi xác nhận đã giao, chỉ tính thông báo đã giao; tách hai chặng Tạo → gửi và Gửi → giao.
 - Chưa làm: giao lại NNT giữa cán bộ, tạo/xóa tài khoản, xuất lịch sử hỏi đáp AI (yêu cầu mục 4–5 nhưng ngoài dữ liệu của web này).
 - Không đưa cron, biến môi trường, token, tên queue lên form.
-- Không có Gửi ngay, gửi lại hàng loạt, endpoint simulate.
+- Không có gửi lại hàng loạt hay endpoint simulate. Gửi chủ động có từ 05/11/2026 (xem dưới).
+
+### Phần Notification Center (thêm 05/11/2026, theo `web/doc/Notification Center Service.md`)
+
+Engagement (rà soát nghĩa vụ, tự lập đợt) là hệ thống nghiệp vụ gửi qua Notification Center; ba màn mới thuộc giao diện Notification Center:
+
+- **Gửi thông báo:** chọn người nhận (nhóm NNT theo điều kiện / cả tổ / từng NNT) → kênh → mẫu tin hoặc tự soạn → xem trước (số gửi, số bỏ qua kèm lý do, chia lô 100 NNT) → gửi; theo dõi tiến độ từng kênh, từng người nhận, từng lần thử; hủy phần chưa gửi. Bấm gửi lại dùng cùng khóa, không tạo lần gửi trùng.
+- **Mẫu tin:** nháp → xuất bản (bắt buộc lý do); phiên bản đã xuất bản không sửa; lần gửi đã tạo giữ nội dung cũ.
+- **Kênh gửi:** Hộp thư, iHanoi đang hoạt động; Email, Zalo chưa kết nối. Lãnh đạo cơ sở tạm dừng / ngắt khẩn cấp (bắt buộc lý do); ngắt khẩn cấp hủy tin đang chờ, không tự chuyển kênh.
+- **Quyền:** lãnh đạo cơ sở gửi toàn cơ sở, được tự soạn, sửa mẫu và kênh; lãnh đạo tổ gửi trong tổ mình theo mẫu, chỉ xem mẫu và kênh; cán bộ chỉ xem các lần gửi có NNT mình phụ trách.
+- **"Đã tiếp nhận" thay "Đã giao":** iHanoi chưa xác minh có xác nhận tin đã tới máy, nên mức cao nhất là "đã tiếp nhận". Tin "chưa rõ" (hết giờ chờ) không tự gửi lại để tránh gửi trùng.
+- Chưa làm: quản lý policy theo loại thông báo (kênh gửi ngay, kênh dự phòng, người dùng được tắt kênh), đối soát thủ công tin "chưa rõ", gửi lại có kiểm soát (DLQ), Email/Zalo thật.
 - Đã giao (DELIVERED) là tập con của Đã gửi Noti (SENT); không cộng lẫn lỗi giao vào Gửi thất bại.
 - NNT có thông báo trong kỳ ≠ NNT còn nghĩa vụ.
 
@@ -51,7 +62,7 @@ Bối cảnh: cán bộ thuế làm việc trên máy bàn tại cơ quan, đôi
 - Phong cách corporate theo mẫu cập nhật 02/11/2026: card dashboard bo 12px, bóng nhẹ khi nghỉ; hover viền Slate 400, bóng nổi và nâng 2px. Nút chính chữ trắng, hover Red 700, active Red 800 và scale 0,98. Đây là yêu cầu thay thế quy tắc flat trước đó.
 - Sidebar desktop 272px (tăng từ 240px ngày 04/11/2026: logo 40px, tên 16px, mục điều hướng 15px cao 46px kèm icon 18px); nút thu gọn đặt cạnh logo; thu gọn là ẩn hẳn. Khi ẩn, hover-peek từ nút mở trên topbar hoặc mép trái (đè lên nội dung, không đẩy layout). Mobile: bottom nav Thống kê/Thiết lập/Tài khoản (Tài khoản ẩn với cán bộ).
 - Hover lift áp cho card dashboard và mục điều hướng sidebar; tắt dịch chuyển khi prefers-reduced-motion.
-- Không có công tắc giả lập trạng thái trong giao diện; trạng thái tải luôn hiện skeleton.
+- Không có công tắc giả lập trạng thái trong giao diện. Lần tải đầu hiện skeleton; đổi bộ lọc thì vùng kết quả giữ số cũ, làm mờ và tạm khóa bấm tới khi có số mới (05/11/2026, để giữ vị trí đọc và cấu trúc ổn định).
 - Không hiển thị mã nhóm (D1a, D2…) trên giao diện. Màn Thiết lập gồm 4 tab thay cho danh mục 240px của đặc tả 3.1 (lệch đặc tả, chưa được nghiệp vụ xác nhận).
 - Bộ lọc Thống kê trên desktop/tablet áp dụng ngay khi chọn (lệch đặc tả 4.1 vốn có nút "Áp dụng bộ lọc"; chưa được nghiệp vụ xác nhận).
 

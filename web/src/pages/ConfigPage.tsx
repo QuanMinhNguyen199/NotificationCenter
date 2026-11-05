@@ -1,6 +1,6 @@
 import { ViewTabs, Feedback } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
-import { Eye, History } from 'lucide-react';
+import { CircleCheck, Eye, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -8,7 +8,7 @@ import { ApiError, saveConfig } from '../api/mockApi';
 import { Skel } from '../components/Blocks';
 import { DayRibbon } from '../config/DayRibbon';
 import { CompareModal, HistoryOverlay, PreviewOverlay, SaveDialog, type SaveInput } from '../config/Dialogs';
-import { sectionsFor, UnusedGroups, type Ctx } from '../config/Forms';
+import { SectionToggle, sectionsFor, UnusedGroups, type Ctx } from '../config/Forms';
 import { useConfigDraft } from '../config/useConfigDraft';
 import { AREAS, areaOfField, type AreaId, type FieldKey } from '../data/config';
 import { usePermissions } from '../demo/DemoContext';
@@ -34,14 +34,18 @@ const writeSeen = (key: string, v: number) => {
 };
 
 /** Một hàng cài đặt: tên và mô tả bên trái, điều khiển bên phải; trên mobile xếp chồng. */
-function SettingRow({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
+function SettingRow({ title, desc, toggle, children }: { title: string; desc?: string; toggle?: ReactNode; children?: ReactNode }) {
   return (
     <section className="set-row">
       <div className="set-row__label">
-        <h2 className="set-row__title">{title}</h2>
+        {/* Công tắc bật/tắt cả mục nằm cùng hàng tên mục; thẻ chỉ có công tắc thì không có phần thân. */}
+        <div className="set-row__head">
+          <h2 className="set-row__title">{title}</h2>
+          {toggle}
+        </div>
         {desc && <p className="set-row__desc">{desc}</p>}
       </div>
-      <div className="set-row__panel">{children}</div>
+      {children && <div className="set-row__panel">{children}</div>}
     </section>
   );
 }
@@ -62,6 +66,13 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
   const [compare, setCompare] = useState(false);
   const [conflict, setConflict] = useState(false);
+  // Kết quả lưu hiện ngay tại thanh lưu (nơi vừa thao tác) trong 4 giây, ngoài toast; sửa tiếp thì thay bằng trạng thái chưa lưu.
+  const [saved, setSaved] = useState<string | null>(null);
+  useEffect(() => {
+    if (!saved) return;
+    const t = window.setTimeout(() => setSaved(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [saved]);
 
   const readOnly = !canEditConfig;
   const dirty = dirtyKeys.length > 0;
@@ -90,7 +101,9 @@ export default function ConfigPage() {
       );
       setSaving(false);
       setConflict(false);
-      toast.success(v.pending ? `Đã lưu phiên bản ${v.version}, chờ hiệu lực từ ${dmyhm(v.effectiveAt)}.` : `Đã lưu và áp dụng phiên bản ${v.version}.`);
+      const msg = v.pending ? `Đã lưu phiên bản ${v.version}, chờ hiệu lực từ ${dmyhm(v.effectiveAt)}.` : `Đã lưu và áp dụng phiên bản ${v.version}.`;
+      toast.success(msg);
+      setSaved(msg);
     },
     onError: async (e) => {
       if (e instanceof ApiError && e.code === 'CONFLICT') {
@@ -102,7 +115,11 @@ export default function ConfigPage() {
   });
 
   const startSave = () => {
-    const errKeys = Object.keys(errors) as FieldKey[];
+    // Trường đang ẩn vì công tắc tắt không chặn việc lưu: không nhìn thấy thì không sửa được.
+    const hidden = new Set(AREAS.flatMap((a) => (ctx ? sectionsFor(a.id, ctx, () => {}) : []))
+      .filter((s) => (s.toggle && !draft![s.toggle]) || (s.dependsOn && !draft![s.dependsOn]))
+      .flatMap((s) => s.fields.filter((f) => f !== s.toggle)));
+    const errKeys = (Object.keys(errors) as FieldKey[]).filter((k) => !hidden.has(k));
     if (errKeys.length) {
       api.setShowErrors(true);
       // Chuyển tới mục có lỗi đầu tiên rồi đưa focus vào trường đó.
@@ -171,11 +188,17 @@ export default function ConfigPage() {
             </div>
           </section>
         )}
-        {sectionsFor(id, ctx, () => pickArea('schedule')).map((s) => (
-          <SettingRow key={s.key} title={s.title} desc={s.desc}>
-            {s.content}
-          </SettingRow>
-        ))}
+        {/* Công tắc tắt: ẩn phần thân thẻ và các thẻ thuộc phạm vi của nó; giá trị vẫn giữ trong bản nháp. */}
+        {sectionsFor(id, ctx, () => pickArea('schedule'))
+          .filter((s) => !s.dependsOn || ctx.v[s.dependsOn])
+          .map((s) => {
+            const off = !!s.toggle && !ctx.v[s.toggle];
+            return (
+              <SettingRow key={s.key} title={s.title} desc={s.desc} toggle={s.toggle && <SectionToggle k={s.toggle} ctx={ctx} />}>
+                {off ? null : s.content}
+              </SettingRow>
+            );
+          })}
       </>
     );
   };
@@ -245,9 +268,9 @@ export default function ConfigPage() {
         <>
           {mobile && <div className="action-bar-spacer" aria-hidden="true" />}
           <div className="action-bar" role="region" aria-label="Lưu thiết lập">
-            <span className={`action-bar__state${dirty ? ' action-bar__state--dirty' : ''}`} aria-live="polite">
-              <i className="action-bar__dot" aria-hidden="true" />
-              {dirty ? `Có thay đổi chưa lưu (${dirtyKeys.length})` : 'Chưa có thay đổi'}
+            <span className={`action-bar__state${dirty ? ' action-bar__state--dirty' : saved ? ' action-bar__state--saved' : ''}`} aria-live="polite" key={dirty ? 'dirty' : saved ? 'saved' : 'idle'}>
+              {!dirty && saved ? <CircleCheck className="size-4" aria-hidden="true" /> : <i className="action-bar__dot" aria-hidden="true" />}
+              {dirty ? `Có thay đổi chưa lưu (${dirtyKeys.length})` : saved ?? 'Chưa có thay đổi'}
             </span>
             {!mobile && (
               <Button variant="outline" onClick={api.discard} disabled={!dirty}>

@@ -443,15 +443,31 @@ Mỗi sắc một nghĩa, dùng nhất quán ở pill, KPI, biểu đồ và d�
 - Chữ trong bảng: nội dung chính (tên NNT, tiêu đề, trạng thái HKD, ngày, số) màu #0F172A; nhãn nhóm và tiến độ #475569; chỉ MST, giờ phụ và số 0 dùng chữ phụ #64748B.
 - Bộ lọc đơn vị mặc định theo quyền: quản trị trung tâm mặc định "Toàn hệ thống"; tài khoản đơn vị khóa đơn vị của mình; vai trò chỉ xem (không chọn được toàn hệ thống) mặc định đơn vị A. "Đặt lại" và chip bỏ điều kiện đưa về giá trị mặc định này.
 
-## Chuyển động (04/11/2026)
+## Chuyển động (cập nhật 05/11/2026)
 
-Nguyên tắc: chuyển động chỉ để phản hồi một thao tác; không có hiệu ứng xuất hiện lặp cho mọi khối, không vòng lặp gây chú ý; chỉ dùng transform và opacity; tắt hết khi người dùng chọn giảm chuyển động (motion/react `MotionConfig reducedMotion="user"` và `@media (prefers-reduced-motion: reduce)`).
+Nguyên tắc: chuyển động chỉ để phản hồi thao tác, đổi trạng thái hoặc nối hai vùng; số liệu đọc được ngay, không chờ animation; không nảy, không lặp, không đếm số, không cho card xuất hiện tuần tự; không chạy lại hiệu ứng xuất hiện sau mỗi lần lọc. Chỉ transform, opacity và màu. Tắt khi người dùng chọn giảm chuyển động (motion/react `MotionConfig reducedMotion="user"`, `@media (prefers-reduced-motion: reduce)` và `animation: false` cho ECharts).
 
-| Thao tác | Chuyển động | Thời lượng |
+**Token** (CSS `--dur-*` trong `styles.css`, JS trong `src/lib/motion.ts`; giá trị khởi đầu để thử, chưa kiểm chứng với người dùng): phản hồi nhỏ `--dur-fast` 120ms; chuyển trạng thái `--dur-state` 180ms; drawer/modal `--dur-overlay` 240ms; easing `--ease-out` cubic-bezier(0.22, 1, 0.36, 1).
+
+| Thao tác | Chuyển động | Token |
 |---|---|---|
-| Đổi mục sidebar | Ô trắng mục đang chọn trượt sang mục mới (layoutId `nav-pill`) | spring ~250ms |
-| Đổi tab (ViewTabs) | Gạch chân trượt sang tab mới | spring ~250ms |
-| Đổi màn | Nội dung hiện dần, chỉ độ mờ | 160ms |
-| Đổi phạm vi, kỳ, nhóm | Số KPI chạy từ giá trị cũ sang mới (`useTween`) | 450ms, ease-out |
-| Đổi trang hoặc lọc bảng | Thân bảng hiện dần | 180ms |
-| Có thay đổi mới (nút Lịch sử) | Chấm đỏ bật ra một lần | 320ms |
+| Hover, nhấn nút | Đổi màu; nhấn thu 2% | fast |
+| Bật/tắt switch | Nền đổi màu, núm trượt | state |
+| Đổi mục sidebar | Ô trắng mục đang chọn trượt sang mục mới (layoutId `nav-pill`) | state |
+| Đổi tab | Gạch chân trượt; nội dung mới hiện dần, không trượt | state |
+| Đổi màn | Nội dung hiện dần, chỉ độ mờ | state |
+| Mở/đóng drawer, modal | Trượt/hiện của Radix; khóa focus, Esc đóng, trả focus về nút đã mở | overlay |
+| Bung/thu chi tiết người nhận | Chiều cao + độ mờ; chỉ cắt nội dung trong lúc chuyển động | state |
+| Đổi bộ lọc | Vùng kết quả (KPI, biểu đồ, danh sách) giữ số cũ, mờ 50% và tạm khóa bấm tới khi có số mới; lần tải đầu vẫn là skeleton | state |
+| Biểu đồ cập nhật | ECharts chuyển từ số cũ sang số mới, không vẽ lại từ đầu; lần vẽ đầu 300ms, cập nhật 240ms | — |
+| Lưu thiết lập | Nút trong hộp thoại hiện đang lưu; thành công: thanh lưu hiện "Đã lưu…" màu xanh 4 giây; lỗi: thông báo trong hộp thoại | state |
+| Cảnh báo mới | Hiện dần và dịch 4px một lần | state |
+| Có thay đổi mới (nút Lịch sử) | Chấm đỏ hiện một lần, không phóng quá cỡ | state |
+
+Đã bỏ (05/11/2026): số KPI chạy từ số cũ sang số mới, thân bảng hiện từ trong suốt, chấm phóng to 125% rồi co lại, kiểu lò xo ở sidebar và tab.
+
+## Đổ bóng và focus ô nhập (05/11/2026)
+
+- **Đổ bóng theo yêu cầu người dùng**, thay quy tắc "phẳng khi nghỉ" ở trên: thẻ, khối KPI, thẻ thiết lập, hàng danh sách có bóng nhẹ khi nghỉ (`--shadow-card`); thứ bấm được có bóng rõ hơn khi rê chuột (`--shadow-card-hover`); ô nhập, nút viền, bộ chọn có bóng rất nhẹ (`--shadow-control`); thanh trên, thanh bên và thanh lưu cố định có bóng mềm tách khỏi nội dung cuộn.
+- **Focus ô nhập:** một chỉ báo duy nhất là viền brand cộng quầng mờ 3px (18% brand; ô lỗi dùng màu lỗi). Bỏ đường viền ngoài 2px của quy tắc focus chung để không còn hai viền. Nút và mục điều hướng vẫn dùng viền ngoài 2px.
+- **Không lộ cú pháp biến:** giao diện hiện tên trường ("Tên NNT", "Kỳ khai"), không hiện `{ten_nnt}`; chèn trường tự điền bằng nút. Ô soạn nội dung mẫu tin vẫn hiện cú pháp vì đó là nơi viết mẫu.

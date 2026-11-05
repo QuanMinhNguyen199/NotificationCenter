@@ -61,7 +61,7 @@ export interface Summary {
   pending: number;
   failed: number;
   uniqueTaxpayers: number;
-  /** Thời gian phản hồi trung bình (phút) từ lúc tạo tới khi iHanoi xác nhận giao; null nếu chưa có thông báo đã giao. */
+  /** Thời gian phản hồi trung bình (phút) từ lúc tạo tới khi iHanoi tiếp nhận; null nếu chưa có thông báo có mốc tiếp nhận. */
   avgResponse: number | null;
   updatedAt: string;
   stale: boolean;
@@ -92,7 +92,7 @@ export async function fetchSummary(f: StatsFilter): Promise<Summary> {
   return {
     total: rows.length,
     sent: rows.filter((r) => r.send === 'SENT').length,
-    delivered: rows.filter((r) => r.delivery === 'DELIVERED').length,
+    delivered: rows.filter((r) => r.delivery === 'DELIVERED' || r.delivery === 'ACCEPTED').length,
     pending: rows.filter((r) => r.send === 'PENDING').length,
     failed: rows.filter((r) => r.send === 'FAILED').length,
     uniqueTaxpayers: new Set(rows.map((r) => r.taxpayerId)).size,
@@ -178,7 +178,8 @@ export async function fetchNotifications(qy: NotificationQuery): Promise<Page<No
   await wait();
   const rows = filterNotifications(qy, qy.day).filter((n) => {
     if (qy.send !== 'all' && n.send !== qy.send) return false;
-    if (qy.delivery !== 'all' && n.delivery !== qy.delivery) return false;
+    // Lọc "Đã tiếp nhận" gồm cả hai mã DELIVERED và ACCEPTED.
+    if (qy.delivery === 'DELIVERED' ? n.delivery !== 'DELIVERED' && n.delivery !== 'ACCEPTED' : qy.delivery !== 'all' && n.delivery !== qy.delivery) return false;
     return matchQ(taxpayers[n.taxpayerId], qy.q);
   });
   const start = (qy.page - 1) * qy.size;

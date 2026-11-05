@@ -59,7 +59,7 @@ export function PreviewOverlay({ open, onClose, draft, applied, dirty }: { open:
       }
     >
       <p className="chart-note" style={{ marginTop: 0, marginBottom: 12 }}>
-        {dirty ? 'Kết quả tính từ bản đang sửa. ' : 'Chưa có thay đổi — đang hiển thị thiết lập đang áp dụng. '}Không tạo thông báo thật.
+        {dirty ? 'Tính từ bản đang sửa, chưa áp dụng.' : 'Đang hiển thị thiết lập đang áp dụng.'}
       </p>
       <ViewTabs
         items={[
@@ -116,7 +116,7 @@ export function PreviewOverlay({ open, onClose, draft, applied, dirty }: { open:
                       <p key={i}>{t}</p>
                     ))}
                   </div>
-                  <p className="chart-note">Dữ liệu minh họa. Mẫu chỉ xem trước, không soạn tại đây.</p>
+                  
                 </div>
               </>
             ),
@@ -261,9 +261,6 @@ export function SaveDialog({
 export function HistoryOverlay({ open, onClose, history }: { open: boolean; onClose: () => void; history: ConfigVersion[] }) {
   return (
     <Overlay open={open} onClose={onClose} title="Lịch sử thay đổi" width={560}>
-      <p className="chart-note" style={{ marginTop: 0, marginBottom: 16 }}>
-        Chỉ đọc. Lịch sử minh họa trong bản thiết kế.
-      </p>
       {history.map((h, i) => (
         <article key={h.version} className="history-item">
           <div className="history-item__head">

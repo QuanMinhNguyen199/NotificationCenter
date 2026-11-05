@@ -7,10 +7,14 @@ import { GuardProvider } from './shell/guard';
 import AppShell from './shell/AppShell';
 import { useRoute } from './lib/router';
 import { PalettePanel } from './dev/PalettePanel';
+import { DUR, tween } from './lib/motion';
 // Tách gói theo route: ECharts chỉ tải ở màn Thống kê.
 const StatsPage = lazy(() => import('./pages/StatsPage'));
 const ConfigPage = lazy(() => import('./pages/ConfigPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
+const SendPage = lazy(() => import('./pages/SendPage'));
+const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
+const ChannelsPage = lazy(() => import('./pages/ChannelsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, retry: 0, refetchOnWindowFocus: false } },
@@ -21,8 +25,8 @@ function Routes() {
   // Đổi màn: nội dung hiện dần 160ms (chỉ độ mờ, không trượt) để phản hồi thao tác bấm điều hướng.
   return (
     <Suspense fallback={<div className="page-skel" aria-busy="true" aria-label="Đang tải màn hình" />}>
-      <motion.div key={path} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.16, ease: 'easeOut' }}>
-        {path === '/thiet-lap' ? <ConfigPage /> : path === '/tai-khoan' ? <AccountsPage /> : <StatsPage />}
+      <motion.div key={path} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={tween(DUR.state)}>
+        {path === '/thiet-lap' ? <ConfigPage /> : path === '/tai-khoan' ? <AccountsPage /> : path === '/gui-thong-bao' ? <SendPage /> : path === '/mau-tin' ? <TemplatesPage /> : path === '/kenh-gui' ? <ChannelsPage /> : <StatsPage />}
       </motion.div>
     </Suspense>
   );

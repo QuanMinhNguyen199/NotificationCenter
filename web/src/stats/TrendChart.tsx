@@ -4,7 +4,8 @@ import { useMemo } from 'react';
 import type { Summary } from '../api/mockApi';
 import { Panel, Skel } from '../components/Blocks';
 import { dm, dmy, num } from '../lib/format';
-import { useBreakpoint } from '../lib/useMedia';
+import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
+import { chartMotion } from '../lib/motion';
 import { C } from '../theme';
 import { useChartColorVersion } from '../dev/chartPalette';
 
@@ -13,6 +14,7 @@ const axisLabel = { color: C.faint, fontSize: 12, fontFamily: 'Inter Variable, I
 /** Cột tổng phát sinh theo ngày + đường Đã gửi Noti của cùng tập ngày đó. */
 export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: Summary; day: string | null; onPickDay: (d: string | null) => void; onShowList: (d: string) => void; emptyText?: string }) {
   const bp = useBreakpoint();
+  const reduced = useReducedMotion();
   const mobile = bp === 'mobile';
   const colors = useChartColorVersion();
 
@@ -21,7 +23,8 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
     const max = Math.max(...s.byDay.map((d) => d.total), 1);
     const step = max > 1500 ? 500 : max > 600 ? 250 : max > 200 ? 100 : 50;
     return {
-      animationDuration: 400,
+      // Lần đầu vẽ ngắn; đổi bộ lọc thì chuyển từ số cũ sang số mới, trục và nhãn giữ chỗ. Giảm chuyển động: tắt hẳn.
+      ...chartMotion(reduced),
       textStyle: { fontFamily: 'Inter Variable, Inter, sans-serif' },
       grid: { left: 48, right: 12, top: 16, bottom: 28 },
       tooltip: {
@@ -73,7 +76,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
         },
       ],
     };
-  }, [s, day, mobile, colors]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [s, day, mobile, colors, reduced]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const picked = s?.byDay.find((d) => d.date === day);
 
@@ -97,7 +100,6 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
           option={option}
           aria-hidden="true"
           style={{ height: mobile ? 200 : 220 }}
-          notMerge
           onEvents={{
             click: (e: { dataIndex: number }) => {
               const d = s!.byDay[e.dataIndex].date;

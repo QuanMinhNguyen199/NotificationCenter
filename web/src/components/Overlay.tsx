@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useBreakpoint } from '../lib/useMedia';
@@ -27,10 +27,23 @@ export default function Overlay({
   const bp = useBreakpoint();
   const mobile = bp === 'mobile';
   useHideNavWhile(open && mobile);
+  // Chi tiết mở qua URL (không qua Trigger của Radix) nên tự nhớ phần tử đang focus lúc mở để trả focus khi đóng.
+  // onOpenAutoFocus chạy ngay trước khi Radix chuyển focus vào panel, nên lúc đó vẫn là nút vừa bấm.
+  const returnTo = useRef<HTMLElement | null>(null);
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
+        onOpenAutoFocus={() => {
+          returnTo.current = document.activeElement as HTMLElement | null;
+        }}
+        onCloseAutoFocus={(e) => {
+          const el = returnTo.current;
+          if (el && el.isConnected && el !== document.body) {
+            e.preventDefault();
+            el.focus();
+          }
+        }}
         side="right"
         showCloseButton={!mobile}
         className="gap-0 p-0 sm:max-w-none"

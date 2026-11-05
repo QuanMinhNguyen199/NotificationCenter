@@ -1,4 +1,4 @@
-import { BarChart3, CalendarClock, PanelLeftClose, PanelLeftOpen, UserCog } from 'lucide-react';
+import { BarChart3, CalendarClock, FileText, PanelLeftClose, PanelLeftOpen, RadioTower, Send, UserCog } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -9,24 +9,29 @@ import { buildHash, useRoute, type RoutePath } from '../lib/router';
 import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
 import { DEMO_ACCOUNTS, ROLE_LABEL, initials, teamName, useDemo, usePermissions, useStaff } from '../demo/DemoContext';
 import { useGuard } from './guard';
+import { DUR, tween } from '../lib/motion';
 import { useOverlayOpen } from './overlay';
 
 const WIDTH = 272;
 const PEEK_OPEN_DELAY = 120;
 const PEEK_CLOSE_DELAY = 260;
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Icon theo việc của từng màn: Thiết lập chủ yếu là lịch rà soát và khung gửi; Tài khoản là phân quyền.
-const ALL_NAV: { path: RoutePath; label: string; icon: ReactNode }[] = [
-  { path: '/thong-ke', label: 'Thống kê', icon: <BarChart3 className="size-5" /> },
-  { path: '/thiet-lap', label: 'Thiết lập', icon: <CalendarClock className="size-5" /> },
-  { path: '/tai-khoan', label: 'Tài khoản', icon: <UserCog className="size-5" /> },
+// short: nhãn ngắn cho thanh điều hướng dưới trên mobile.
+const ALL_NAV: { path: RoutePath; label: string; short: string; icon: ReactNode }[] = [
+  { path: '/thong-ke', label: 'Thống kê', short: 'Thống kê', icon: <BarChart3 className="size-5" /> },
+  { path: '/gui-thong-bao', label: 'Gửi thông báo', short: 'Gửi', icon: <Send className="size-5" /> },
+  { path: '/mau-tin', label: 'Mẫu tin', short: 'Mẫu tin', icon: <FileText className="size-5" /> },
+  { path: '/kenh-gui', label: 'Kênh gửi', short: 'Kênh', icon: <RadioTower className="size-5" /> },
+  { path: '/thiet-lap', label: 'Thiết lập', short: 'Thiết lập', icon: <CalendarClock className="size-5" /> },
+  { path: '/tai-khoan', label: 'Tài khoản', short: 'Tài khoản', icon: <UserCog className="size-5" /> },
 ];
 
-/** Mục điều hướng theo quyền: cán bộ không có màn Tài khoản. */
+/** Mục điều hướng theo quyền: cán bộ không có Mẫu tin, Kênh gửi, Tài khoản. */
 function useNavItems() {
-  const { canViewAccounts } = usePermissions();
-  return ALL_NAV.filter((n) => n.path !== '/tai-khoan' || canViewAccounts);
+  const { canViewAccounts, canViewTemplates, canViewChannels } = usePermissions();
+  const allowed: Partial<Record<RoutePath, boolean>> = { '/tai-khoan': canViewAccounts, '/mau-tin': canViewTemplates, '/kenh-gui': canViewChannels };
+  return ALL_NAV.filter((n) => allowed[n.path] ?? true);
 }
 
 function readPinned() {
@@ -38,15 +43,24 @@ function readPinned() {
 }
 
 // Logo Thuế thành phố Hà Nội (logo/images.jpg, cắt tròn nền trong suốt ở public/).
-function Brand({ size = 32 }: { size?: number }) {
+// Bấm logo về trang Thống kê (qua điều hướng có chặn rời màn khi còn thay đổi chưa lưu).
+function Brand({ size = 32, onHome }: { size?: number; onHome: () => void }) {
   return (
-    <span className="brand">
+    <a
+      className="brand"
+      href={buildHash('/thong-ke')}
+      aria-label="Quản trị thông báo, về trang Thống kê"
+      onClick={(e) => {
+        e.preventDefault();
+        onHome();
+      }}
+    >
       <img className="mark" src={`${import.meta.env.BASE_URL}logo-thue-ha-noi.png`} width={size} height={size} alt="" />
       <span className="brand__text">
         <span className="brand__name">Quản trị thông báo</span>
         <span className="brand__org">Thuế thành phố Hà Nội</span>
       </span>
-    </span>
+    </a>
   );
 }
 
@@ -131,6 +145,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   const visible = pinned || peek;
   const floating = !pinned && peek;
+  // Logo dẫn về Thống kê; thanh bên đang mở dạng phủ thì đóng lại sau khi chuyển.
+  const home = () => go('/thong-ke', floating ? () => (setPeek(false), setByClick(false)) : undefined);
 
   const schedule = useCallback((next: boolean, delay: number) => {
     window.clearTimeout(timer.current);
@@ -173,7 +189,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     return (
       <div className={`shell shell--mobile${overlayOpen ? ' shell--overlay' : ''}`}>
         <header className="m-header">
-          <Brand />
+          <Brand onHome={home} />
           <Account compact />
         </header>
         <main className="canvas" id="main">
@@ -193,7 +209,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 }}
               >
                 <span className="bottom-nav__icon" aria-hidden="true">{item.icon}</span>
-                <span>{item.label}</span>
+                <span>{item.short}</span>
               </a>
             ))}
           </nav>
@@ -202,7 +218,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const transition = reduced ? { duration: 0 } : { duration: 0.24, ease: EASE };
+  const transition = reduced ? { duration: 0 } : tween(DUR.overlay);
 
   return (
     <div className={`shell${pinned ? ' shell--pinned' : ''}`} style={{ ['--rail' as string]: pinned ? `${WIDTH}px` : '0px' }}>
@@ -232,7 +248,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         aria-label="Điều hướng chính"
       >
         <div className="sidebar__brand">
-          <Brand size={40} />
+          <Brand size={40} onHome={home} />
           {canPin && (
             <button
               type="button"
@@ -260,10 +276,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 }}
                 whileHover={reduced || active ? undefined : { y: -2 }}
                 whileTap={reduced ? undefined : { y: 0 }}
-                transition={{ type: 'spring', stiffness: 520, damping: 32 }}
+                transition={tween(DUR.fast)}
               >
                 {/* Ô trắng của mục đang chọn là một phần tử dùng chung, trượt sang mục mới khi chuyển màn. */}
-                {active && <motion.span layoutId="nav-pill" className="nav-pill" transition={{ type: 'spring', stiffness: 420, damping: 36 }} aria-hidden="true" />}
+                {active && <motion.span layoutId="nav-pill" className="nav-pill" transition={tween(DUR.state)} aria-hidden="true" />}
                 <span aria-hidden="true" className="nav-item__icon">{item.icon}</span>
                 <span className="nav-item__label">{item.label}</span>
               </motion.a>
@@ -290,7 +306,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 >
                   <PanelLeftOpen className="size-[18px]" />
                 </button>
-                <Brand />
+                <Brand onHome={home} />
               </>
             )}
           </div>

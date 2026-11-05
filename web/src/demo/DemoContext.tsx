@@ -120,6 +120,15 @@ export function usePermissions() {
       canOperateRuns: role === 'base' && user.active,
       canViewAccounts: role !== 'officer' && user.active,
       canEditAccounts: role === 'base' && user.active,
+      // Gửi chủ động tách khỏi quyền thiết lập: lãnh đạo cơ sở gửi toàn cơ sở, lãnh đạo tổ gửi trong tổ mình.
+      canSend: role !== 'officer' && user.active,
+      sendTeam: role === 'team' ? user.team : null,
+      // Tự soạn nội dung (không theo mẫu) cần quyền riêng: chỉ lãnh đạo cơ sở.
+      canFreeText: role === 'base' && user.active,
+      canViewTemplates: role !== 'officer' && user.active,
+      canEditTemplates: role === 'base' && user.active,
+      canViewChannels: role !== 'officer' && user.active,
+      canManageChannels: role === 'base' && user.active,
       scopes,
       allowedScopes: allowed,
       fixedScope: role === 'officer' ? user.id : null,

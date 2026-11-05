@@ -136,7 +136,7 @@ function NotificationDetail({ id }: { id: string }) {
         <ol className="timeline">
           <li><time>{hm(n.createdAt)}</time><span>Tạo thông báo trong lượt rà soát</span></li>
           {n.processedAt && <li><time>{hm(n.processedAt)}</time><span>{SEND[n.send].label}</span></li>}
-          {n.deliveredAt && delivery === 'DELIVERED' && <li><time>{hm(n.deliveredAt)}</time><span>iHanoi xác nhận đã giao</span></li>}
+          {n.deliveredAt && delivery === 'DELIVERED' && <li><time>{hm(n.deliveredAt)}</time><span>iHanoi tiếp nhận</span></li>}
           {n.send === 'PENDING' && <li><time>—</time><span>Đang chờ tới lượt trong khung 06:00–10:00</span></li>}
         </ol>
       </section>
@@ -352,11 +352,6 @@ function RunDetail({ id }: { id: string }) {
             </div>
           )}
         </div>
-        {!canOperateRuns && (
-          <p className="chart-note">
-            Đợt gửi chung cho cả cơ sở; chỉ lãnh đạo cơ sở được duyệt, tạm dừng hoặc hủy.
-          </p>
-        )}
         <div style={{ marginTop: 14 }}>
           <RunProgress r={r} />
         </div>
@@ -415,17 +410,17 @@ function ResponseDetail({ filter }: { filter: StatsFilter }) {
   const r = q.data;
   const scope = `${scopeLabel(filter.unit)}, ${dm(filter.from)}–${dmy(filter.to)}`;
   if (r.total == null) {
-    return <p className="chart-note">Chưa có thông báo nào được iHanoi xác nhận đã giao trong phạm vi {scope}.</p>;
+    return <p className="chart-note">Chưa có thông báo nào có mốc iHanoi tiếp nhận trong phạm vi {scope}.</p>;
   }
   const sendShare = (r.toSend! / r.total) * 100;
 
   return (
     <>
       <section className="ov-section">
-        <p className="caption-line">{scope}. Tính trên {num(r.count)} thông báo đã giao.</p>
+        <p className="caption-line">{scope}. Tính trên {num(r.count)} thông báo có mốc tiếp nhận.</p>
         <div className="resp">
           <div className="resp__total">
-            <small>Trung bình từ lúc tạo tới khi đã giao</small>
+            <small>Trung bình từ lúc tạo tới khi iHanoi tiếp nhận</small>
             <b>{duration(r.total)}</b>
           </div>
           <div className="resp__bar" role="img" aria-label={`Tạo tới gửi chiếm ${pct(r.toSend!, r.total)}, gửi tới giao chiếm ${pct(r.toDeliver!, r.total)}`}>
@@ -439,9 +434,9 @@ function ResponseDetail({ filter }: { filter: StatsFilter }) {
               <p>Gồm thời gian chờ tới khung giờ gửi và xếp lượt gửi.</p>
             </div>
             <div>
-              <dt><i className="resp__dot resp__dot--deliver" aria-hidden="true" />Gửi → iHanoi giao</dt>
+              <dt><i className="resp__dot resp__dot--deliver" aria-hidden="true" />Gửi → iHanoi tiếp nhận</dt>
               <dd>{duration(r.toDeliver!)}</dd>
-              <p>Từ khi gửi tới trung tâm tới khi iHanoi xác nhận đã giao.</p>
+              <p>Từ khi gửi tới iHanoi tới khi iHanoi xác nhận tiếp nhận. Chưa có xác nhận đã tới máy người nhận.</p>
             </div>
           </dl>
         </div>
@@ -452,9 +447,9 @@ function ResponseDetail({ filter }: { filter: StatsFilter }) {
           <thead>
             <tr>
               <th scope="col">Ngày</th>
-              <th scope="col">Đã giao</th>
+              <th scope="col">Tiếp nhận</th>
               <th scope="col">Tạo → gửi</th>
-              <th scope="col">Gửi → giao</th>
+              <th scope="col">Gửi → tiếp nhận</th>
               <th scope="col">Tổng</th>
             </tr>
           </thead>
@@ -470,7 +465,7 @@ function ResponseDetail({ filter }: { filter: StatsFilter }) {
             ))}
           </tbody>
         </table>
-        <p className="chart-note">Thời lượng ghi theo giờ:phút. Thông báo đang chờ, gửi lỗi hoặc chưa có kết quả giao cuối không được tính.</p>
+        <p className="chart-note">Đơn vị giờ:phút.</p>
       </section>
     </>
   );

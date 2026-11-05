@@ -6,21 +6,28 @@ Web quản trị hệ thống thông báo Engagement gửi tới người nộp 
 
 > Toàn bộ số liệu, tên NNT, mã số thuế, đợt gửi và tài khoản cán bộ là **dữ liệu minh họa** chạy trong trình duyệt (mock API). Chưa nối backend thật.
 
-## Ba màn chính
+## Các màn
+
+Hai phần dùng chung một giao diện: **Engagement** tự rà soát nghĩa vụ thuế và lập đợt gửi; **Notification Center** cho gửi chủ động và quản lý mẫu tin, kênh gửi (theo tài liệu thiết kế nội bộ Notification Center Service, không đưa vào repo).
 
 | Màn | Nội dung |
 |---|---|
-| **Thống kê** | Đợt đang gửi; 7 chỉ số (tổng thông báo, đã gửi, đã giao, chờ gửi, gửi thất bại, NNT duy nhất, thời gian phản hồi trung bình); biểu đồ theo ngày và theo loại nghĩa vụ; danh sách thông báo, NNT, đợt gửi kèm chi tiết. |
+| **Thống kê** | Đợt đang gửi; 7 chỉ số (tổng thông báo, đã gửi, đã tiếp nhận, chờ gửi, gửi thất bại, NNT duy nhất, thời gian phản hồi trung bình); biểu đồ theo ngày và theo loại nghĩa vụ; danh sách thông báo, NNT, đợt gửi kèm chi tiết. |
+| **Gửi thông báo** | Gửi chủ động: chọn nhóm NNT, cả tổ hoặc từng NNT → kênh → mẫu tin hoặc tự soạn → xem trước → gửi. Theo dõi tiến độ từng kênh, từng người nhận, từng lần thử; hủy phần chưa gửi. |
+| **Mẫu tin** | Soạn nháp, xem trước trên iHanoi, xuất bản phiên bản có lý do; lịch sử phiên bản. |
+| **Kênh gửi** | Hộp thư, iHanoi, Email, Zalo: trạng thái, khả năng xác nhận; tạm dừng và ngắt khẩn cấp. |
 | **Thiết lập** | Lịch rà soát, quét bù, khung giờ gửi, duyệt đợt bất thường, nhắc nghĩa vụ thuế, cảnh báo doanh thu. Lưu có lý do, chọn thời điểm hiệu lực và lịch sử phiên bản. |
 | **Tài khoản** | Danh sách cán bộ theo tổ; lãnh đạo cơ sở đổi vai trò, tổ và khóa/mở tài khoản. |
 
+"Đã tiếp nhận" nghĩa là iHanoi đã nhận tin; iHanoi chưa xác minh có xác nhận tin đã tới máy người nhận.
+
 ## Phân quyền 3 cấp
 
-| Cấp | Thống kê | Thiết lập | Đợt gửi | Tài khoản |
-|---|---|---|---|---|
-| Lãnh đạo cơ sở | Toàn cơ sở, lọc theo tổ hoặc cán bộ | Sửa | Duyệt, tạm dừng, hủy | Sửa |
-| Lãnh đạo tổ | Tổ mình, lọc theo cán bộ trong tổ | Chỉ xem | Chỉ xem | Xem tổ mình |
-| Cán bộ | NNT mình phụ trách | Chỉ xem | Chỉ xem | Không có |
+| Cấp | Thống kê | Gửi thông báo | Mẫu tin, Kênh gửi | Thiết lập | Đợt gửi | Tài khoản |
+|---|---|---|---|---|---|---|
+| Lãnh đạo cơ sở | Toàn cơ sở, lọc theo tổ hoặc cán bộ | Gửi toàn cơ sở, được tự soạn | Sửa | Sửa | Duyệt, tạm dừng, hủy | Sửa |
+| Lãnh đạo tổ | Tổ mình, lọc theo cán bộ trong tổ | Gửi trong tổ, theo mẫu tin | Chỉ xem | Chỉ xem | Chỉ xem | Xem tổ mình |
+| Cán bộ | NNT mình phụ trách | Xem lần gửi có NNT mình phụ trách | Không có | Chỉ xem | Chỉ xem | Không có |
 
 Đổi tài khoản xem thử bằng nút tên tài khoản ở góc trên phải: **Nguyễn Minh An** (lãnh đạo cơ sở), **Trần Thu Hà** (lãnh đạo tổ, Tổ 1), **Lê Văn Bình** (cán bộ, Tổ 1). Quyền trên giao diện chỉ để ẩn hoặc hiện thao tác; khi có backend, quyền phải được kiểm tra ở backend.
 
@@ -55,12 +62,14 @@ React 19, TypeScript, Vite, shadcn/ui (Radix + Tailwind CSS 4), TanStack Query, 
 
 ```text
 web/src/
-  pages/        ba màn: StatsPage, ConfigPage (Thiết lập), AccountsPage
+  pages/        StatsPage, SendPage (Gửi thông báo), TemplatesPage (Mẫu tin), ChannelsPage (Kênh gửi),
+                ConfigPage (Thiết lập), AccountsPage
   stats/        bộ lọc, chỉ số, biểu đồ, danh sách và chi tiết của màn Thống kê
   config/       form, dải "Một ngày vận hành", hộp thoại lưu, lịch sử, xem trước
   shell/        khung app: sidebar, thanh trên, điều hướng mobile
   demo/         tài khoản xem thử và quyền theo vai trò
-  api/mockApi   mock API: độ trễ, phân trang, phạm vi theo quyền, lưu thiết lập
+  api/mockApi   mock API Engagement: độ trễ, phân trang, phạm vi theo quyền, lưu thiết lập
+  api/notifyApi mock API Notification Center: kênh, mẫu tin, lần gửi chủ động (tiến độ mô phỏng theo thời gian thực)
   data/         dữ liệu minh họa, cơ cấu tổ và cán bộ
   theme.ts      màu dùng trong biểu đồ (khớp token trong styles.css)
 ```

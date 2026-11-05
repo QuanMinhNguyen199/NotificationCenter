@@ -15,9 +15,16 @@ export interface Section {
   desc?: string;
   /** Tóm tắt giá trị hiện trên accordion mobile khi đóng. */
   summary: string;
+  /** Không có nội dung ngoài công tắc thì để null: thẻ chỉ còn tiêu đề, mô tả và công tắc. */
   content: ReactNode;
   fields: FieldKey[];
+  /** Công tắc bật/tắt cả mục, đặt cùng hàng tiêu đề thẻ. Tắt thì ẩn phần thân thẻ. */
+  toggle?: SwitchKey;
+  /** Thẻ thuộc phạm vi của công tắc ở thẻ khác: công tắc đó tắt thì ẩn cả thẻ. */
+  dependsOn?: SwitchKey;
 }
+
+type SwitchKey = 'autoScan' | 'holdAbnormal' | 'reminderEnabled' | 'revenueEnabled';
 
 interface Ctx {
   api: DraftApi;
@@ -70,19 +77,16 @@ function NumField({ k, ctx, help, min, max }: { k: FieldKey; ctx: Ctx; help?: Re
   );
 }
 
-function SwitchRow({ k, ctx, desc }: { k: 'autoScan' | 'holdAbnormal' | 'reminderEnabled' | 'revenueEnabled'; ctx: Ctx; desc?: ReactNode }) {
+/** Công tắc bật/tắt cả mục, đặt cạnh tiêu đề thẻ; tài khoản chỉ xem thấy nhãn trạng thái thay cho công tắc. */
+export function SectionToggle({ k, ctx }: { k: SwitchKey; ctx: Ctx }) {
   const on = ctx.v[k];
   const dirty = ctx.api.dirtyKeys.includes(k);
+  if (ctx.readOnly) return <StatusPill tone={on ? 'success' : 'neutral'}>{on ? 'Đang bật' : 'Đang tắt'}</StatusPill>;
   return (
-    <div className="switch-row">
-      <label className="switch-row__title" htmlFor={`cfg-${k}`}>
-        {FIELD_META[k].label}
-        {ctx.readOnly && <StatusPill tone={on ? 'success' : 'neutral'}>{on ? 'Đang bật' : 'Đang tắt'}</StatusPill>}
-        {dirty && !ctx.readOnly && <span className="dirty-note">đã sửa</span>}
-      </label>
-      {desc && <span className="switch-row__desc">{desc}</span>}
-      {!ctx.readOnly && <Switch id={`cfg-${k}`} checked={on} onCheckedChange={(c) => ctx.api.update(k, c)} />}
-    </div>
+    <span className="section-toggle">
+      {dirty && <span className="dirty-mark" role="img" aria-label="Đã sửa, chưa lưu" title="Đã sửa, chưa lưu">!</span>}
+      <Switch id={`cfg-${k}`} checked={on} onCheckedChange={(c) => ctx.api.update(k, c)} aria-label={FIELD_META[k].label} />
+    </span>
   );
 }
 
@@ -97,12 +101,12 @@ function scheduleSections(ctx: Ctx): Section[] {
     {
       key: 'scan',
       title: 'Rà soát hằng ngày',
-      desc: 'Lập danh sách thông báo mỗi ngày theo giờ Việt Nam. Quét bù chạy khi lượt chính bị lỡ.',
+      desc: 'Tắt chỉ dừng lập danh sách mới; đợt đã tạo vẫn gửi tiếp.',
       summary: v.autoScan ? `${v.scanTime}, quét bù ${v.catchupTime}` : 'Quét tự động đang tắt',
       fields: ['autoScan', 'scanTime', 'catchupTime'],
+      toggle: 'autoScan',
       content: (
         <>
-          <SwitchRow k="autoScan" ctx={ctx} desc="Tắt chỉ dừng việc tự lập danh sách mới; đợt đã tạo hoặc đang gửi vẫn tiếp tục." />
           <div className="fields">
             <TimeField k="scanTime" ctx={ctx} />
             <TimeField k="catchupTime" ctx={ctx} />
@@ -116,7 +120,6 @@ function scheduleSections(ctx: Ctx): Section[] {
     {
       key: 'send',
       title: 'Khung giờ gửi',
-      desc: 'Chỉ gửi trong khung này, trong cùng một ngày.',
       summary: `${v.sendStart}–${v.sendEnd}`,
       fields: ['sendStart', 'sendEnd'],
       content: (
@@ -129,12 +132,12 @@ function scheduleSections(ctx: Ctx): Section[] {
     {
       key: 'hold',
       title: 'Duyệt đợt tăng bất thường',
-      desc: 'Giữ lại đợt có số lượng tăng đột biến để cán bộ duyệt trước khi gửi.',
+      desc: 'Đợt bị giữ chờ duyệt ở tab Đợt gửi.',
       summary: v.holdAbnormal ? `Giữ khi tăng trên ${v.growthFactor} lần` : 'Không giữ',
       fields: ['holdAbnormal', 'growthFactor', 'historyRuns', 'minRuns'],
+      toggle: 'holdAbnormal',
       content: (
         <>
-          <SwitchRow k="holdAbnormal" ctx={ctx} desc="Đợt bị giữ hiện trạng thái Chờ duyệt ở tab Đợt gửi." />
           <div className="fields fields--3">
             <NumField k="growthFactor" ctx={ctx} min={1} />
             <NumField k="historyRuns" ctx={ctx} min={1} />
@@ -158,12 +161,11 @@ function reminderSections(ctx: Ctx, goSchedule: () => void): Section[] {
     {
       key: 'use',
       title: 'Nhắc khai và nộp thuế',
-      desc: 'Nhắc hồ sơ khai còn thiếu và khoản thuế còn phải nộp.',
       summary: `${v.reminderEnabled ? 'Đang bật' : 'Đang tắt'}, nhắc trước hạn ${v.daysBefore} ngày`,
       fields: ['reminderEnabled', 'daysBefore'],
+      toggle: 'reminderEnabled',
       content: (
         <>
-          <SwitchRow k="reminderEnabled" ctx={ctx} />
           <div className="fields">
             <NumField k="daysBefore" ctx={ctx} min={0} />
           </div>
@@ -189,17 +191,17 @@ function revenueSections(ctx: Ctx): Section[] {
     {
       key: 'use',
       title: 'Cảnh báo doanh thu',
-      desc: 'Cảnh báo doanh thu gần ngưỡng hoặc dự báo vượt ngưỡng, và nhắc khuyến khích lên doanh nghiệp.',
       summary: v.revenueEnabled ? 'Đang bật' : 'Đang tắt',
       fields: ['revenueEnabled'],
-      content: <SwitchRow k="revenueEnabled" ctx={ctx} />,
+      toggle: 'revenueEnabled',
+      content: null,
     },
     {
       key: 'rule',
       title: 'Điều kiện cảnh báo',
-      desc: 'Tỷ lệ và nhịp nhắc, tính trên bảng ngưỡng chính sách.',
       summary: `Gần ngưỡng ${v.nearThresholdPct}%, biên dự báo ${v.forecastMarginPct}%`,
       fields: ['nearThresholdPct', 'forecastMarginPct', 'forecastMinDays', 'confirmGapDays', 'confirmCount', 'upsellCycleDays'],
+      dependsOn: 'revenueEnabled',
       content: (
         <div className="fields fields--3">
           <NumField k="nearThresholdPct" ctx={ctx} min={1} max={99} />
@@ -214,9 +216,10 @@ function revenueSections(ctx: Ctx): Section[] {
     {
       key: 'policy',
       title: 'Ngưỡng chính sách',
-      desc: 'Chỉ đọc, lấy từ hệ thống cấu hình chính sách.',
+      desc: 'Chỉ đọc.',
       summary: POLICY_THRESHOLDS.map((t) => `${num(t.amount / 1e9)} tỷ`).join(', '),
       fields: [],
+      dependsOn: 'revenueEnabled',
       content: (
         <table className="threshold-table">
           <thead>
@@ -255,7 +258,7 @@ export function UnusedGroups() {
   return (
     <section className="panel">
       <div className="panel__body">
-        <p className="cfg-card__desc">Các loại thông báo dưới đây chưa có trong hệ thống đang chạy nên chưa có tham số để bật hay chỉnh.</p>
+        
         <dl className="unused-list">
           {GROUPS.filter((g) => g.unused).map((g) => (
             <div key={g.id} className="unused-list__item">

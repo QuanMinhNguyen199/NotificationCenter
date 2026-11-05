@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 import type { ObligationBreakdown } from '../api/mockApi';
 import { BlockError, Panel, Skel } from '../components/Blocks';
 import { dmyhm, num } from '../lib/format';
-import { useBreakpoint } from '../lib/useMedia';
+import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
+import { chartMotion } from '../lib/motion';
 import { C } from '../theme';
 import { useChartColorVersion } from '../dev/chartPalette';
 import type { Priority } from '../data/types';
@@ -36,6 +37,7 @@ export function ObligationChart({
   onPick: (kind: 'file' | 'pay', prio: Priority) => void;
 }) {
   const bp = useBreakpoint();
+  const reduced = useReducedMotion();
   const mobile = bp === 'mobile';
   const colors = useChartColorVersion();
 
@@ -44,7 +46,8 @@ export function ObligationChart({
     if (!data) return null;
     // Trục Y đảo để Khai thuế nằm trên.
     return {
-      animationDuration: 400,
+      // Lần đầu vẽ ngắn; đổi bộ lọc thì chuyển từ số cũ sang số mới, trục và nhãn giữ chỗ. Giảm chuyển động: tắt hẳn.
+      ...chartMotion(reduced),
       textStyle: { fontFamily: 'Inter Variable, Inter, sans-serif' },
       grid: { left: mobile ? 84 : 100, right: 16, top: 8, bottom: 8 },
       tooltip: {
@@ -103,7 +106,7 @@ export function ObligationChart({
         data: KINDS.map((k) => data[k.key][o.key]),
       })),
     };
-  }, [data, mobile, totals, colors]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, mobile, totals, colors, reduced]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   return (
@@ -119,7 +122,6 @@ export function ObligationChart({
           // Desktop: giãn theo chiều cao thẻ bên cạnh; mobile xếp một cột nên giữ chiều cao cố định.
           className={mobile ? undefined : 'chart-fill'}
           style={mobile ? { height: 140 } : { height: 'auto' }}
-          notMerge
           opts={{ renderer: 'svg' }}
           onEvents={{ click: (e: { dataIndex: number; seriesIndex: number }) => onPick(KINDS[e.dataIndex].key, ORDER[e.seriesIndex].key) }}
         />
