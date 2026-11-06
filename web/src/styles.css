@@ -1330,12 +1330,7 @@ a { text-decoration: none; }
 .workspace-note { color: var(--text-muted, #475569); font-size: 14px; line-height: 1.6; margin: 12px 0 20px; max-width: 75ch; }
 .page-toolbar .workspace-note { margin: 0; }
 .charts--single { grid-template-columns: minmax(0, 1fr); }
-.tpl-list > li:has(.tpl-use) { display: flex; align-items: center; gap: 12px; }
-.tpl-list > li:has(.tpl-use) .tpl-row { flex: 1; min-width: 0; }
-.tpl-use { flex-shrink: 0; }
 @media (max-width: 600px) {
-  .tpl-list > li:has(.tpl-use) { flex-direction: column; align-items: stretch; gap: 0; }
-  .tpl-use { align-self: flex-start; margin: 0 12px 12px; }
   .page-toolbar:has(.workspace-note) { flex-wrap: wrap; gap: 12px; }
 }
 

@@ -99,7 +99,7 @@ Vùng chạm ≥44px, input mobile ≥16px, tương phản ≥4.5:1, focus rõ, 
 Theo yêu cầu gộp chức năng trùng của người dùng, điều hướng còn 5 mục: Thống kê, Quản lý HKD, Thông báo, Thiết lập, Tài khoản (mục Tài khoản vẫn theo quyền).
 
 - **Thống kê:** chỉ số và xu hướng vận hành gửi; danh sách thông báo. Nút xem đợt mở tab Đợt tự động trong Thông báo; KPI NNT có thông báo mở danh sách nghĩa vụ trong Quản lý HKD, giữ phạm vi và kỳ.
-- **Thông báo:** ba tab Gửi chủ động / Đợt tự động / Thư viện mẫu. Gửi chủ động có form tạo và theo dõi kết quả; Đợt tự động giữ duyệt, tạm dừng, tiếp tục, hủy theo quyền; thư viện giữ nháp, xuất bản và lịch sử phiên bản. Nút Dùng mẫu để gửi mở form chọn đúng mẫu. Hai loại gửi giữ trạng thái riêng vì luồng nghiệp vụ khác nhau.
+- **Thông báo:** ba tab Gửi chủ động / Đợt tự động / Thư viện mẫu. Gửi chủ động có form tạo và theo dõi kết quả; Đợt tự động giữ duyệt, tạm dừng, tiếp tục, hủy theo quyền; thư viện giữ nháp, xuất bản và lịch sử phiên bản. Chọn mẫu trong form Gửi chủ động; thư viện không có nút gửi. Hai loại gửi giữ trạng thái riêng vì luồng nghiệp vụ khác nhau.
 - **Quản lý HKD:** bổ sung Danh sách nghĩa vụ, chuyển cả biểu đồ nghĩa vụ từ Thống kê sang đây. Hiệu quả nhắc việc tập trung số HKD còn việc, đã nhắc, hoàn thành sau nhắc, theo loại/đơn vị/ngưỡng; bỏ biểu đồ và cột kết quả truyền thông báo lặp với Thống kê.
 - **Thiết lập:** hai tab Quy tắc nhắc tự động / Kênh gửi; quyền cũ giữ nguyên. Đổi sang Kênh gửi khi có quy tắc chưa lưu phải xác nhận bỏ thay đổi. Nhãn thao tác nêu phạm vi toàn kênh / đợt này / tạo đợt mới.
 - Link cũ Mẫu tin, Kênh gửi, Thống kê tab NNT/Đợt gửi vẫn mở nội dung tại vị trí mới, giữ bộ lọc.

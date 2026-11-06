@@ -477,6 +477,6 @@ Nguyên tắc: chuyển động chỉ để phản hồi thao tác, đổi trạ
 
 Điều hướng chính rút từ 7 còn 5 mục: Thống kê / Quản lý HKD / Thông báo / Thiết lập / Tài khoản. Thông báo dùng tab Gửi chủ động, Đợt tự động, Thư viện mẫu (ẩn theo quyền); Thiết lập dùng tab Quy tắc nhắc tự động, Kênh gửi (ẩn theo quyền). Giữ token thương hiệu và component hiện có.
 
-Mỗi nội dung chi tiết có một nơi chính: thông báo đã gửi ở Thống kê; đợt tự động ở Thông báo; danh sách và biểu đồ nghĩa vụ ở Quản lý HKD. Các nút từ màn khác dẫn tới đúng nơi, giữ phạm vi liên quan. Thư viện mẫu có hành động Dùng mẫu để gửi; xuất bản không đồng nghĩa gửi. Nhắc việc ưu tiên kết quả nghiệp vụ của HKD, bỏ biểu đồ truyền tin và các cột gửi/tiếp nhận bị lặp.
+Mỗi nội dung chi tiết có một nơi chính: thông báo đã gửi ở Thống kê; đợt tự động ở Thông báo; danh sách và biểu đồ nghĩa vụ ở Quản lý HKD. Các nút từ màn khác dẫn tới đúng nơi, giữ phạm vi liên quan. Thư viện mẫu dùng để quản lý nội dung; chọn mẫu trong form Gửi chủ động. Xuất bản không đồng nghĩa gửi. Nhắc việc ưu tiên kết quả nghiệp vụ của HKD, bỏ biểu đồ truyền tin và các cột gửi/tiếp nhận bị lặp.
 
 Đây là phương án theo yêu cầu rút gọn, chưa có bằng chứng thử nghiệm với người dùng. Kiểm chứng bằng tìm đợt lỗi và tìm HKD quá hạn; không dùng chỉ số minh họa làm kết quả kiểm chứng.

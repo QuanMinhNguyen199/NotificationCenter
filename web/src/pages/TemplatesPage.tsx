@@ -11,7 +11,6 @@ import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
 import { StatusPill } from '../components/Status';
 import { usePermissions } from '../demo/DemoContext';
 import { dmyhm } from '../lib/format';
-import { useRoute } from '../lib/router';
 import { PushPreview } from '../stats/Details';
 
 export const TITLE_MAX = 65;
@@ -142,8 +141,7 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
 }
 
 export default function TemplatesPage() {
-  const { canViewTemplates, canEditTemplates, canSend } = usePermissions();
-  const { navigate } = useRoute();
+  const { canViewTemplates, canEditTemplates } = usePermissions();
   const q = useQuery({ queryKey: ['templates'], queryFn: fetchTemplates, enabled: canViewTemplates });
   const [open, setOpen] = useState<Template | 'new' | null>(null);
 
@@ -183,7 +181,6 @@ export default function TemplatesPage() {
                     {draft && <StatusPill tone="warning">Có bản nháp</StatusPill>}
                   </span>
                 </button>
-                {pub && canSend && <Button variant="outline" className="tpl-use" onClick={() => navigate('/gui-thong-bao', { tao: '1', modele: t.id })}>Dùng mẫu để gửi</Button>}
               </li>
             );
           })}
