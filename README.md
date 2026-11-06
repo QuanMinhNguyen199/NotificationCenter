@@ -13,6 +13,7 @@ Hai phần dùng chung một giao diện: **Engagement** tự rà soát nghĩa v
 | Màn | Nội dung |
 |---|---|
 | **Thống kê** | Đợt đang gửi; 7 chỉ số (tổng thông báo, đã gửi, đã tiếp nhận, chờ gửi, gửi thất bại, NNT duy nhất, thời gian phản hồi trung bình); biểu đồ theo ngày và theo loại nghĩa vụ; danh sách thông báo, NNT, đợt gửi kèm chi tiết. |
+| **Quản lý HKD** | 4 tab: **Chỉ tiêu hằng ngày** (tờ khai tiếp nhận, tỷ lệ xử lý thành công, tỷ lệ nộp thuế theo hồ sơ, hộ đăng ký app nhưng chưa nộp tờ khai; theo ngày, tuần và đơn vị); **Cơ cấu và tuân thủ** (theo địa bàn, doanh thu năm, loại hình; 4 nhóm đủ / thiếu tờ khai / nợ thuế / cả hai); **Nợ thuế** (12 tháng, theo đơn vị và địa bàn, báo cáo tháng tải CSV); **Hỗ trợ HKD** (yêu cầu theo cán bộ, địa bàn, loại, trạng thái; danh sách chờ HKD bổ sung); **Nhắc việc** (sắp đến hạn, quá hạn chưa làm, việc phải làm, sắp đạt ngưỡng doanh thu 1 / 3 / 50 tỷ; thông báo đã gửi, tỷ lệ hoàn thành sau nhắc, theo mốc và đơn vị). Toàn bộ là dữ liệu minh họa. |
 | **Gửi thông báo** | Gửi chủ động: chọn nhóm NNT, cả tổ hoặc từng NNT → kênh → mẫu tin hoặc tự soạn → xem trước → gửi. Theo dõi tiến độ từng kênh, từng người nhận, từng lần thử; hủy phần chưa gửi. |
 | **Mẫu tin** | Soạn nháp, xem trước trên iHanoi, xuất bản phiên bản có lý do; lịch sử phiên bản. |
 | **Kênh gửi** | Hộp thư, iHanoi, Email, Zalo: trạng thái, khả năng xác nhận; tạm dừng và ngắt khẩn cấp. |
@@ -22,6 +23,8 @@ Hai phần dùng chung một giao diện: **Engagement** tự rà soát nghĩa v
 "Đã tiếp nhận" nghĩa là iHanoi đã nhận tin; iHanoi chưa xác minh có xác nhận tin đã tới máy người nhận.
 
 ## Phân quyền 3 cấp
+
+Màn **Quản lý HKD** theo cùng phạm vi với Thống kê: lãnh đạo cơ sở so sánh giữa các tổ, lãnh đạo tổ so sánh giữa cán bộ trong tổ, cán bộ chỉ thấy HKD mình phụ trách.
 
 | Cấp | Thống kê | Gửi thông báo | Mẫu tin, Kênh gửi | Thiết lập | Đợt gửi | Tài khoản |
 |---|---|---|---|---|---|---|
@@ -81,3 +84,6 @@ web/src/
 - [web_quan_tri_engagement_views_va_mockup_stitch.md](web_quan_tri_engagement_views_va_mockup_stitch.md): đặc tả gốc.
 
 Màu brand theo biểu trưng Thuế thành phố Hà Nội: đỏ Pantone 199 C `#D50032`, vàng Pantone 108 C `#FEDB00`. Mã Pantone là màu gần nhất đo từ ảnh logo, chưa đối chiếu cẩm nang nhận diện chính thức.
+
+
+Điều hướng đã rút gọn theo nghiệp vụ (06/11/2026): Thông báo gom gửi chủ động, đợt tự động, thư viện mẫu; Thiết lập gom quy tắc tự động và kênh gửi. Quản lý HKD giữ danh sách nghĩa vụ và hiệu quả sau nhắc; Thống kê giữ vận hành gửi. `NotificationWorkspace.tsx` và `SettingsWorkspace.tsx` là hai màn bao; đường dẫn Mẫu tin/Kênh gửi và tab NNT/Đợt gửi cũ vẫn được ánh xạ. Dữ liệu tiếp tục là mock, quyền thao tác giữ nguyên.

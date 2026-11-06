@@ -215,7 +215,7 @@ function TaxpayerDetail({ id }: { id: number }) {
 
 const ACTION: Record<RunAction, { label: string; danger?: boolean; reasonRequired: boolean; verb: string }> = {
   approve: { label: 'Duyệt đợt', reasonRequired: false, verb: 'Duyệt' },
-  pause: { label: 'Tạm dừng', reasonRequired: true, verb: 'Tạm dừng' },
+  pause: { label: 'Tạm dừng đợt này', reasonRequired: true, verb: 'Tạm dừng' },
   resume: { label: 'Tiếp tục gửi', reasonRequired: false, verb: 'Tiếp tục' },
   cancel: { label: 'Hủy đợt', danger: true, reasonRequired: true, verb: 'Hủy' },
 };

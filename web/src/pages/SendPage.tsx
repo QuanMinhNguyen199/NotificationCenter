@@ -216,6 +216,7 @@ function SendDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
 function Composer({ onDone, onBack }: { onDone: (id: string) => void; onBack: () => void }) {
   const { user, sendTeam, canFreeText } = usePermissions();
+  const { params } = useRoute();
   const bp = useBreakpoint();
   const qc = useQueryClient();
   const chq = useQuery({ queryKey: ['channels'], queryFn: fetchChannels });
@@ -227,7 +228,7 @@ function Composer({ onDone, onBack }: { onDone: (id: string) => void; onBack: ()
   const [search, setSearch] = useState('');
   const [chans, setChans] = useState<ChannelId[]>(['IN_APP', 'IHANOI']);
   const [mode, setMode] = useState<'template' | 'free'>('template');
-  const [tplId, setTplId] = useState('');
+  const [tplId, setTplId] = useState(params.get('modele') ?? '');
   const [values, setValues] = useState<Record<string, string>>({});
   const [free, setFree] = useState({ title: '', body: '' });
   const [confirm, setConfirm] = useState(false);

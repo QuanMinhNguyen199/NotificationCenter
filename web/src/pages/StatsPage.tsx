@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchActiveRun, fetchObligations, fetchSummary } from '../api/mockApi';
+import { fetchActiveRun, fetchSummary } from '../api/mockApi';
 import { RUN } from '../components/Status';
 import { num } from '../lib/format';
 import { Skel } from '../components/Blocks';
@@ -11,21 +11,21 @@ import { GROUPS } from '../data/config';
 import { FilterBar } from '../stats/FilterBar';
 import { Kpis } from '../stats/Kpis';
 import { TrendChart } from '../stats/TrendChart';
-import { ObligationChart } from '../stats/ObligationChart';
 import { DetailTabs } from '../stats/DetailTabs';
 import { DetailOverlay } from '../stats/Details';
+import { useRoute } from '../lib/router';
 import { filterOf, useStatsParams } from '../stats/useStatsParams';
 
 export default function StatsPage() {
   const { p, set, openDetail, closeDetail } = useStatsParams();
   const qc = useQueryClient();
+  const { navigate } = useRoute();
   const f = filterOf(p);
 
   // Số liệu đang gửi làm mới mỗi 30 giây khi tab Thống kê đang mở.
   // Đổi bộ lọc: giữ số cũ (làm mờ tại vùng kết quả) tới khi có số mới, khung không nhảy về skeleton; lần tải đầu vẫn là skeleton.
   const summary = useQuery({ queryKey: ['summary', f], queryFn: () => fetchSummary(f), refetchInterval: 30_000, placeholderData: keepPreviousData });
   const active = useQuery({ queryKey: ['active-run', f.unit], queryFn: () => fetchActiveRun(f), refetchInterval: 30_000 });
-  const ob = useQuery({ queryKey: ['obligations', f.unit], queryFn: () => fetchObligations(f), placeholderData: keepPreviousData });
 
   const scrollToList = () => document.getElementById('detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const resetFilters = () => set({ unit: null, from: null, to: null, group: null, day: null, ns: null, nd: null, nq: null, tq: null, notified: null, kind: null, prio: null, rs: null, rq: null, page: 1 });
@@ -50,7 +50,7 @@ export default function StatsPage() {
               </b>
               , còn <b className="num">{num(active.data.pending)}</b> chờ trong khung <span className="nowrap">{active.data.window}</span>.{' '}
               {p.unit !== 'ALL' && 'Số liệu đợt tính cho toàn cơ sở. '}
-              <button type="button" className="link-btn finding__link" onClick={() => openDetail(`r:${active.data!.id}`)}>
+              <button type="button" className="link-btn finding__link" onClick={() => navigate('/gui-thong-bao', { muc: 'tu-dong', detail: `r:${active.data!.id}` })}>
                 Xem đợt gửi
                 <ArrowRight aria-hidden="true" />
               </button>
@@ -85,14 +85,14 @@ export default function StatsPage() {
           unused={unusedGroup ? unusedGroup.name : undefined}
           onPick={(k, f) => {
             if (k === 'response') return openDetail('x:response');
-            if (k === 'unique') set({ tab: 'taxpayers', notified: true, kind: null, prio: null, page: 1 });
+            if (k === 'unique') return navigate('/quan-ly-hkd', { muc: 'danh-sach', unit: p.unit, from: p.from, to: p.to, group: p.group, notified: '1' });
             else set({ tab: 'notifications', ns: f?.ns ?? 'all', nd: f?.nd ?? 'all', day: k === 'total' ? null : p.day, page: 1 });
             scrollToList();
           }}
         />
       )}
 
-      <div className={`charts${summary.isPlaceholderData || ob.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={summary.isPlaceholderData || ob.isPlaceholderData}>
+      <div className={`charts charts--single${summary.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={summary.isPlaceholderData}>
         <TrendChart
           s={s}
           day={p.day}
@@ -100,17 +100,7 @@ export default function StatsPage() {
           onPickDay={(day) => set({ day, tab: 'notifications', page: 1 })}
           onShowList={() => scrollToList()}
         />
-        <ObligationChart
-          data={ob.data}
-          error={ob.error}
-          loading={ob.isLoading}
-          groupNote={p.group !== 'all'}
-          onRetry={() => ob.refetch()}
-          onPick={(kind, prio) => {
-            set({ tab: 'taxpayers', kind, prio, notified: false, page: 1 });
-            scrollToList();
-          }}
-        />
+
       </div>
 
       <DetailTabs p={p} set={set} open={openDetail} reset={resetFilters} />

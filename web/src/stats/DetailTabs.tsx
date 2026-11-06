@@ -274,7 +274,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
 
 /* ---------- Tab NNT ---------- */
 
-function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
+export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
   const bp = useBreakpoint();
   const q = useQuery({
     // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
@@ -420,7 +420,7 @@ export function RunProgress({ r }: { r: SendRun }) {
   );
 }
 
-function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
+export function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
   const bp = useBreakpoint();
   const q = useQuery({
     // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
@@ -524,8 +524,6 @@ function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (
 export function DetailTabs({ p, set, open, reset }: { p: StatsParams; set: SetFn; open: (k: string) => void; reset: () => void }) {
   const items = [
     { key: 'notifications', label: 'Thông báo', children: <NotificationsPane p={p} set={set} open={open} reset={reset} /> },
-    { key: 'taxpayers', label: 'NNT', children: <TaxpayersPane p={p} set={set} open={open} reset={reset} /> },
-    { key: 'runs', label: 'Đợt gửi', children: <RunsPane p={p} set={set} open={open} reset={reset} /> },
   ];
   return (
     <section className="panel detail" id="detail" aria-label="Danh sách chi tiết">

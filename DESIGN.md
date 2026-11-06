@@ -471,3 +471,12 @@ Nguyên tắc: chuyển động chỉ để phản hồi thao tác, đổi trạ
 - **Đổ bóng theo yêu cầu người dùng**, thay quy tắc "phẳng khi nghỉ" ở trên: thẻ, khối KPI, thẻ thiết lập, hàng danh sách có bóng nhẹ khi nghỉ (`--shadow-card`); thứ bấm được có bóng rõ hơn khi rê chuột (`--shadow-card-hover`); ô nhập, nút viền, bộ chọn có bóng rất nhẹ (`--shadow-control`); thanh trên, thanh bên và thanh lưu cố định có bóng mềm tách khỏi nội dung cuộn.
 - **Focus ô nhập:** một chỉ báo duy nhất là viền brand cộng quầng mờ 3px (18% brand; ô lỗi dùng màu lỗi). Bỏ đường viền ngoài 2px của quy tắc focus chung để không còn hai viền. Nút và mục điều hướng vẫn dùng viền ngoài 2px.
 - **Không lộ cú pháp biến:** giao diện hiện tên trường ("Tên NNT", "Kỳ khai"), không hiện `{ten_nnt}`; chèn trường tự điền bằng nút. Ô soạn nội dung mẫu tin vẫn hiện cú pháp vì đó là nơi viết mẫu.
+
+
+## Tổ chức theo nghiệp vụ (06/11/2026)
+
+Điều hướng chính rút từ 7 còn 5 mục: Thống kê / Quản lý HKD / Thông báo / Thiết lập / Tài khoản. Thông báo dùng tab Gửi chủ động, Đợt tự động, Thư viện mẫu (ẩn theo quyền); Thiết lập dùng tab Quy tắc nhắc tự động, Kênh gửi (ẩn theo quyền). Giữ token thương hiệu và component hiện có.
+
+Mỗi nội dung chi tiết có một nơi chính: thông báo đã gửi ở Thống kê; đợt tự động ở Thông báo; danh sách và biểu đồ nghĩa vụ ở Quản lý HKD. Các nút từ màn khác dẫn tới đúng nơi, giữ phạm vi liên quan. Thư viện mẫu có hành động Dùng mẫu để gửi; xuất bản không đồng nghĩa gửi. Nhắc việc ưu tiên kết quả nghiệp vụ của HKD, bỏ biểu đồ truyền tin và các cột gửi/tiếp nhận bị lặp.
+
+Đây là phương án theo yêu cầu rút gọn, chưa có bằng chứng thử nghiệm với người dùng. Kiểm chứng bằng tìm đợt lỗi và tìm HKD quá hạn; không dùng chỉ số minh họa làm kết quả kiểm chứng.

@@ -22,8 +22,8 @@ type Action = { to: ChannelStatus; label: string; danger?: boolean; impact: stri
 
 /** Thao tác được phép từ trạng thái hiện tại, kèm hệ quả nói rõ trước khi xác nhận. */
 function actionsFor(c: Channel): Action[] {
-  const emergency: Action = { to: 'DISABLED_EMERGENCY', label: 'Ngắt khẩn cấp', danger: true, reasonRequired: true, impact: `Chặn mọi lần gửi mới và thử lại qua ${c.name}. Tin đang chờ bị hủy, không tự chuyển sang kênh khác. Tin ${c.name} đã tiếp nhận không thu hồi được.` };
-  if (c.status === 'ACTIVE') return [{ to: 'PAUSED', label: 'Tạm dừng', reasonRequired: true, impact: `Tin đang chờ giữ nguyên trong hàng đợi tới khi mở lại hoặc hết hạn; lần gửi mới qua ${c.name} cũng chờ.` }, emergency];
+  const emergency: Action = { to: 'DISABLED_EMERGENCY', label: 'Ngắt khẩn cấp toàn kênh', danger: true, reasonRequired: true, impact: `Chặn mọi lần gửi mới và thử lại qua ${c.name}. Tin đang chờ bị hủy, không tự chuyển sang kênh khác. Tin ${c.name} đã tiếp nhận không thu hồi được.` };
+  if (c.status === 'ACTIVE') return [{ to: 'PAUSED', label: 'Tạm dừng toàn kênh', reasonRequired: true, impact: `Tin đang chờ giữ nguyên trong hàng đợi tới khi mở lại hoặc hết hạn; lần gửi mới qua ${c.name} cũng chờ.` }, emergency];
   if (c.status === 'PAUSED') return [{ to: 'ACTIVE', label: 'Mở lại', reasonRequired: false, impact: 'Tin đang chờ tiếp tục gửi theo thứ tự.' }, emergency];
   if (c.status === 'DISABLED_EMERGENCY') return [{ to: 'ACTIVE', label: 'Bỏ ngắt khẩn cấp', reasonRequired: true, impact: 'Chỉ các lần gửi mới đi qua kênh này. Tin đã bị hủy lúc ngắt không được gửi lại.' }];
   return [];

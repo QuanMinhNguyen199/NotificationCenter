@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
 // Ba route chính, trạng thái lọc/tab/trang nằm trong query của hash để tải lại hoặc chia sẻ vẫn giữ ngữ cảnh.
-export type RoutePath = '/thong-ke' | '/gui-thong-bao' | '/mau-tin' | '/kenh-gui' | '/thiet-lap' | '/tai-khoan';
+export type RoutePath = '/thong-ke' | '/quan-ly-hkd' | '/gui-thong-bao' | '/mau-tin' | '/kenh-gui' | '/thiet-lap' | '/tai-khoan';
 
 export interface Route {
   path: RoutePath;
@@ -12,9 +12,19 @@ function parse(): Route {
   const raw = window.location.hash.replace(/^#/, '') || '/thong-ke';
   const [p, q = ''] = raw.split('?');
   // '/cau-hinh' là đường dẫn cũ của màn Thiết lập (đổi tên 04/11/2026), giữ để link cũ vẫn mở đúng màn.
-  const known: RoutePath[] = ['/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan'];
+  const known: RoutePath[] = ['/quan-ly-hkd', '/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan'];
   const path: RoutePath = p === '/cau-hinh' ? '/thiet-lap' : known.includes(p as RoutePath) ? (p as RoutePath) : '/thong-ke';
-  return { path, params: new URLSearchParams(q) };
+  const params = new URLSearchParams(q);
+  // Giữ link cũ, đưa về nơi quản lý nghiệp vụ duy nhất.
+  if (path === '/mau-tin') { params.set('muc', 'thu-vien'); return { path: '/gui-thong-bao', params }; }
+  if (path === '/kenh-gui') { params.set('nhom', 'kenh'); return { path: '/thiet-lap', params }; }
+  if (path === '/thong-ke' && params.get('tab') === 'runs') {
+    params.set('muc', 'tu-dong'); return { path: '/gui-thong-bao', params };
+  }
+  if (path === '/thong-ke' && params.get('tab') === 'taxpayers') {
+    params.set('muc', 'danh-sach'); return { path: '/quan-ly-hkd', params };
+  }
+  return { path, params };
 }
 
 let cache = parse();

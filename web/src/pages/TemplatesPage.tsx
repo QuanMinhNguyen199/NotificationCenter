@@ -11,6 +11,7 @@ import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
 import { StatusPill } from '../components/Status';
 import { usePermissions } from '../demo/DemoContext';
 import { dmyhm } from '../lib/format';
+import { useRoute } from '../lib/router';
 import { PushPreview } from '../stats/Details';
 
 export const TITLE_MAX = 65;
@@ -141,7 +142,8 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
 }
 
 export default function TemplatesPage() {
-  const { canViewTemplates, canEditTemplates } = usePermissions();
+  const { canViewTemplates, canEditTemplates, canSend } = usePermissions();
+  const { navigate } = useRoute();
   const q = useQuery({ queryKey: ['templates'], queryFn: fetchTemplates, enabled: canViewTemplates });
   const [open, setOpen] = useState<Template | 'new' | null>(null);
 
@@ -151,7 +153,7 @@ export default function TemplatesPage() {
     <div className="acct-page">
       <h1 className="sr-only">Mẫu tin</h1>
       <div className="page-toolbar">
-        <span />
+        <p className="workspace-note">Soạn nội dung dùng lại. Xuất bản mẫu để chọn khi gửi; xuất bản chưa gửi tới NNT.</p>
         {canEditTemplates && (
           <Button onClick={() => setOpen('new')}>
             <Plus aria-hidden="true" /> Mẫu tin mới
@@ -181,6 +183,7 @@ export default function TemplatesPage() {
                     {draft && <StatusPill tone="warning">Có bản nháp</StatusPill>}
                   </span>
                 </button>
+                {pub && canSend && <Button variant="outline" className="tpl-use" onClick={() => navigate('/gui-thong-bao', { tao: '1', modele: t.id })}>Dùng mẫu để gửi</Button>}
               </li>
             );
           })}

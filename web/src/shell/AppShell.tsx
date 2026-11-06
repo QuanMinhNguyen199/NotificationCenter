@@ -1,4 +1,4 @@
-import { BarChart3, CalendarClock, FileText, PanelLeftClose, PanelLeftOpen, RadioTower, Send, UserCog } from 'lucide-react';
+import { BarChart3, CalendarClock, PanelLeftClose, PanelLeftOpen, Send, Store, UserCog } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,17 +20,16 @@ const PEEK_CLOSE_DELAY = 260;
 // short: nhãn ngắn cho thanh điều hướng dưới trên mobile.
 const ALL_NAV: { path: RoutePath; label: string; short: string; icon: ReactNode }[] = [
   { path: '/thong-ke', label: 'Thống kê', short: 'Thống kê', icon: <BarChart3 className="size-5" /> },
-  { path: '/gui-thong-bao', label: 'Gửi thông báo', short: 'Gửi', icon: <Send className="size-5" /> },
-  { path: '/mau-tin', label: 'Mẫu tin', short: 'Mẫu tin', icon: <FileText className="size-5" /> },
-  { path: '/kenh-gui', label: 'Kênh gửi', short: 'Kênh', icon: <RadioTower className="size-5" /> },
+  { path: '/quan-ly-hkd', label: 'Quản lý HKD', short: 'HKD', icon: <Store className="size-5" /> },
+  { path: '/gui-thong-bao', label: 'Thông báo', short: 'Thông báo', icon: <Send className="size-5" /> },
   { path: '/thiet-lap', label: 'Thiết lập', short: 'Thiết lập', icon: <CalendarClock className="size-5" /> },
   { path: '/tai-khoan', label: 'Tài khoản', short: 'Tài khoản', icon: <UserCog className="size-5" /> },
 ];
 
-/** Mục điều hướng theo quyền: cán bộ không có Mẫu tin, Kênh gửi, Tài khoản. */
+/** Thư viện mẫu và Kênh gửi nằm trong các tab theo quyền; Tài khoản chỉ lãnh đạo thấy. */
 function useNavItems() {
-  const { canViewAccounts, canViewTemplates, canViewChannels } = usePermissions();
-  const allowed: Partial<Record<RoutePath, boolean>> = { '/tai-khoan': canViewAccounts, '/mau-tin': canViewTemplates, '/kenh-gui': canViewChannels };
+  const { canViewAccounts } = usePermissions();
+  const allowed: Partial<Record<RoutePath, boolean>> = { '/tai-khoan': canViewAccounts };
   return ALL_NAV.filter((n) => allowed[n.path] ?? true);
 }
 

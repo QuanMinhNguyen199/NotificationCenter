@@ -27,7 +27,7 @@ export interface StatsParams extends StatsFilter {
 
 // Bộ lọc, tab, trang nằm trên URL; không đưa thông tin người nhận nhạy cảm hay nội dung form chưa lưu vào URL.
 export function useStatsParams() {
-  const { params, navigate } = useRoute();
+  const { path, params, navigate } = useRoute();
   const { fixedScope, defaultScope: defaultUnit, allowedScopes } = usePermissions();
   const pushedDetail = useRef(false);
   // Phạm vi trên URL chỉ được nhận khi nằm trong quyền; sửa link không mở rộng được phạm vi xem.
@@ -68,9 +68,9 @@ export function useStatsParams() {
         if (!s || defaults[k] === s) next.delete(k);
         else next.set(k, s);
       });
-      navigate('/thong-ke', next, !opts.push);
+      navigate(path, next, !opts.push);
     },
-    [params, navigate, defaultUnit],
+    [path, params, navigate, defaultUnit],
   );
 
   const openDetail = useCallback(

@@ -100,7 +100,7 @@ function scheduleSections(ctx: Ctx): Section[] {
   return [
     {
       key: 'scan',
-      title: 'Rà soát hằng ngày',
+      title: 'Tự động tạo đợt nhắc hằng ngày',
       desc: 'Tắt chỉ dừng lập danh sách mới; đợt đã tạo vẫn gửi tiếp.',
       summary: v.autoScan ? `${v.scanTime}, quét bù ${v.catchupTime}` : 'Quét tự động đang tắt',
       fields: ['autoScan', 'scanTime', 'catchupTime'],
