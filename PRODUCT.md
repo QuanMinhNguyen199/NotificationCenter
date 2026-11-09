@@ -27,6 +27,7 @@ Bối cảnh: cán bộ thuế làm việc trên máy bàn tại cơ quan, đôi
 ## Operating Context
 
 - Chi tiết, xem trước, lịch sử, xác nhận mở bằng drawer/modal/overlay trong hai màn; không có trang phụ.
+- **Đăng nhập (09/11/2026, mock):** màn chia đôi (cột thương hiệu đỏ brand / cột form); nhận 3 tài khoản xem thử, mật khẩu bất kỳ; chọn tài khoản xem thử là vào luôn. Chuyển cảnh sang trang chủ: logo + tên gom vào giữa (560ms) → chờ ≥1,6s kèm ba chấm, tới khi trang chủ tải xong → logo bay về đúng hộp logo thật (620ms) → lớp che đỏ `#B5002B` mở lỗ tròn từ tâm logo (980ms). Đăng xuất (chiều ngược): lớp che khép lỗ tròn về tâm logo trên trang chủ (720ms) → logo bay về hộp logo màn đăng nhập (620ms), màn đăng nhập hiện dần; tổng ~1,4s, không có pha chờ. Giảm chuyển động: chỉ fade. Thời lượng theo yêu cầu, chưa kiểm chứng với người dùng; khi nối Keycloak/OIDC cần xác định lại điểm bắt đầu chuyển cảnh.
 - Thông báo tự động (Engagement) dùng mẫu cố định, chỉ xem trước. Gửi chủ động dùng màn Mẫu tin: soạn nháp → xuất bản phiên bản (05/11/2026).
 - Giờ Việt Nam, số `10.000`, ngày `dd/MM/yyyy`, giờ 24h.
 

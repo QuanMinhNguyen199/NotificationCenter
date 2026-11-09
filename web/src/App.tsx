@@ -3,6 +3,8 @@ import { MotionConfig, motion } from 'motion/react';
 import { lazy, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { DemoProvider } from './demo/DemoContext';
+import { AuthGate } from './auth/AuthGate';
+import { useAuthTransition } from './auth/transitionState';
 import { GuardProvider } from './shell/guard';
 import AppShell from './shell/AppShell';
 import { useRoute } from './lib/router';
@@ -21,10 +23,12 @@ const queryClient = new QueryClient({
 
 function Routes() {
   const { path } = useRoute();
+  // Lúc chuyển cảnh đăng nhập: nội dung hiện sẵn dưới lớp che, không fade để không chạy chồng với reveal.
+  const quiet = useAuthTransition();
   // Đổi màn: nội dung hiện dần 160ms (chỉ độ mờ, không trượt) để phản hồi thao tác bấm điều hướng.
   return (
     <Suspense fallback={<div className="page-skel" aria-busy="true" aria-label="Đang tải màn hình" />}>
-      <motion.div key={path} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={tween(DUR.state)}>
+      <motion.div key={path} initial={quiet ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={tween(DUR.state)}>
         {path === '/thiet-lap' ? <ConfigPage /> : path === '/tai-khoan' ? <AccountsPage /> : path === '/gui-thong-bao' ? <SendPage /> : path === '/quan-ly-hkd' ? <HkdPage /> : <StatsPage />}
       </motion.div>
     </Suspense>
@@ -36,11 +40,13 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <DemoProvider>
-          <GuardProvider>
-            <AppShell>
-              <Routes />
-            </AppShell>
-          </GuardProvider>
+          <AuthGate>
+            <GuardProvider>
+              <AppShell>
+                <Routes />
+              </AppShell>
+            </GuardProvider>
+          </AuthGate>
         </DemoProvider>
       </QueryClientProvider>
       <PalettePanel />

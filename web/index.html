@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#F8FAFC" />
     <title>Quản trị thông báo</title>
+    <!-- Nối tiếp chuyển cảnh đăng nhập khi tài liệu được tải lại / chuyển trang giữa pha chờ: tô sẵn màu lớp che
+         ngay khung hình đầu, trước khi JS chạy (khóa khớp STAGE_KEY trong src/auth/AuthGate.tsx). -->
+    <script>
+      try { if (sessionStorage.getItem('qttb-auth-stage')) document.documentElement.setAttribute('data-auth-boot', ''); } catch (e) {}
+    </script>
+    <style>html[data-auth-boot], html[data-auth-boot] body { background: #B5002B; }</style>
   </head>
   <body>
     <div id="root"></div>

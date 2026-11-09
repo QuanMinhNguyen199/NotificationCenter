@@ -1,4 +1,5 @@
-import { BarChart3, CalendarClock, PanelLeftClose, PanelLeftOpen, Send, Store, UserCog } from 'lucide-react';
+import { BarChart3, CalendarClock, LogOut, PanelLeftClose, PanelLeftOpen, Send, Store, UserCog } from 'lucide-react';
+import { useAuth } from '../auth/AuthGate';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -11,6 +12,7 @@ import { DEMO_ACCOUNTS, ROLE_LABEL, initials, teamName, useDemo, usePermissions,
 import { useGuard } from './guard';
 import { DUR, tween } from '../lib/motion';
 import { useOverlayOpen } from './overlay';
+import { readPinned, savePinned } from './sidebarPref';
 
 const WIDTH = 272;
 const PEEK_OPEN_DELAY = 120;
@@ -33,14 +35,6 @@ function useNavItems() {
   return ALL_NAV.filter((n) => allowed[n.path] ?? true);
 }
 
-function readPinned() {
-  try {
-    return localStorage.getItem('qttb-sidebar') !== 'collapsed';
-  } catch {
-    return true;
-  }
-}
-
 // Logo Thuế thành phố Hà Nội (logo/images.jpg, cắt tròn nền trong suốt ở public/).
 // Bấm logo về trang Thống kê (qua điều hướng có chặn rời màn khi còn thay đổi chưa lưu).
 function Brand({ size = 32, onHome }: { size?: number; onHome: () => void }) {
@@ -54,7 +48,8 @@ function Brand({ size = 32, onHome }: { size?: number; onHome: () => void }) {
         onHome();
       }}
     >
-      <img className="mark" src={`${import.meta.env.BASE_URL}logo-thue-ha-noi.png`} width={size} height={size} alt="" />
+      {/* data-shared-logo: đích hạ cánh của logo khi chuyển cảnh từ màn đăng nhập (auth/AuthGate). */}
+      <img className="mark" data-shared-logo src={`${import.meta.env.BASE_URL}logo-thue-ha-noi.png`} width={size} height={size} alt="" />
       <span className="brand__text">
         <span className="brand__name">Quản trị thông báo</span>
         <span className="brand__org">Thuế thành phố Hà Nội</span>
@@ -71,6 +66,8 @@ function Account({ compact }: { compact?: boolean }) {
   const { userId, setUserId } = useDemo();
   const staff = useStaff();
   const { user } = usePermissions();
+  const { signOut } = useAuth();
+  const { confirmLeave } = useGuard();
   const panel = (
     <div className="account-panel">
       <p className="account-panel__name">{user.name}</p>
@@ -89,6 +86,10 @@ function Account({ compact }: { compact?: boolean }) {
           );
         })}
       </RadioGroup>
+      <button type="button" className="account-panel__signout" onClick={() => confirmLeave(signOut)}>
+        <LogOut className="size-4" aria-hidden="true" />
+        Đăng xuất
+      </button>
     </div>
   );
   return (
@@ -172,11 +173,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const setPinned = (v: boolean) => {
     setPinnedPref(v);
     close();
-    try {
-      localStorage.setItem('qttb-sidebar', v ? 'pinned' : 'collapsed');
-    } catch {
-      /* chỉ giữ trong phiên */
-    }
+    savePinned(v);
   };
 
   const hoverOpen = (e: React.PointerEvent) => e.pointerType === 'mouse' && !pinned && schedule(true, PEEK_OPEN_DELAY);

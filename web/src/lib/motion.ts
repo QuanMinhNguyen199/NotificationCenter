@@ -1,3 +1,5 @@
+import { authTransition } from '../auth/transitionState';
+
 // Token chuyển động dùng chung cho motion/react và ECharts; khớp biến CSS --dur-* và --ease-* trong styles.css.
 // Giá trị là điểm khởi đầu để thử, chưa kiểm chứng với người dùng.
 
@@ -21,6 +23,7 @@ export const tween = (duration: number) => ({ type: 'tween' as const, duration, 
  * Giảm chuyển động thì tắt hẳn.
  */
 export const chartMotion = (reduced: boolean) =>
-  reduced
+  // Đang chuyển cảnh đăng nhập: vẽ thẳng số cuối, biểu đồ đứng yên khi lớp che mở ra.
+  reduced || authTransition.get()
     ? { animation: false }
     : { animation: true, animationDuration: 300, animationEasing: 'cubicOut', animationDurationUpdate: 240, animationEasingUpdate: 'cubicOut' };
