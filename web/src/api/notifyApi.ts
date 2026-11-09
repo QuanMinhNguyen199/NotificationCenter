@@ -225,6 +225,9 @@ const REASON: Record<string, string> = {
   CHANNEL_PAUSED: 'Kênh đang tạm dừng',
   EMERGENCY_DISABLED: 'Kênh bị ngắt khẩn cấp',
   CANCELED_BY_USER: 'Đã hủy phần chưa gửi',
+  // Mã lỗi của từng lần thử (hiện cạnh kết quả lần thử).
+  CONNECT_FAILED: 'Không kết nối được iHanoi',
+  READ_TIMEOUT: 'Hết thời gian chờ phản hồi',
 };
 export const reasonText = (code?: string) => (code ? REASON[code] ?? code : '');
 

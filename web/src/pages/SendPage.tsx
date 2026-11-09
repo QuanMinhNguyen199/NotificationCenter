@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   AUTO_VARS, varLabel, cancelSend, channelName, createSend, fetchChannels, fetchSend, fetchSendRecipients, fetchSends, fetchTemplates, GROUPS,
   noIhanoi, publishedOf, reasonText, resolveAudience, scopeTaxpayers, varsOf,
-  type AudienceKind, type ChannelId, type DeliveryState, type RecipientFilter, type SendView,
+  type Attempt, type AudienceKind, type ChannelId, type DeliveryState, type RecipientFilter, type SendView,
 } from '../api/notifyApi';
 import Overlay from '../components/Overlay';
 import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
@@ -36,6 +36,13 @@ export const STATE: Record<DeliveryState, { label: string; tone: Tone }> = {
   UNKNOWN: { label: 'Chưa rõ', tone: 'warning' },
   SKIPPED: { label: 'Bỏ qua', tone: 'neutral' },
   CANCELED: { label: 'Đã hủy', tone: 'neutral' },
+};
+/** Kết quả của từng lần thử gửi (khác trạng thái cuối của kênh). */
+const OUTCOME: Record<Attempt['outcome'], { label: string; tone: Tone }> = {
+  DELIVERED: { label: 'Đã lưu vào hộp thư', tone: 'success' },
+  ACCEPTED: { label: 'iHanoi tiếp nhận', tone: 'success' },
+  REJECTED: { label: 'Bị từ chối', tone: 'danger' },
+  UNKNOWN: { label: 'Chưa rõ kết quả', tone: 'warning' },
 };
 const SEND_STATUS: Record<SendView['status'], { label: string; tone: Tone }> = {
   SENDING: { label: 'Đang gửi', tone: 'info' },
@@ -141,7 +148,7 @@ function SendDetail({ id, onClose }: { id: string; onClose: () => void }) {
               <>
                 <ul className="rcpt-list">
                   {rq.data.rows.map((r) => (
-                    <li key={r.taxpayerId} className="rcpt">
+                    <li key={r.taxpayerId} className={`rcpt${open === r.taxpayerId ? ' rcpt--open' : ''}`}>
                       <button type="button" className="rcpt__row" aria-expanded={open === r.taxpayerId} onClick={() => setOpen(open === r.taxpayerId ? null : r.taxpayerId)}>
                         <span className="cell-tp"><span className="cell-tp__name">{r.name}</span><span className="cell-tp__mst">{r.mst}</span></span>
                         <span className="rcpt__states">
@@ -158,20 +165,38 @@ function SendDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       <AnimatePresence initial={false}>
                       {open === r.taxpayerId && (
                         <motion.div key="detail" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }} exit={{ height: 0, opacity: 0, overflow: 'hidden' }} style={{ overflow: 'hidden' }} transition={tween(DUR.state)}>
+                        {/* Mỗi kênh một khối xếp dọc: tên kênh → lý do (nếu có, tô theo mức) → từng lần thử trên một dòng. */}
                         <div className="rcpt__detail">
                           {r.deliveries.map((d) => (
-                            <div key={d.channel}>
-                              <p className="field__label">{channelName(d.channel)}{d.reason ? ` · ${reasonText(d.reason)}` : ''}</p>
+                            <section key={d.channel} className="dlv" aria-label={channelName(d.channel)}>
+                              <h4 className="dlv__channel">{channelName(d.channel)}</h4>
+                              {d.reason && <p className={`dlv__reason dlv__reason--${STATE[d.state].tone}`}>{reasonText(d.reason)}</p>}
                               {d.attempts.length ? (
-                                <ol className="timeline">
-                                  {d.attempts.map((a) => (
-                                    <li key={a.no}><time>Lần {a.no}</time><span>{a.outcome === 'ACCEPTED' ? 'iHanoi tiếp nhận' : a.outcome === 'DELIVERED' ? 'Đã lưu vào hộp thư' : a.outcome === 'UNKNOWN' ? 'Chưa rõ kết quả' : 'Bị từ chối'}<small>{a.at.slice(11)} · {num(a.latencyMs)} ms{a.code ? ` · ${a.code}` : ''}</small></span></li>
-                                  ))}
+                                <ol className="dlv__attempts">
+                                  {d.attempts.map((a) => {
+                                    const o = OUTCOME[a.outcome];
+                                    // Lý do của lần thử chỉ ghi khi khác lý do chung của kênh (vd. lần 1 lỗi kết nối, lần 2 thành công).
+                                    const why = a.code && a.code !== d.reason ? reasonText(a.code) : '';
+                                    return (
+                                      <li key={a.no} className="dlv__attempt">
+                                        <span className="dlv__no">Lần {a.no}</span>
+                                        <span className="dlv__outcome">
+                                          <span className={`dlv__dot dlv__dot--${o.tone}`} aria-hidden="true" />
+                                          {o.label}
+                                          {why && <span className="dlv__why">{why}</span>}
+                                        </span>
+                                        <span className="dlv__meta">
+                                          <time>{a.at.slice(11)}</time> · <span className="num">{num(a.latencyMs)} ms</span>
+                                          {a.code && <code className="dlv__code">{a.code}</code>}
+                                        </span>
+                                      </li>
+                                    );
+                                  })}
                                 </ol>
                               ) : (
-                                <p className="chart-note">Chưa có lần thử gửi.</p>
+                                <p className="dlv__empty">Chưa có lần thử gửi.</p>
                               )}
-                            </div>
+                            </section>
                           ))}
                         </div>
                         </motion.div>

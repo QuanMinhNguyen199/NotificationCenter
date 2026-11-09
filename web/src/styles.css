@@ -1163,7 +1163,38 @@ a { text-decoration: none; }
 .rcpt__state small { color: var(--text-muted); font-size: 12px; }
 .rcpt__chev { width: 16px; height: 16px; color: var(--text-muted); flex: none; transition: transform 0.15s; }
 .rcpt__chev--open { transform: rotate(90deg); }
-.rcpt__detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 4px 4px 16px; }
+.rcpt--open { background: var(--ground); }
+.rcpt--open .rcpt__row:hover { background: transparent; }
+/* Chi tiết người nhận: mỗi kênh một khối xếp dọc, thụt theo cột tên; mỗi lần thử một dòng. */
+.rcpt__detail { display: flex; flex-direction: column; gap: 14px; padding: 2px 12px 16px; }
+.dlv + .dlv { padding-top: 14px; border-top: 1px solid var(--border); }
+.dlv__channel { font-size: 13.5px; font-weight: 600; line-height: 1.4; }
+.dlv__reason { margin-top: 2px; font-size: 13px; line-height: 1.45; }
+.dlv__reason--danger { color: var(--brand-ink); }
+.dlv__reason--warning { color: var(--warning); }
+.dlv__reason--neutral, .dlv__reason--info, .dlv__reason--success { color: var(--text-muted); }
+.dlv__attempts { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dlv__attempt { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: baseline; font-size: 13.5px; line-height: 1.45; }
+.dlv__no { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.dlv__outcome { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 6px; min-width: 0; }
+.dlv__dot { flex: none; width: 7px; height: 7px; border-radius: 50%; align-self: center; background: var(--control); }
+.dlv__dot--success { background: var(--success-fill); }
+.dlv__dot--danger { background: var(--brand); }
+.dlv__dot--warning { background: var(--warning-fill); }
+.dlv__why { color: var(--text-muted); }
+.dlv__why::before { content: '– '; }
+.dlv__meta { display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; justify-content: flex-end; color: var(--text-muted); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dlv__code { padding: 0 5px; border-radius: 4px; background: var(--rule); color: var(--text-muted); font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11.5px; line-height: 1.6; }
+.dlv__empty { margin-top: 4px; font-size: 13px; color: var(--text-muted); }
+@media (max-width: 767px) {
+  /* Mobile: trạng thái các kênh xuống dưới tên, tên NNT không bị gãy dòng vì nhãn trạng thái chiếm chỗ. */
+  .rcpt__row { flex-wrap: wrap; row-gap: 6px; padding: 10px 8px; }
+  .rcpt__states { order: 3; width: 100%; justify-content: flex-start; gap: 6px 12px; }
+  .rcpt__state { flex-direction: row; align-items: center; gap: 6px; }
+  .rcpt__detail { padding: 2px 8px 14px; }
+  .dlv__attempt { grid-template-columns: 44px minmax(0, 1fr); }
+  .dlv__meta { grid-column: 2; justify-content: flex-start; }
+}
 @media (prefers-reduced-motion: reduce) { .rcpt__chev, .send-prog__seg, .mini-prog span { transition: none; } }
 
 /* Thiết lập dạng thẻ (05/11/2026): tên và mô tả mục nằm trong đầu thẻ, nội dung ngay bên dưới,
