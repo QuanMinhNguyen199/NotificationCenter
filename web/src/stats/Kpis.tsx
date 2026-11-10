@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { Summary } from '../api/mockApi';
 import { Skel } from '../components/Blocks';
 import { duration, durationParts, num, pct } from '../lib/format';
@@ -30,7 +31,14 @@ const Duration = ({ min }: { min: number }) => (
 
 
 const DEFS: Def[] = [
-  { key: 'total', label: 'Tổng thông báo', value: (s) => s.total, note: () => '', selected: () => false },
+  {
+    key: 'total',
+    label: 'Tổng thông báo',
+    value: (s) => s.total,
+    // Đã gửi + Chờ gửi + Gửi thất bại chưa bằng Tổng: nêu phần còn lại để các ô cộng khớp.
+    note: (s) => (s.other ? `Gồm ${num(s.other)} chưa rõ, hết hạn hoặc bỏ qua` : ''),
+    selected: () => false,
+  },
   { key: 'sent', label: 'Đã gửi Noti', value: (s) => s.sent, note: (s) => (s.total ? `${pct(s.sent, s.total)} tổng số` : ''), selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
   {
     key: 'delivered',
@@ -44,7 +52,7 @@ const DEFS: Def[] = [
   { key: 'unique', label: 'NNT duy nhất', value: (s) => s.uniqueTaxpayers, note: () => '', selected: (p) => p.tab === 'taxpayers' && p.notified },
   {
     key: 'response',
-    label: 'Thời gian phản hồi',
+    label: 'Thời gian phản hồi trung bình',
     value: (s) => s.avgResponse,
     render: (v) => <Duration min={v} />,
     note: (s) => (s.avgResponse == null ? 'Chưa có mốc tiếp nhận' : 'Tạo → tiếp nhận'),
@@ -61,8 +69,9 @@ const NS: Partial<Record<KpiKey, { ns: StatsParams['ns']; nd: StatsParams['nd'] 
 };
 
 export function Kpis({ s, p, onPick, unused, stale }: { s?: Summary; p: StatsParams; stale?: boolean; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string }) {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <div className={`kpis${stale ? ' is-stale' : ''}`} aria-busy={stale} role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
+    <div className={`kpis${expanded ? ' kpis--expanded' : ''}${stale ? ' is-stale' : ''}`} aria-busy={stale} role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
       {DEFS.map((d) => {
         const v = s ? d.value(s) : undefined;
         const sel = d.selected(p);
@@ -70,7 +79,7 @@ export function Kpis({ s, p, onPick, unused, stale }: { s?: Summary; p: StatsPar
           <button
             key={d.key}
             type="button"
-            className={`kpi${sel ? ' kpi--selected' : ''}${d.key === 'total' ? ' kpi--lead' : ''}`}
+            className={`kpi${sel ? ' kpi--selected' : ''}${d.key === 'total' ? ' kpi--lead' : ''}${['delivered', 'unique', 'response'].includes(d.key) ? ' kpi--secondary' : ''}`}
             aria-pressed={d.key === 'response' ? undefined : sel}
             aria-haspopup={d.key === 'response' ? 'dialog' : undefined}
             onClick={() => onPick(d.key, NS[d.key])}
@@ -95,6 +104,9 @@ export function Kpis({ s, p, onPick, unused, stale }: { s?: Summary; p: StatsPar
           </button>
         );
       })}
+      <button type="button" className="kpis__more" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+        {expanded ? 'Thu gọn chỉ số' : 'Xem thêm 3 chỉ số'}<ChevronDown aria-hidden="true" />
+      </button>
     </div>
   );
 }

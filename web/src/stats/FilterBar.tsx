@@ -1,6 +1,7 @@
+import { IconButton } from '@/components/IconButton';
 import { GroupedSelect, OptionGroup, BottomSheet, DateRangeField } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
-import { X, ChevronDown, RotateCcw } from 'lucide-react';
+import { X, ChevronDown, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -171,10 +172,7 @@ export function FilterBar({ p, apply, stamp }: { p: StatsParams; apply: (d: Draf
         <div className="filters">
           <Fields {...state} />
           {!isDefault && (
-            <Button variant="ghost" className="filters__reset" onClick={() => apply(reset())}>
-              <RotateCcw aria-hidden="true" />
-              Đặt lại
-            </Button>
+            <IconButton variant="ghost" icon={RotateCcw} className="filters__reset" onClick={() => apply(reset())} label="Đặt lại bộ lọc thống kê" />
           )}
           {stamp && <div className="filters__stamp">{stamp}</div>}
         </div>
@@ -195,18 +193,11 @@ export function FilterBar({ p, apply, stamp }: { p: StatsParams; apply: (d: Draf
           <b className="num">
             {dm(p.from)}–{dmy(p.to)}
           </b>
-          {stamp}
         </div>
-        <Button variant="outline" onClick={() => setSheet(true)} aria-haspopup="dialog">
-          Bộ lọc{n ? ` (${n})` : ''}
-        </Button>
+        {stamp}
+        <IconButton icon={SlidersHorizontal} label={n ? `Mở bộ lọc, ${n} điều kiện đang áp dụng` : 'Mở bộ lọc'} badge={n} onClick={() => setSheet(true)} aria-haspopup="dialog" aria-expanded={sheet} />
       </div>
-      <div className="chips" style={{ marginTop: 10 }}>
-        {fixedUnit && (
-          <span className="chip chip--fixed">
-            {unitName}
-          </span>
-        )}
+      <div className="chips m-filter-chips" style={{ marginTop: 10 }}>
         {!fixedUnit && p.unit !== defaultUnit && (
           <span className="chip">
             {unitName}

@@ -1,3 +1,4 @@
+import { MobileDisclosure } from '@/components/MobileDisclosure';
 import { ViewTabs, Feedback } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
 import { CircleCheck, Eye, History } from 'lucide-react';
@@ -179,6 +180,7 @@ export default function ConfigPage() {
     if (id === 'unused') return <UnusedGroups />;
     return (
       <>
+        {id === 'schedule' && <MobileDisclosure label="Lịch vận hành và cách gửi">
         {/* Tổng quan cả lịch, không phải một tham số: trải hết chiều rộng, không cần cột nhãn. */}
         {id === 'schedule' && (
           <section className="cfg-overview">
@@ -188,6 +190,23 @@ export default function ConfigPage() {
             </div>
           </section>
         )}
+        {/* Hai cách gửi tách rõ: nhắc việc theo khung giờ, thông báo sự kiện gửi ngay (view.docx, mục Thiết lập). */}
+        {id === 'schedule' && (
+          <section className="cfg-overview" aria-labelledby="cfg-modes">
+            <h2 className="set-row__title" id="cfg-modes">Hai cách gửi</h2>
+            <dl className="send-modes">
+              <div>
+                <dt>Nhắc việc, gửi theo khung giờ</dt>
+                <dd>Nhắc khai thuế, nhắc nộp thuế, cảnh báo doanh thu. Lập đợt sau lượt rà soát và gửi trong khung {ctx.v.sendStart}–{ctx.v.sendEnd}.</dd>
+              </div>
+              <div>
+                <dt>Theo sự kiện, gửi ngay</dt>
+                <dd>Kết quả hồ sơ, kết quả nộp thuế, kết quả chuyển tuyến. Gửi khi có sự kiện, không chờ khung giờ. Chưa có nguồn dữ liệu nên chưa có tham số thiết lập.</dd>
+              </div>
+            </dl>
+          </section>
+        )}
+        </MobileDisclosure>}
         {/* Công tắc tắt: ẩn phần thân thẻ và các thẻ thuộc phạm vi của nó; giá trị vẫn giữ trong bản nháp. */}
         {sectionsFor(id, ctx, () => pickArea('schedule'))
           .filter((s) => !s.dependsOn || ctx.v[s.dependsOn])

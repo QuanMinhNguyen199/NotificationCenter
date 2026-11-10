@@ -254,7 +254,16 @@ export async function fetchDaily(scope: string) {
   const sum = (k: 'received' | 'accepted' | 'mustPay' | 'paid') => series.reduce((a, s) => a + s[k], 0);
   const appMissing = rows.filter((h) => h.app && h.fileMissing > 0).length;
   // 8 tuần gần nhất: số hộ đã đăng ký app nhưng chưa nộp tờ khai giảm dần về số hiện tại.
-  const weeks = Array.from({ length: 8 }, (_, i) => ({ label: `T${i + 1}`, value: Math.round(appMissing * (1 + (7 - i) * 0.045)) }));
+  // Nhãn trục là khoảng ngày thật (7 ngày, kết thúc ở ngày số liệu cuối) thay cho T1…T8.
+  const last = new Date(`${days30[days30.length - 1]}T00:00:00`);
+  const ddmm = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const weeks = Array.from({ length: 8 }, (_, i) => {
+    const end = new Date(last);
+    end.setDate(last.getDate() - (7 - i) * 7);
+    const start = new Date(end);
+    start.setDate(end.getDate() - 6);
+    return { label: `${ddmm(start)}–${ddmm(end)}`, value: Math.round(appMissing * (1 + (7 - i) * 0.045)) };
+  });
   const byUnit = units(scope).map((u) => {
     const r = rows.filter((h) => u.officers.has(h.officer));
     const k = r.length / Math.max(rows.length, 1);

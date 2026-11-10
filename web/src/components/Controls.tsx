@@ -1,6 +1,4 @@
-import { useId, useState, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
-import { motion } from 'motion/react';
-import { DUR, tween } from '../lib/motion';
+import { useLayoutEffect, useRef, useState, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import { CircleCheck, Info, TriangleAlert } from 'lucide-react';
 import { vi } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
@@ -88,23 +86,62 @@ export function OptionGroup<T extends string>({ value, onValueChange, options, b
   </ToggleGroup>;
 }
 
-export function ViewTabs({ value, onValueChange, items, className, extra }: {
+export function ViewTabs({ value, onValueChange, items, className, extra, label = 'Chọn nội dung' }: {
   value?: string; onValueChange?: (value: string) => void;
   items: { key: string; label: ReactNode; children: ReactNode }[]; className?: string;
   /** Thao tác đặt cùng hàng với tab, sát phải. */
   extra?: ReactNode;
+  /** Tên của ô chọn thay cho tab trên mobile. */
+  label?: string;
 }) {
-  // Gạch chân tab đang chọn là một phần tử dùng chung, trượt sang tab mới khi đổi tab.
+  // Mobile: hơn 3 tab không vừa 375px → đổi thành ô chọn, tránh cuộn ngang (giống màn Quản lý HKD).
+  const compact = useBreakpoint() === 'mobile' && items.length > 3;
+  // Gạch chân tab đang chọn: một thanh duy nhất trong danh sách tab, đo vị trí tab đang chọn một lần rồi trượt bằng CSS transform.
+  // Trước đây dùng layoutId của motion: mỗi lần đổi tab/đổi màn phải đo lại layout nhiều phần tử, gây khựng (đo 10/11/2026).
   const [own, setOwn] = useState(items[0]?.key);
   const current = value ?? own;
-  const indicator = useId();
+  const listRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLSpanElement>(null);
+  const placed = useRef(false);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const bar = barRef.current;
+    if (!list || !bar) return;
+    const place = () => {
+      const tab = list.querySelector<HTMLElement>('[role="tab"][data-state="active"]');
+      if (!tab) return void (bar.style.opacity = '0');
+      // Lần đặt đầu không trượt từ vị trí 0.
+      if (!placed.current) bar.style.transition = 'none';
+      bar.style.opacity = '1';
+      bar.style.width = `${tab.offsetWidth}px`;
+      bar.style.transform = `translateX(${tab.offsetLeft}px)`;
+      if (!placed.current) {
+        placed.current = true;
+        requestAnimationFrame(() => (bar.style.transition = ''));
+      }
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(list);
+    return () => ro.disconnect();
+  }, [current, items.length]);
+  const pick = (v: string) => { setOwn(v); onValueChange?.(v); };
+  if (compact) {
+    return <div className={`view-tabs--select${className ? ` ${className}` : ''}`}>
+      <div className="view-tabs__select-bar">
+        <ChoiceSelect aria-label={label} value={current} onValueChange={pick} options={items.map((i) => ({ value: i.key, label: i.label }))} style={{ width: '100%' }} />
+        {extra && <div className="view-tabs__extra">{extra}</div>}
+      </div>
+      {items.find((i) => i.key === current)?.children}
+    </div>;
+  }
   return <Tabs value={value} defaultValue={items[0]?.key} onValueChange={(v) => { setOwn(v); onValueChange?.(v); }} className={className}>
     <div className="view-tabs__bar">
-      <div className="view-tabs__scroll"><TabsList variant="line" className="view-tabs__list">
+      <div className="view-tabs__scroll"><TabsList ref={listRef} variant="line" className="view-tabs__list">
         {items.map((item) => <TabsTrigger key={item.key} value={item.key} className="view-tabs__trigger">
           {item.label}
-          {item.key === current && <motion.span layoutId={`tab-ind-${indicator}`} className="view-tabs__ind" transition={tween(DUR.state)} aria-hidden="true" />}
         </TabsTrigger>)}
+        <span ref={barRef} className="view-tabs__ind" aria-hidden="true" />
       </TabsList></div>
       {extra && <div className="view-tabs__extra">{extra}</div>}
     </div>
@@ -131,8 +168,16 @@ export function TextareaField(props: ComponentProps<typeof Textarea>) {
 
 export function BottomSheet({ open, onClose, title, footer, children }: { open: boolean; onClose: () => void; title: ReactNode; footer?: ReactNode; children: ReactNode }) {
   useHideNavWhile(open);
+  const returnTo = useRef<HTMLElement | null>(null);
   return <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-    <SheetContent side="bottom" className="sheet max-h-[90dvh] gap-0 rounded-t-xl p-0">
+    <SheetContent side="bottom" className="sheet max-h-[90dvh] gap-0 rounded-t-xl p-0"
+      onOpenAutoFocus={() => { returnTo.current = document.activeElement as HTMLElement | null; }}
+      onCloseAutoFocus={(event) => {
+        if (returnTo.current?.isConnected && returnTo.current !== document.body) {
+          event.preventDefault();
+          returnTo.current.focus();
+        }
+      }}>
       <SheetHeader className="border-b pr-14"><SheetTitle>{title}</SheetTitle><SheetDescription className="sr-only">Đóng để quay lại màn hình.</SheetDescription></SheetHeader>
       <div className="min-h-0 overflow-y-auto p-4">{children}</div>
       {footer && <SheetFooter className="border-t p-4">{footer}</SheetFooter>}

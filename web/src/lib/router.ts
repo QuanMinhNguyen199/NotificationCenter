@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-// Ba route chính, trạng thái lọc/tab/trang nằm trong query của hash để tải lại hoặc chia sẻ vẫn giữ ngữ cảnh.
-export type RoutePath = '/thong-ke' | '/quan-ly-hkd' | '/gui-thong-bao' | '/mau-tin' | '/kenh-gui' | '/thiet-lap' | '/tai-khoan';
+// Các route nghiệp vụ, trạng thái lọc/tab/trang nằm trong query của hash để tải lại hoặc chia sẻ vẫn giữ ngữ cảnh.
+export type RoutePath = '/thong-ke' | '/quan-ly-hkd' | '/gui-thong-bao' | '/mau-tin' | '/kenh-gui' | '/thiet-lap' | '/tai-khoan' | '/chuyen-tuyen';
 
 export interface Route {
   path: RoutePath;
@@ -11,8 +11,10 @@ export interface Route {
 function parse(): Route {
   const raw = window.location.hash.replace(/^#/, '') || '/thong-ke';
   const [p, q = ''] = raw.split('?');
+  // Link của mục Lãnh đạo bị thêm nhầm mở lại Thống kê theo quyền tài khoản.
+  if (p === '/lanh-dao') return { path: '/thong-ke', params: new URLSearchParams(q) };
   // '/cau-hinh' là đường dẫn cũ của màn Thiết lập (đổi tên 04/11/2026), giữ để link cũ vẫn mở đúng màn.
-  const known: RoutePath[] = ['/quan-ly-hkd', '/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan'];
+  const known: RoutePath[] = ['/quan-ly-hkd', '/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan', '/chuyen-tuyen'];
   const path: RoutePath = p === '/cau-hinh' ? '/thiet-lap' : known.includes(p as RoutePath) ? (p as RoutePath) : '/thong-ke';
   const params = new URLSearchParams(q);
   // Giữ link cũ, đưa về nơi quản lý nghiệp vụ duy nhất.

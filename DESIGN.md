@@ -480,3 +480,19 @@ Nguyên tắc: chuyển động chỉ để phản hồi thao tác, đổi trạ
 Mỗi nội dung chi tiết có một nơi chính: thông báo đã gửi ở Thống kê; đợt tự động ở Thông báo; danh sách và biểu đồ nghĩa vụ ở Quản lý HKD. Các nút từ màn khác dẫn tới đúng nơi, giữ phạm vi liên quan. Thư viện mẫu dùng để quản lý nội dung; chọn mẫu trong form Gửi chủ động. Xuất bản không đồng nghĩa gửi. Nhắc việc ưu tiên kết quả nghiệp vụ của HKD, bỏ biểu đồ truyền tin và các cột gửi/tiếp nhận bị lặp.
 
 Đây là phương án theo yêu cầu rút gọn, chưa có bằng chứng thử nghiệm với người dùng. Kiểm chứng bằng tìm đợt lỗi và tìm HKD quá hạn; không dùng chỉ số minh họa làm kết quả kiểm chứng.
+
+
+## Nút tiện ích dùng icon (10/11/2026)
+
+Theo yêu cầu người dùng: thao tác Tìm, Xuất/Tải CSV, Làm mới, mở bộ lọc và đặt lại trên toolbar dùng nút chỉ icon. Dùng `components/IconButton.tsx`: có aria-label cụ thể, tooltip khi hover/focus, kích thước bằng control trên desktop và tối thiểu 44×44px trên mobile/thiết bị chạm. Xuất tệp đang chạy thay icon bằng spinner, khóa bấm và có aria-busy. Số điều kiện lọc vẫn hiện bằng badge. Nút quyết định Gửi, Lưu, Hủy, Áp dụng giữ chữ; Xuất bản mẫu tin là hành động nghiệp vụ riêng, không đổi thành icon tải xuống.
+
+
+## Bố cục điện thoại (10/11/2026)
+
+- **Yêu cầu:** cân đối, đơn giản, sạch, thân thiện và dễ thao tác. Giữ brand, font và quyền hiện có. CSS thích ứng riêng ở `src/mobile.css`, chỉ áp dụng dưới 768px.
+- **Quyết định:** lề trái/phải 16px; header có tên màn và vai trò; bottom nav 5 cột đều nhau; nút tiện ích 44×44px. Card bo 12px trên điện thoại, nhịp khoảng cách 8/12/16px.
+- **Nội dung:** Thống kê hiện 4 chỉ số chính, mở thêm để xem đủ 7 chỉ số và chú thích; biểu đồ nằm sau danh sách trên mobile. Nghĩa vụ, hỏi đáp AI, chuyển tuyến, lịch vận hành và báo cáo lãnh đạo dùng disclosure cho nội dung phụ; desktop vẫn hiển thị đầy đủ.
+- **Danh sách:** tìm kiếm phủ hết chiều ngang; số kết quả bên trái, nút lọc/xuất bên phải. Bộ lọc trong bottom sheet có nhãn và áp dụng ngay khi chọn; nút Xem kết quả chỉ đóng sheet. Đóng sheet trả focus về nút đã mở. Không bỏ bộ lọc hay giới hạn thêm dữ liệu.
+- **Thao tác:** nút mở chi tiết thông báo đặt cạnh danh tính hộ. Phân trang cân đối 44px / chỉ báo / 44px. Thanh Lưu/Gửi cách đều hai mép, nằm trên bottom nav, hai nút bằng nhau. Ô nhập 16px, tránh tự zoom khi nhập trên điện thoại.
+- **Bằng chứng kiểm tra:** browser giả lập 375px và 430px; kiểm tra mở bộ lọc, áp dụng kết quả gửi, mở thêm KPI và biểu đồ, desktop 1440px. Ảnh ở `.taste-skill/mobile-refresh`. Các kết quả này là kiểm tra giao diện, không phải thử nghiệm người dùng.
+- **Chưa xác nhận:** trải nghiệm bàn phím ảo và safe-area trên thiết bị thật; mức dễ dùng cần thử nhiệm vụ tìm lỗi gửi, tìm hộ quá hạn và nhận ca. Không chốt thêm quyền lãnh đạo tổ trong lượt chỉnh mobile này.

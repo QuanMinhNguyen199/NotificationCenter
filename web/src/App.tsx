@@ -16,6 +16,7 @@ const ConfigPage = lazy(() => import('./pages/SettingsWorkspace'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 const SendPage = lazy(() => import('./pages/NotificationWorkspace'));
 const HkdPage = lazy(() => import('./pages/HkdPage'));
+const RoutingPage = lazy(() => import('./routing/RoutingPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, retry: 0, refetchOnWindowFocus: false } },
@@ -29,7 +30,7 @@ function Routes() {
   return (
     <Suspense fallback={<div className="page-skel" aria-busy="true" aria-label="Đang tải màn hình" />}>
       <motion.div key={path} initial={quiet ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={tween(DUR.state)}>
-        {path === '/thiet-lap' ? <ConfigPage /> : path === '/tai-khoan' ? <AccountsPage /> : path === '/gui-thong-bao' ? <SendPage /> : path === '/quan-ly-hkd' ? <HkdPage /> : <StatsPage />}
+        {path === '/chuyen-tuyen' ? <RoutingPage /> : path === '/thiet-lap' ? <ConfigPage /> : path === '/tai-khoan' ? <AccountsPage /> : path === '/gui-thong-bao' ? <SendPage /> : path === '/quan-ly-hkd' ? <HkdPage /> : <StatsPage />}
       </motion.div>
     </Suspense>
   );

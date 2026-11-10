@@ -1,8 +1,9 @@
+import { IconButton } from '@/components/IconButton';
 import { ChoiceSelect, DialogFrame, Feedback, OptionGroup, TextareaField } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -207,9 +208,9 @@ function SendDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 </ul>
                 <div className="table-pager">
                   <span className="mr-auto text-muted-foreground num">{num(rq.data.total)} người nhận</span>
-                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Trước</Button>
+                  <IconButton icon={ChevronLeft} label="Trang người nhận trước" disabled={page <= 1} onClick={() => setPage(page - 1)} />
                   <span className="num">{page}/{pages}</span>
-                  <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
+                  <IconButton icon={ChevronRight} label="Trang người nhận sau" disabled={page >= pages} onClick={() => setPage(page + 1)} />
                 </div>
               </>
             )}

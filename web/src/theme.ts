@@ -40,6 +40,6 @@ export const C = {
   dueSoon: '#FACC15',
   dueSoonInk: '#0F172A',
   inTerm: '#5D9C59',
-  inTermInk: '#FFFFFF',
+  inTermInk: '#0F172A',
 };
 

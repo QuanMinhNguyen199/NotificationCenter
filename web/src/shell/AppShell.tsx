@@ -1,11 +1,11 @@
-import { BarChart3, CalendarClock, LogOut, PanelLeftClose, PanelLeftOpen, Send, Store, UserCog } from 'lucide-react';
+import { BarChart3, CalendarClock, Inbox, LogOut, PanelLeftClose, PanelLeftOpen, Send, Store, UserCog } from 'lucide-react';
 import { useAuth } from '../auth/AuthGate';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { buildHash, useRoute, type RoutePath } from '../lib/router';
 import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
 import { DEMO_ACCOUNTS, ROLE_LABEL, initials, teamName, useDemo, usePermissions, useStaff } from '../demo/DemoContext';
@@ -13,6 +13,9 @@ import { useGuard } from './guard';
 import { DUR, tween } from '../lib/motion';
 import { useOverlayOpen } from './overlay';
 import { readPinned, savePinned } from './sidebarPref';
+import { NotificationBell } from '../routing/NotificationBell';
+import { useOpenCaseCount } from '../routing/useRouting';
+import { watchTableLabels } from '../lib/tableLabels';
 
 const WIDTH = 272;
 const PEEK_OPEN_DELAY = 120;
@@ -24,6 +27,7 @@ const ALL_NAV: { path: RoutePath; label: string; short: string; icon: ReactNode 
   { path: '/thong-ke', label: 'Thống kê', short: 'Thống kê', icon: <BarChart3 className="size-5" /> },
   { path: '/quan-ly-hkd', label: 'Quản lý HKD', short: 'HKD', icon: <Store className="size-5" /> },
   { path: '/gui-thong-bao', label: 'Thông báo', short: 'Thông báo', icon: <Send className="size-5" /> },
+  { path: '/chuyen-tuyen', label: 'Chuyển tuyến', short: 'Hộp việc', icon: <Inbox className="size-5" /> },
   { path: '/thiet-lap', label: 'Thiết lập', short: 'Thiết lập', icon: <CalendarClock className="size-5" /> },
   { path: '/tai-khoan', label: 'Tài khoản', short: 'Tài khoản', icon: <UserCog className="size-5" /> },
 ];
@@ -62,7 +66,7 @@ function Brand({ size = 32, onHome }: { size?: number; onHome: () => void }) {
 
 const roleLine = (role: keyof typeof ROLE_LABEL, team: string | null) => (team ? `${ROLE_LABEL[role]} · ${teamName(team)}` : ROLE_LABEL[role]);
 
-function Account({ compact }: { compact?: boolean }) {
+function Account({ compact, more }: { compact?: boolean; more?: { label: string; onGo: () => void }[] }) {
   const { userId, setUserId } = useDemo();
   const staff = useStaff();
   const { user } = usePermissions();
@@ -86,6 +90,13 @@ function Account({ compact }: { compact?: boolean }) {
           );
         })}
       </RadioGroup>
+      {more && more.length > 0 && (
+        <nav className="account-panel__more" aria-label="Màn khác">
+          {more.map((m) => (
+            <button key={m.label} type="button" onClick={m.onGo}>{m.label}</button>
+          ))}
+        </nav>
+      )}
       <button type="button" className="account-panel__signout" onClick={() => confirmLeave(signOut)}>
         <LogOut className="size-4" aria-hidden="true" />
         Đăng xuất
@@ -129,11 +140,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { path, go } = useNav();
   const nav = useNavItems();
   const { user } = usePermissions();
+  const openCases = useOpenCaseCount();
+  // Số ca Mới cạnh mục Chuyển tuyến.
+  const count = (to: RoutePath) => (to === '/chuyen-tuyen' && openCases > 0 ? <span className="nav-count" aria-label={`${openCases} ca mới`}>{openCases > 99 ? '99+' : openCases}</span> : null);
   // Tài khoản bị tạm khóa: không hiện dữ liệu.
   const content = user.active ? children : <p className="locked-note" role="status">Tài khoản {user.name} đang tạm khóa. Liên hệ lãnh đạo cơ sở để mở lại.</p>;
   const canPin = bp === 'desktop';
   useEffect(() => {
     document.documentElement.dataset.bp = bp;
+  }, [bp]);
+  // Nhãn cột cho bảng nhỏ khi xếp dọc trên mobile.
+  useEffect(() => {
+    const main = document.getElementById('main');
+    return main ? watchTableLabels(main) : undefined;
   }, [bp]);
   const [pinnedPref, setPinnedPref] = useState(readPinned);
   const pinned = canPin && pinnedPref;
@@ -141,6 +160,27 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [byClick, setByClick] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const asideRef = useRef<HTMLElement>(null);
+  // Ô trắng mục đang chọn: một phần tử duy nhất, đo vị trí mục đang chọn rồi trượt bằng CSS transform
+  // (thay layoutId của motion — đo lại layout mỗi lần đổi màn gây khựng, đo 10/11/2026).
+  const navRef = useRef<HTMLElement>(null);
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const pillPlaced = useRef(false);
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const pill = pillRef.current;
+    if (!nav || !pill) return;
+    const item = nav.querySelector<HTMLElement>('.nav-item--active');
+    if (!item) return void (pill.style.opacity = '0');
+    if (!pillPlaced.current) pill.style.transition = 'none';
+    pill.style.opacity = '1';
+    pill.style.width = `${item.offsetWidth}px`;
+    pill.style.height = `${item.offsetHeight}px`;
+    pill.style.transform = `translate(${item.offsetLeft}px, ${item.offsetTop}px)`;
+    if (!pillPlaced.current) {
+      pillPlaced.current = true;
+      requestAnimationFrame(() => (pill.style.transition = ''));
+    }
+  }, [path, nav.length, bp]);
   const openerRef = useRef<HTMLButtonElement>(null);
 
   const visible = pinned || peek;
@@ -182,18 +222,28 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const onOpener = () => (canPin ? setPinned(true) : (setByClick(true), setPeek(true), requestAnimationFrame(() => asideRef.current?.querySelector('a')?.focus())));
 
   if (bp === 'mobile') {
+    // Thanh dưới chỉ vừa 5 mục ở 375px; mục còn lại nằm trong bảng tài khoản.
+    const bottom = nav.slice(0, 5);
+    const more = nav.slice(5).map((n) => ({ label: n.label, onGo: () => go(n.path) }));
     return (
       <div className={`shell shell--mobile${overlayOpen ? ' shell--overlay' : ''}`}>
         <header className="m-header">
           <Brand onHome={home} />
-          <Account compact />
+          <span className="m-header__actions">
+            <NotificationBell />
+            <Account compact more={more} />
+          </span>
         </header>
         <main className="canvas" id="main">
+          <div className="mobile-page-heading">
+            <p className="mobile-page-heading__title">{nav.find((item) => item.path === path)?.label ?? 'Thống kê'}</p>
+            <span className="mobile-page-heading__role">{ROLE_LABEL[user.role]}</span>
+          </div>
           {content}
         </main>
         {!overlayOpen && (
           <nav className="bottom-nav" aria-label="Điều hướng chính">
-            {nav.map((item) => (
+            {bottom.map((item) => (
               <a
                 key={item.path}
                 href={buildHash(item.path)}
@@ -204,7 +254,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   go(item.path);
                 }}
               >
-                <span className="bottom-nav__icon" aria-hidden="true">{item.icon}</span>
+                <span className="bottom-nav__icon" aria-hidden="true">{item.icon}{count(item.path)}</span>
                 <span>{item.short}</span>
               </a>
             ))}
@@ -257,7 +307,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </button>
           )}
         </div>
-        <nav className="sidebar__nav">
+        <nav className="sidebar__nav" ref={navRef}>
+          <span ref={pillRef} className="nav-pill" aria-hidden="true" />
           {nav.map((item) => {
             const active = item.path === path;
             return (
@@ -274,10 +325,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 whileTap={reduced ? undefined : { y: 0 }}
                 transition={tween(DUR.fast)}
               >
-                {/* Ô trắng của mục đang chọn là một phần tử dùng chung, trượt sang mục mới khi chuyển màn. */}
-                {active && <motion.span layoutId="nav-pill" className="nav-pill" transition={tween(DUR.state)} aria-hidden="true" />}
                 <span aria-hidden="true" className="nav-item__icon">{item.icon}</span>
                 <span className="nav-item__label">{item.label}</span>
+                {count(item.path)}
               </motion.a>
             );
           })}
@@ -306,7 +356,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </>
             )}
           </div>
-          <Account />
+          <span className="topbar__actions">
+            <NotificationBell />
+            <Account />
+          </span>
         </header>
         <main className="canvas" id="main">
           {content}

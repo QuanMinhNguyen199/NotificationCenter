@@ -120,6 +120,7 @@ function scheduleSections(ctx: Ctx): Section[] {
     {
       key: 'send',
       title: 'Khung giờ gửi',
+      desc: 'Chỉ áp dụng cho nhắc việc. Thông báo theo sự kiện gửi ngay, không chờ khung giờ.',
       summary: `${v.sendStart}–${v.sendEnd}`,
       fields: ['sendStart', 'sendEnd'],
       content: (

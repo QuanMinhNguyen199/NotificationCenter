@@ -5,7 +5,10 @@ import { ChevronDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ApiError, RUN_ACTIONS, actOnRun, fetchResponse, fetchRun, fetchTaxpayerNotifications, type RunAction, type StatsFilter } from '../api/mockApi';
+import { ApiError, RUN_ACTIONS, actOnRun, appRegistered, failReason, fetchResponse, fetchRun, fetchTaxpayerNotifications, retryNotifications, retryOf, type RunAction, type StatsFilter } from '../api/mockApi';
+import { FILING_LABEL, fetchProfile } from '../api/profileApi';
+import { ProtoBadge } from '../components/Proto';
+import { StatusPill } from '../components/Status';
 import Overlay from '../components/Overlay';
 import { BlockError, Skel } from '../components/Blocks';
 import { DELIVERY, GroupTags, Pill, PRIORITY, RUN, SEND } from '../components/Status';
@@ -80,8 +83,49 @@ function FullContent({ n }: { n: Notification }) {
 
 /* ---------- Chi tiết thông báo ---------- */
 
+/** [Thêm] Lý do lỗi và gửi lại một thông báo thất bại. */
+function RetryOne({ id, onDone }: { id: string; onDone: () => void }) {
+  const qc = useQueryClient();
+  const user = useCurrentUser();
+  const n = notifications.find((x) => x.id === id)!;
+  const reason = failReason(n);
+  const m = useMutation({
+    mutationFn: () => retryNotifications([id], user.name),
+    onSuccess: () => {
+      toast.success('Đã đưa thông báo vào lượt gửi kế tiếp.');
+      qc.invalidateQueries();
+      onDone();
+    },
+    onError: () => toast.error('Không gửi lại được. Thử lại sau.'),
+  });
+  return (
+    <div className="retry-one">
+      <dl className="kv">
+        <dt>Lý do lỗi</dt>
+        <dd>
+          {reason.text} <ProtoBadge kind="mock" note="Mã lỗi đang giả lập; hệ thống gửi thật chưa trả lý do." />
+        </dd>
+        {reason.fix && (
+          <>
+            <dt>Cần làm</dt>
+            <dd>{reason.fix}</dd>
+          </>
+        )}
+      </dl>
+      <div className="retry-one__actions">
+        <Button disabled={!reason.retry || m.isPending} onClick={() => m.mutate()}>
+          {m.isPending ? 'Đang gửi lại…' : 'Gửi lại'}
+        </Button>
+        <ProtoBadge kind="proposal" note="Chỉ gửi lại lỗi tạm thời; lỗi dữ liệu phải sửa trước khi gửi lại." />
+        {!reason.retry && <span className="chart-note">Chưa gửi lại được vì lỗi nằm ở dữ liệu NNT.</span>}
+      </div>
+    </div>
+  );
+}
+
 function NotificationDetail({ id }: { id: string }) {
   const { canSeeTaxpayer } = usePermissions();
+  const [, bump] = useState(0);
   const n = notifications.find((x) => x.id === id);
   if (!n) return <BlockError message="Không tìm thấy thông báo." onRetry={() => location.reload()} />;
   if (!canSeeTaxpayer(n.taxpayerId)) return <OutOfScope />;
@@ -122,6 +166,7 @@ function NotificationDetail({ id }: { id: string }) {
             </>
           )}
         </dl>
+        {n.send === 'FAILED' && <RetryOne id={n.id} onDone={() => bump((x) => x + 1)} />}
       </section>
       <section className="ov-section">
         <h3 className="ov-section__title">Bản đẩy</h3>
@@ -137,6 +182,7 @@ function NotificationDetail({ id }: { id: string }) {
           <li><time>{hm(n.createdAt)}</time><span>Tạo thông báo trong lượt rà soát</span></li>
           {n.processedAt && <li><time>{hm(n.processedAt)}</time><span>{SEND[n.send].label}</span></li>}
           {n.deliveredAt && delivery === 'DELIVERED' && <li><time>{hm(n.deliveredAt)}</time><span>iHanoi tiếp nhận</span></li>}
+          {retryOf(n.id) && <li><time>{hm(retryOf(n.id)!.at)}</time><span>Gửi lại theo yêu cầu của {retryOf(n.id)!.by}</span></li>}
           {n.send === 'PENDING' && <li><time>—</time><span>Đang chờ tới lượt trong khung 06:00–10:00</span></li>}
         </ol>
       </section>
@@ -151,6 +197,7 @@ function TaxpayerDetail({ id }: { id: number }) {
   const t = taxpayers[id];
   const allowed = !!t && canSeeTaxpayer(id);
   const q = useQuery({ queryKey: ['tp-notifs', id], queryFn: () => fetchTaxpayerNotifications(id), enabled: allowed });
+  const prof = useQuery({ queryKey: ['tp-profile', id], queryFn: () => fetchProfile(id), enabled: allowed });
   if (!allowed) return <OutOfScope />;
   return (
     <>
@@ -164,6 +211,8 @@ function TaxpayerDetail({ id }: { id: number }) {
           <dd>{unitName('A')}</dd>
           <dt>Cán bộ phụ trách</dt>
           <dd><Officer taxpayerId={id} /></dd>
+          <dt>Ứng dụng iHanoi</dt>
+          <dd>{appRegistered(id) ? 'Đã đăng ký' : 'Chưa đăng ký'} <ProtoBadge kind="mock" note="Trạng thái đăng ký iHanoi đang giả lập." /></dd>
           <dt>Nguồn</dt>
           <dd>Quản lý NNT, nghĩa vụ hiện hành — chốt {dmyhm(OBLIGATION_CUTOFF)}</dd>
         </dl>
@@ -183,8 +232,61 @@ function TaxpayerDetail({ id }: { id: number }) {
             ),
           },
           {
+            key: 'hs',
+            label: 'Hồ sơ',
+            children: prof.isError ? (
+              <BlockError message="Không tải được hồ sơ của hộ." onRetry={() => prof.refetch()} />
+            ) : !prof.data ? (
+              <Skel w="100%" h={80} />
+            ) : (
+              <>
+                <p className="proto-inline chart-note">Hồ sơ đã nộp và đang làm dở <ProtoBadge kind="mock" note="Danh sách hồ sơ đang giả lập; chưa nối hệ thống quản lý hồ sơ." /></p>
+                {prof.data.filings.length ? (
+                  <ul className="filing-list">
+                    {prof.data.filings.map((f) => (
+                      <li key={f.id}>
+                        <span>
+                          <b>{f.form}</b>
+                          <small>{f.period} · {f.submittedAt ? `nộp ${dmy(f.submittedAt)}` : 'chưa nộp'}{f.note ? ` · ${f.note}` : ''}</small>
+                        </span>
+                        <StatusPill tone={FILING_LABEL[f.status].tone}>{FILING_LABEL[f.status].label}</StatusPill>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="chart-note">Hộ chưa có hồ sơ trong dữ liệu đang xem.</p>
+                )}
+              </>
+            ),
+          },
+          {
+            key: 'ht',
+            label: 'Hội thoại',
+            children: prof.isError ? (
+              <BlockError message="Không tải được lịch sử hội thoại." onRetry={() => prof.refetch()} />
+            ) : !prof.data ? (
+              <Skel w="100%" h={80} />
+            ) : (
+              <>
+                <p className="proto-inline chart-note">Hội thoại của hộ với Geo AI trên iHanoi <ProtoBadge kind="mock" note="Lịch sử hội thoại đang giả lập." /></p>
+                {prof.data.conversation.length ? (
+                  <ol className="chat-log">
+                    {prof.data.conversation.map((m, i) => (
+                      <li key={i} className={`chat-log__msg chat-log__msg--${m.from}`}>
+                        <small>{m.from === 'hkd' ? 'Hộ kinh doanh' : m.from === 'ai' ? 'Geo AI' : 'Cán bộ'} · {dmyhm(m.at)}</small>
+                        <p>{m.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="chart-note">Hộ chưa hỏi Geo AI trong 30 ngày.</p>
+                )}
+              </>
+            ),
+          },
+          {
             key: 'nt',
-            label: 'Thông báo',
+            label: 'Thông báo đã nhận',
             children: q.isLoading ? (
               <Skel w="100%" h={80} />
             ) : q.data?.length ? (

@@ -38,11 +38,11 @@ export default function Overlay({
           returnTo.current = document.activeElement as HTMLElement | null;
         }}
         onCloseAutoFocus={(e) => {
+          // Trả focus nhưng KHÔNG cuộn trang: bấm chuột vào dòng thì phần tử đang focus thường là khung chứa danh sách
+          // (vùng nội dung tab có tabIndex), focus() mặc định sẽ cuộn khung đó vào tầm nhìn → trang giật khi đóng chi tiết.
+          e.preventDefault();
           const el = returnTo.current;
-          if (el && el.isConnected && el !== document.body) {
-            e.preventDefault();
-            el.focus();
-          }
+          if (el && el.isConnected && el !== document.body) el.focus({ preventScroll: true });
         }}
         side="right"
         showCloseButton={!mobile}

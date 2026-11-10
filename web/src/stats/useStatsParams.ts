@@ -20,6 +20,8 @@ export interface StatsParams extends StatsFilter {
   notified: boolean;
   kind: 'file' | 'pay' | null;
   prio: Priority | null;
+  /** Đăng ký app nhưng chưa nộp tờ khai. */
+  app: boolean;
   rs: 'all' | RunStatus;
   rq: string;
   detail: string | null;
@@ -42,7 +44,8 @@ export function useStatsParams() {
       group: (params.get('group') as GroupCode) ?? 'all',
       tab: (params.get('tab') as Tab) ?? 'notifications',
       page: Number(params.get('page') ?? 1),
-      size: Number(params.get('size') ?? 20),
+      // 10 dòng mỗi trang: đủ nắm nhanh, ít phải cuộn; người dùng tăng được lên 20/50.
+      size: Number(params.get('size') ?? 10),
       day: params.get('day'),
       // Link cũ dùng ns=DELIVERED trước khi tách lọc gửi/giao: chuyển sang bộ lọc giao.
       ns: params.get('ns') === 'DELIVERED' ? 'all' : ((params.get('ns') as SendFilter) ?? 'all'),
@@ -52,6 +55,7 @@ export function useStatsParams() {
       notified: params.get('notified') === '1',
       kind: (params.get('kind') as 'file' | 'pay') ?? null,
       prio: (params.get('prio') as Priority) ?? null,
+      app: params.get('app') === '1',
       rs: (params.get('rs') as RunStatus) ?? 'all',
       rq: params.get('rq') ?? '',
       detail: params.get('detail'),
@@ -63,7 +67,7 @@ export function useStatsParams() {
     (patch: Partial<Record<keyof StatsParams, string | number | boolean | null>>, opts: { push?: boolean } = {}) => {
       const next = new URLSearchParams(params);
       Object.entries(patch).forEach(([k, v]) => {
-        const defaults: Record<string, string> = { unit: defaultUnit, from: PERIOD.from, to: PERIOD.to, group: 'all', tab: 'notifications', page: '1', size: '20', ns: 'all', nd: 'all', rs: 'all' };
+        const defaults: Record<string, string> = { unit: defaultUnit, from: PERIOD.from, to: PERIOD.to, group: 'all', tab: 'notifications', page: '1', size: '10', ns: 'all', nd: 'all', rs: 'all' };
         const s = v === true ? '1' : v === false || v == null ? '' : String(v);
         if (!s || defaults[k] === s) next.delete(k);
         else next.set(k, s);

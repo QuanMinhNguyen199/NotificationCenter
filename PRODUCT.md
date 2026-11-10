@@ -105,3 +105,9 @@ Theo yêu cầu gộp chức năng trùng của người dùng, điều hướng
 - **Thiết lập:** hai tab Quy tắc nhắc tự động / Kênh gửi; quyền cũ giữ nguyên. Đổi sang Kênh gửi khi có quy tắc chưa lưu phải xác nhận bỏ thay đổi. Nhãn thao tác nêu phạm vi toàn kênh / đợt này / tạo đợt mới.
 - Link cũ Mẫu tin, Kênh gửi, Thống kê tab NNT/Đợt gửi vẫn mở nội dung tại vị trí mới, giữ bộ lọc.
 - **Đề xuất đã triển khai**, chưa xác nhận bằng thử nghiệm người dùng: kiểm chứng hai nhiệm vụ tìm đợt gửi lỗi và tìm HKD quá hạn chưa hoàn thành; đo chọn đúng nơi bắt đầu, tỷ lệ hoàn thành và thời gian. Không suy diễn dữ liệu nhắc việc minh họa thành số liệu vận hành thực.
+
+### Phân chia giao diện theo view.docx (10/11/2026)
+
+- **Bằng chứng:** `web/doc/view.docx` chia nội dung thành Cán bộ và Lãnh đạo, không yêu cầu thêm mục điều hướng hoặc tab Lãnh đạo.
+- **Quyết định triển khai:** dùng các màn nghiệp vụ hiện có và hiển thị theo quyền. Số liệu tổng hợp, so sánh cơ sở và hiệu quả cán bộ nằm trong Thống kê cho lãnh đạo cơ sở; bảng Theo đơn vị nằm trong Quản lý HKD cho lãnh đạo; phân quyền nằm trong Tài khoản. Link `#/lanh-dao` từ bản làm sai mở về Thống kê.
+- **Chưa xác nhận:** quyền so sánh 25 Thuế cơ sở, mẫu số tỷ lệ nộp tờ khai và chỉ số đánh giá cán bộ. Số liệu tổng hợp hiện là mock 30 ngày đến 28/10/2026, có phạm vi và kỳ riêng với bộ lọc thông báo.

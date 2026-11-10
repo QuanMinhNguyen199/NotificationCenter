@@ -1,0 +1,42 @@
+/* Phần số liệu tổng hợp theo quyền trong màn Thống kê. Dùng lại .hkd-kpis, .charts, .mini-table, .chart-legend của styles.css. */
+.leader-page { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.leader-page > .proto-note { margin: 0; }
+.leader-page .charts { margin-top: 0; }
+.leader-page .hkd-filter { margin-bottom: 0; }
+
+.leader-section { display: flex; flex-direction: column; gap: 12px; min-width: 0; margin-top: 8px; }
+.leader-section > .proto-note { margin: 0; }
+.leader-section__title { font-size: 18px; font-weight: 600; line-height: 1.35; }
+.leader-section__sub { margin-top: 2px; color: var(--text-muted); font-size: 14px; }
+.leader-title { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.leader-title .proto { font-weight: 500; }
+
+/* Bảng cuộn trong khung của nó, trang không cuộn ngang ở 375px. */
+.leader-scroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border-radius: 4px; }
+.leader-scroll:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.leader-table { min-width: 560px; }
+.leader-table--narrow { min-width: 280px; }
+.leader-table tbody th { white-space: nowrap; }
+.leader-table td { white-space: nowrap; }
+
+.leader-sort {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; margin: 0; border: 0; background: none;
+  font: inherit; color: inherit; cursor: pointer; border-radius: 4px; text-align: inherit; white-space: nowrap;
+}
+.leader-sort svg { width: 14px; height: 14px; flex: none; opacity: 0.55; }
+.leader-sort:hover { color: var(--text); }
+.leader-sort.is-on { color: var(--text); font-weight: 600; }
+.leader-sort.is-on svg { opacity: 1; }
+.leader-sort:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.leader-row--own th, .leader-row--own td { background: var(--tint-50); }
+.leader-row--own th { font-weight: 600; }
+.leader-own-tag { display: inline-block; margin-left: 8px; padding: 0 6px; border-radius: 4px; background: var(--tint-100); color: var(--brand-ink); font-size: 12px; font-weight: 500; line-height: 20px; }
+
+.leader-swatch-dash { background: none !important; border-top: 2px dashed var(--text); height: 0; }
+.leader-swatch-dot { border-radius: 999px; }
+
+@media (max-width: 767px) {
+  .leader-page .panel__head { flex-wrap: wrap; gap: 8px; }
+  .leader-page .panel__head > :last-child:not(:first-child) { width: 100%; }
+}

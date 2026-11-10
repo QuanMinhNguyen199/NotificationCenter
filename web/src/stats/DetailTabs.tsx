@@ -1,11 +1,17 @@
+import { ListToolbar } from '@/components/ListToolbar';
+import { IconButton } from '@/components/IconButton';
 import { ChoiceSelect, ViewTabs } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, RotateCcw, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, RotateCcw, Search as SearchIcon, Send, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { ProtoBadge } from '@/components/Proto';
+import { downloadCsv } from '../lib/csv';
+import { useCurrentUser } from '../demo/DemoContext';
 import { Input } from '@/components/ui/input';
 import { DataTable, type DataColumns } from '@/components/DataTable';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
-import { fetchNotifications, fetchRuns, fetchTaxpayers, type DeliveryFilter, type NotificationRow, type SendFilter } from '../api/mockApi';
+import { appRegistered, failReason, fetchNotifications, fetchRetryableIds, fetchRuns, fetchTaxpayers, retryNotifications, type DeliveryFilter, type NotificationQuery, type NotificationRow, type SendFilter, type TaxpayerQuery } from '../api/mockApi';
 import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
 import { DELIVERY, GroupTags, Pill, PRIORITY, RUN, SEND } from '../components/Status';
 import { UNITS, OBLIGATION_CUTOFF } from '../data/mock';
@@ -32,8 +38,8 @@ function Search({ value, onSearch, placeholder, label }: { value: string; onSear
   // Chỉ tìm khi nhấn Enter hoặc nút tìm — không gọi lại API liên tục khi đang nhập.
   return <form className="table-search" role="search" onSubmit={(e) => { e.preventDefault(); onSearch(v.trim()); }}>
     <Input aria-label={label} placeholder={placeholder} value={v} onChange={(e) => setV(e.target.value)} />
-    {v && <Button variant="ghost" size="icon" type="button" aria-label="Xóa nội dung tìm kiếm" onClick={() => { setV(''); onSearch(''); }}><X className="size-4" aria-hidden="true" /></Button>}
-    <Button type="submit">Tìm</Button>
+    {v && <IconButton variant="ghost" icon={X} label="Xóa nội dung tìm kiếm" onClick={() => { setV(''); onSearch(''); }} />}
+    <IconButton type="submit" variant="default" icon={SearchIcon} label="Tìm kiếm" />
   </form>;
 }
 
@@ -41,9 +47,7 @@ function Search({ value, onSearch, placeholder, label }: { value: string; onSear
 function ListReset({ show, onReset }: { show: boolean; onReset: () => void }) {
   if (!show) return null;
   return (
-    <Button variant="ghost" size="icon" className="list-reset" onClick={onReset} aria-label="Đặt lại bộ lọc danh sách" title="Đặt lại bộ lọc danh sách">
-      <RotateCcw aria-hidden="true" />
-    </Button>
+    <IconButton variant="ghost" icon={RotateCcw} className="list-reset" onClick={onReset} label="Đặt lại bộ lọc danh sách" />
   );
 }
 
@@ -65,15 +69,11 @@ function Pager({ page, size, total, onChange, mobile }: { page: number; size: nu
   if (mobile) {
     return (
       <div className="m-pager">
-        <Button variant="outline" disabled={page <= 1} onClick={() => onChange(page - 1, size)}>
-          Trước
-        </Button>
+        <IconButton icon={ChevronLeft} label="Trang trước" disabled={page <= 1} onClick={() => onChange(page - 1, size)} />
         <span className="num">
           {num(from)}–{num(to)} / {num(total)}
         </span>
-        <Button variant="outline" disabled={page >= pages} onClick={() => onChange(page + 1, size)}>
-          Sau
-        </Button>
+        <IconButton icon={ChevronRight} label="Trang sau" disabled={page >= pages} onClick={() => onChange(page + 1, size)} />
       </div>
     );
   }
@@ -86,7 +86,7 @@ function pagination(p: StatsParams, total: number, set: SetFn) {
     pageSize: p.size,
     total,
     showSizeChanger: true,
-    pageSizeOptions: [20, 50, 100],
+    pageSizeOptions: [10, 20, 50],
     showTotal: (t: number, [a, b]: [number, number]) => `${num(a)}–${num(b)} trong ${num(t)}`,
     onChange: (page: number, size: number) => set({ page: size !== p.size ? 1 : page, size }),
 
@@ -144,6 +144,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
     queryFn: () => fetchNotifications({ ...filterOf(p), day: p.day, send: p.ns, delivery: p.nd, q: p.nq, page: p.page, size: p.size }),
   });
   const empty = useEmpty(p, reset);
+  const query: NotificationQuery = { ...filterOf(p), day: p.day, send: p.ns, delivery: p.nd, q: p.nq, page: 1, size: 1e6 };
 
   const cols: DataColumns<NotificationRow> = [
     {
@@ -212,18 +213,21 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
 
   return (
     <>
-      <div className="detail__toolbar">
-        <Search value={p.nq} onSearch={(nq) => set({ nq, page: 1 })} placeholder="Tìm theo tên hoặc MST" label="Tìm thông báo theo tên hoặc MST" />
-        <ChoiceSelect aria-label="Lọc kết quả gửi" value={p.ns} options={SEND_OPTIONS} onValueChange={(ns) => set({ ns, page: 1 })} style={{ width: 190 }} />
+      <ListToolbar
+        search={<Search value={p.nq} onSearch={(nq) => set({ nq, page: 1 })} placeholder="Tìm theo tên hoặc MST" label="Tìm thông báo theo tên hoặc MST" />}
+        filters={<><ChoiceSelect aria-label="Lọc kết quả gửi" value={p.ns} options={SEND_OPTIONS} onValueChange={(ns) => set({ ns, page: 1 })} style={{ width: 190 }} />
         <ChoiceSelect aria-label="Lọc kết quả giao" value={p.nd} options={DELIVERY_OPTIONS} onValueChange={(nd) => set({ nd, page: 1 })} style={{ width: 210 }} />
         {p.day && (
           <Chip label="Bỏ lọc ngày" onRemove={() => set({ day: null, page: 1 })}>
             Ngày {dmy(p.day)}
           </Chip>
         )}
-        <ListReset show={!!(p.nq || p.ns !== 'all' || p.nd !== 'all' || p.day)} onReset={() => set({ nq: null, ns: null, nd: null, day: null, page: 1 })} />
-        <span className="detail__count">{q.data ? `${num(q.data.total)} thông báo` : ''}</span>
-      </div>
+        <ListReset show={!!(p.nq || p.ns !== 'all' || p.nd !== 'all' || p.day)} onReset={() => set({ nq: null, ns: null, nd: null, day: null, page: 1 })} /></>}
+        count={<span className="detail__count">{q.data ? `${num(q.data.total)} thông báo` : ''}</span>}
+        activeCount={[p.ns !== 'all', p.nd !== 'all', !!p.day].filter(Boolean).length}
+        actions={<ExportButton disabled={!q.data?.total} label="Xuất danh sách thông báo ra CSV" onExport={() => exportNotifications(query)} />}
+      />
+      {p.ns === 'FAILED' && <RetryBar query={query} />}
       <div className={q.isPlaceholderData ? 'pane-results is-stale' : 'pane-results'} aria-busy={q.isPlaceholderData}>
       {q.isError ? (
         <div style={{ paddingBottom: 20 }}>
@@ -243,6 +247,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
                     <span className="cell-tp__name">{r.taxpayer.name}</span>
                     <span className="cell-tp__mst">MST {r.taxpayer.mst}</span>
                   </span>
+                  <IconButton variant="ghost" icon={ChevronRight} label={`Xem thông báo của ${r.taxpayer.name}`} onClick={() => open(`n:${r.id}`)} />
                 </div>
                 <span className="m-card__meta">
                   <GroupTags groups={r.groups} /> <span className="num">{dmyhm(r.createdAt)}</span>
@@ -256,19 +261,79 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
                   <span>Giao</span>
                   <span><Pill map={DELIVERY} value={r.delivery} /></span>
                 </div>
-                <Button variant="outline" className="w-full" onClick={() => open(`n:${r.id}`)}>
-                  Xem chi tiết
-                </Button>
               </article>
             ))}
           </div>
-          <Pager mobile page={p.page} size={20} total={q.data.total} onChange={(page) => set({ page })} />
+          <Pager mobile page={p.page} size={p.size} total={q.data.total} onChange={(page) => set({ page })} />
         </>
       ) : (
         <DataTable<NotificationRow> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(r) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`n:${r.id}`) })} pagination={pagination(p, q.data.total, set)} />
       )}
       </div>
     </>
+  );
+}
+
+/* ---------- [Thêm] Xuất tệp, gửi lại (view.docx mục 1) ---------- */
+
+export function ExportButton({ onExport, disabled, label }: { onExport: () => Promise<void>; disabled?: boolean; label: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <IconButton
+      icon={Download}
+      className="export-btn"
+      disabled={disabled}
+      loading={busy}
+      label={busy ? 'Đang xuất tệp…' : label}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await onExport();
+        } catch {
+          toast.error('Không xuất được tệp. Thử lại sau.');
+        } finally {
+          setBusy(false);
+        }
+      }}
+    />
+  );
+}
+
+async function exportNotifications(qy: NotificationQuery) {
+  const all = await fetchNotifications(qy);
+  downloadCsv(`thong-bao_${qy.from}_${qy.to}.csv`, [
+    ['Mã', 'Thời điểm tạo', 'NNT', 'MST', 'Nhóm', 'Tiêu đề', 'Kết quả gửi', 'Kết quả giao', 'Lý do lỗi (giả lập)', 'Đợt gửi'],
+    ...all.rows.map((r) => [r.id, dmyhm(r.createdAt), r.taxpayer.name, r.taxpayer.mst, r.groups.join(' + '), r.title, SEND[r.send].label, DELIVERY[r.delivery].label, r.send === 'FAILED' ? failReason(r).text : '', r.runId]),
+  ]);
+}
+
+/** Gửi lại hàng loạt khi đang lọc "Gửi thất bại": chỉ lỗi tạm thời. */
+function RetryBar({ query }: { query: NotificationQuery }) {
+  const qc = useQueryClient();
+  const user = useCurrentUser();
+  const ids = useQuery({ queryKey: ['retryable', query], queryFn: () => fetchRetryableIds(query) });
+  const m = useMutation({
+    mutationFn: () => retryNotifications(ids.data ?? [], user.name),
+    onSuccess: (r) => {
+      toast.success(`Đã đưa ${num(r.ok)} thông báo vào lượt gửi kế tiếp.`);
+      qc.invalidateQueries();
+    },
+    onError: () => toast.error('Không gửi lại được. Thử lại sau.'),
+  });
+  const n = ids.data?.length ?? 0;
+  return (
+    <div className="retry-bar" role="region" aria-label="Gửi lại thông báo thất bại">
+      <p>
+        {ids.isLoading ? 'Đang đếm thông báo gửi lại được…' : n ? <><b className="num">{num(n)}</b> thông báo lỗi tạm thời có thể gửi lại. Lỗi do chưa đăng ký iHanoi hoặc sai MST cần sửa dữ liệu trước.</> : 'Không còn thông báo gửi lại được: các lỗi còn lại cần sửa dữ liệu trước.'}
+      </p>
+      <span className="retry-bar__tags">
+        <ProtoBadge kind="mock" note="Lý do lỗi đang giả lập; hệ thống gửi thật chưa trả mã lỗi." />
+        <ProtoBadge kind="proposal" note="Chỉ gửi lại lỗi tạm thời; lỗi dữ liệu phải sửa trước. Cán bộ gửi lại cho NNT mình phụ trách." />
+      </span>
+      <Button disabled={!n || m.isPending} onClick={() => m.mutate()}>
+        <Send aria-hidden="true" /> {m.isPending ? 'Đang gửi lại…' : n ? `Gửi lại ${num(n)}` : 'Gửi lại'}
+      </Button>
+    </div>
   );
 }
 
@@ -279,9 +344,17 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
   const q = useQuery({
     // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
     placeholderData: keepPreviousData,
-    queryKey: ['taxpayers', filterOf(p), p.tq, p.notified, p.kind, p.prio, p.page, p.size],
-    queryFn: () => fetchTaxpayers({ ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, page: p.page, size: p.size }),
+    queryKey: ['taxpayers', filterOf(p), p.tq, p.notified, p.kind, p.prio, p.app, p.page, p.size],
+    queryFn: () => fetchTaxpayers({ ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, app: p.app, page: p.page, size: p.size }),
   });
+  const tpQuery: TaxpayerQuery = { ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, app: p.app, page: 1, size: 1e6 };
+  const exportTaxpayers = async () => {
+    const all = await fetchTaxpayers(tpQuery);
+    downloadCsv(`ho-kinh-doanh_${p.unit}.csv`, [
+      ['NNT', 'MST', 'Trạng thái HKD', 'Hồ sơ khai còn thiếu', 'Ưu tiên khai', 'Khoản còn phải nộp', 'Ưu tiên nộp', 'Đăng ký iHanoi (giả lập)', 'Cập nhật'],
+      ...all.rows.map((t) => [t.name, t.mst, t.hkdStatus, t.fileCount, t.filePriority ? PRIORITY[t.filePriority].label : '', t.payCount, t.payPriority ? PRIORITY[t.payPriority].label : '', appRegistered(t.id) ? 'Có' : 'Chưa', dmyhm(t.updatedAt)]),
+    ]);
+  };
   const empty = useEmpty(p, reset);
 
   const countLink = (n: number, label: string, t: Taxpayer) =>
@@ -324,9 +397,9 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
 
   return (
     <>
-      <div className="detail__toolbar">
-        <Search value={p.tq} onSearch={(tq) => set({ tq, page: 1 })} placeholder="Tìm theo tên hoặc MST" label="Tìm NNT theo tên hoặc MST" />
-        {p.notified && (
+      <ListToolbar
+        search={<Search value={p.tq} onSearch={(tq) => set({ tq, page: 1 })} placeholder="Tìm theo tên hoặc MST" label="Tìm NNT theo tên hoặc MST" />}
+        filters={<>{p.notified && (
           <Chip label="Bỏ điều kiện có thông báo trong kỳ, về nghĩa vụ hiện hành" onRemove={() => set({ notified: false, page: 1 })}>
             Có thông báo trong kỳ
           </Chip>
@@ -349,9 +422,27 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
           options={[{ value: 'all', label: 'Mọi mức ưu tiên' }, ...(Object.keys(PRIORITY) as Priority[]).map((k) => ({ value: k, label: PRIORITY[k].label }))]}
           style={{ width: 170 }}
         />
-        <ListReset show={!!(p.tq || p.kind || p.prio || p.notified)} onReset={() => set({ tq: null, kind: null, prio: null, notified: null, page: 1 })} />
-        <span className="detail__count">{q.data ? `${num(q.data.total)} NNT` : ''}</span>
-      </div>
+        <ChoiceSelect
+          aria-label="Lọc theo đăng ký ứng dụng"
+          value={p.app ? 'missing' : 'all'}
+          onValueChange={(v) => set({ app: v === 'missing', page: 1 })}
+          options={[
+            { value: 'all', label: 'Mọi trạng thái app' },
+            { value: 'missing', label: 'Đăng ký app, chưa nộp' },
+          ]}
+          style={{ width: 200 }}
+        />
+        <ListReset show={!!(p.tq || p.kind || p.prio || p.notified || p.app)} onReset={() => set({ tq: null, kind: null, prio: null, notified: null, app: null, page: 1 })} /></>}
+        count={<span className="detail__count">{q.data ? `${num(q.data.total)} NNT` : ''}</span>}
+        activeCount={[!!p.kind, !!p.prio, !!p.notified, !!p.app].filter(Boolean).length}
+        actions={<ExportButton disabled={!q.data?.total} label="Xuất danh sách hộ ra CSV" onExport={exportTaxpayers} />}
+      />
+      {p.app && (
+        <p className="caption-line proto-inline">
+          Hộ đã đăng ký ứng dụng iHanoi nhưng còn hồ sơ khai chưa nộp.
+          <ProtoBadge kind="mock" note="Trạng thái đăng ký iHanoi chưa có trong dữ liệu NNT; đang giả lập." />
+        </p>
+      )}
       <p className="caption-line" style={{ margin: '0 0 8px' }}>
         Nghĩa vụ chốt {dmyhm(OBLIGATION_CUTOFF)}.
       </p>
@@ -393,7 +484,7 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
               </article>
             ))}
           </div>
-          <Pager mobile page={p.page} size={20} total={q.data.total} onChange={(page) => set({ page })} />
+          <Pager mobile page={p.page} size={p.size} total={q.data.total} onChange={(page) => set({ page })} />
         </>
       ) : (
         <DataTable<Taxpayer> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(t) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`t:${t.id}`) })} pagination={pagination(p, q.data.total, set)} />
@@ -441,7 +532,6 @@ export function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; 
         </span>
       ),
     },
-    ...(bp === 'desktop' ? [{ title: 'Đơn vị', key: 'u', render: (_: unknown, r: SendRun) => unitName(r.unit) }] : []),
     { title: 'Khung giờ', dataIndex: 'window', width: 120, render: (v: string) => <span className="num">{v}</span> },
     {
       title: 'Thông báo / NNT',
@@ -472,12 +562,18 @@ export function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; 
 
   return (
     <>
-      <div className="detail__toolbar">
-        <Search value={p.rq} onSearch={(rq) => set({ rq, page: 1 })} placeholder="Tìm theo mã đợt" label="Tìm đợt gửi theo mã" />
-        <ChoiceSelect aria-label="Lọc trạng thái đợt" value={p.rs} options={RUN_OPTIONS} onValueChange={(rs) => set({ rs, page: 1 })} style={{ width: 200 }} />
-        <ListReset show={!!(p.rq || p.rs !== 'all')} onReset={() => set({ rq: null, rs: null, page: 1 })} />
-        <span className="detail__count">{q.data ? `${num(q.data.total)} đợt` : ''}</span>
-      </div>
+      {/* Đợt tự động lập chung cho cả cơ sở: nói một lần thay vì lặp cột Đơn vị ở mọi dòng. */}
+      <p className="runs-scope">
+        Đợt tự động được lập chung cho toàn {unitName(UNITS[0].id)}.
+        {p.unit !== 'ALL' && ' Số thông báo và NNT trong đợt gồm cả NNT ngoài phạm vi đang xem.'}
+      </p>
+      <ListToolbar
+        search={<Search value={p.rq} onSearch={(rq) => set({ rq, page: 1 })} placeholder="Tìm theo mã đợt" label="Tìm đợt gửi theo mã" />}
+        filters={<><ChoiceSelect aria-label="Lọc trạng thái đợt" value={p.rs} options={RUN_OPTIONS} onValueChange={(rs) => set({ rs, page: 1 })} style={{ width: 200 }} />
+        <ListReset show={!!(p.rq || p.rs !== 'all')} onReset={() => set({ rq: null, rs: null, page: 1 })} /></>}
+        count={<span className="detail__count">{q.data ? `${num(q.data.total)} đợt` : ''}</span>}
+        activeCount={p.rs !== 'all' ? 1 : 0}
+      />
       <div className={q.isPlaceholderData ? 'pane-results is-stale' : 'pane-results'} aria-busy={q.isPlaceholderData}>
       {q.isError ? (
         <div style={{ paddingBottom: 20 }}>
@@ -500,7 +596,7 @@ export function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; 
                   <Pill map={RUN} value={r.status} />
                 </div>
                 <span className="m-card__meta">
-                  {unitName(r.unit)} · khung {r.window} · {num(r.total)} thông báo / {num(r.taxpayers)} NNT
+                  Khung {r.window} · {num(r.total)} thông báo / {num(r.taxpayers)} NNT
                 </span>
                 <RunProgress r={r} />
                 <Button variant="outline" className="w-full" onClick={() => open(`r:${r.id}`)}>
@@ -509,7 +605,7 @@ export function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; 
               </article>
             ))}
           </div>
-          <Pager mobile page={p.page} size={20} total={q.data.total} onChange={(page) => set({ page })} />
+          <Pager mobile page={p.page} size={p.size} total={q.data.total} onChange={(page) => set({ page })} />
         </>
       ) : (
         <DataTable<SendRun> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(r) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`r:${r.id}`) })} pagination={pagination(p, q.data.total, set)} />

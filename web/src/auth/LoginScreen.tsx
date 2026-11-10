@@ -1,11 +1,15 @@
-import { useRef, useState, type FormEvent, type Ref } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type Ref } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ProtoBadge } from '../components/Proto';
 import { DEMO_ACCOUNTS, ROLE_LABEL, teamName, useDemo, useStaff } from '../demo/DemoContext';
+import { forgetDevice, isTrusted, trustDevice, trustedCount } from './mfa';
+import OtpStep from './OtpStep';
 
 // Màn đăng nhập của bản thiết kế, dạng chia đôi: cột thương hiệu (đỏ brand) và cột form.
 // Chỉ nhận ba tài khoản xem thử, mật khẩu bất kỳ; khi nối Keycloak/OIDC, phần kiểm tra thay bằng chuyển hướng.
+// Hai bước: tài khoản → mã xác thực (OtpStep, giả lập MFA). Thiết bị đã được ghi nhớ thì bỏ qua bước 2.
 // Logo, tên hệ thống (.login__logo/.login__title/.login__org) là phần tử dùng chung: AuthGate đo vị trí để chuyển cảnh.
 
 type DemoId = (typeof DEMO_ACCOUNTS)[number];
@@ -33,16 +37,41 @@ export default function LoginScreen({ ref, leaving, arriving = false, onSignIn }
   const [noIntro] = useState(arriving);
   const userRef = useRef<HTMLInputElement>(null);
   const passRef = useRef<HTMLInputElement>(null);
+  /** Bước 2: tài khoản đã qua bước mật khẩu, chờ nhập mã. */
+  const [otpFor, setOtpFor] = useState<DemoId | null>(null);
+  const [trusted, setTrusted] = useState(trustedCount);
+  const backed = useRef(false);
+
+  useEffect(() => {
+    if (otpFor || !backed.current) return;
+    backed.current = false;
+    userRef.current?.focus();
+  }, [otpFor]);
 
   const demo = DEMO_ACCOUNTS.map((id) => staff.find((s) => s.id === id)!);
 
-  const enter = (id: DemoId) => {
+  const finish = (id: DemoId) => {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
     setUserId(id);
     onSignIn();
   };
+
+  const enter = (id: DemoId) => {
+    if (lock.current) return;
+    if (isTrusted(id)) return finish(id);
+    setError(null);
+    setOtpFor(id);
+  };
+
+  const back = () => {
+    backed.current = true;
+    setPassword('');
+    setOtpFor(null);
+  };
+
+  const otpUser = otpFor ? demo.find((s) => s.id === otpFor) : undefined;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -81,6 +110,19 @@ export default function LoginScreen({ ref, leaving, arriving = false, onSignIn }
 
       <section className="login__form-side" aria-labelledby="login-heading">
         <div className="login__panel">
+          {otpUser ? (
+            <OtpStep
+              key={otpUser.id}
+              name={otpUser.name}
+              disabled={busy}
+              onBack={back}
+              onVerified={(remember) => {
+                if (remember) trustDevice(otpUser.id);
+                finish(otpUser.id as DemoId);
+              }}
+            />
+          ) : (
+          <>
           <h2 id="login-heading" className="login__heading">Đăng nhập</h2>
           <p className="login__sub">Dùng tài khoản được cấp để vào hệ thống.</p>
           <form className="login__form" onSubmit={submit} noValidate>
@@ -140,6 +182,28 @@ export default function LoginScreen({ ref, leaving, arriving = false, onSignIn }
               ))}
             </ul>
           </div>
+
+          {trusted > 0 && (
+            <p className="otp-trusted">
+              <ProtoBadge kind="proposal" note="Thiết bị được ghi nhớ bỏ qua bước nhập mã trong 30 ngày" />
+              <span>
+                Trình duyệt này đang được ghi nhớ cho {trusted} tài khoản nên sẽ bỏ qua bước nhập mã.
+              </span>
+              <button
+                type="button"
+                className="otp__link"
+                onClick={() => {
+                  forgetDevice();
+                  setTrusted(0);
+                }}
+                disabled={busy}
+              >
+                Bỏ ghi nhớ
+              </button>
+            </p>
+          )}
+          </>
+          )}
         </div>
       </section>
     </div>

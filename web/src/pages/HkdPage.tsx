@@ -1,3 +1,5 @@
+import { MobileDisclosure } from '@/components/MobileDisclosure';
+import { IconButton } from '@/components/IconButton';
 import { ChoiceSelect, GroupedSelect, OptionGroup, ViewTabs } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -21,6 +23,9 @@ import { filterOf, useStatsParams } from '../stats/useStatsParams';
 import { useRoute } from '../lib/router';
 import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
 import { C } from '../theme';
+import { downloadCsv } from '../lib/csv';
+import { AiQaTab } from '../hkd/AiQaTab';
+import { TopRows } from '../components/TopRows';
 
 const FONT = 'Inter Variable, Inter, sans-serif';
 const axisLabel = { color: C.faint, fontSize: 12, fontFamily: FONT };
@@ -47,19 +52,13 @@ function useChartBase() {
   return { ...chartMotion(reduced), textStyle: { fontFamily: FONT }, tooltip: { trigger: 'axis' as const, axisPointer: { type: 'shadow' as const } } };
 }
 
-/** Tải CSV (có BOM để Excel đọc đúng tiếng Việt). */
-function downloadCsv(name: string, rows: (string | number)[][]) {
-  const csv = '﻿' + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: name });
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 /* ---------- Tab 1: Chỉ tiêu hằng ngày ---------- */
 
 function DailyTab({ scope }: { scope: string }) {
   const base = useChartBase();
+  // So sánh theo đơn vị thuộc màn lãnh đạo; cán bộ chỉ xem số của mình.
+  const { role } = usePermissions();
   const mobile = useBreakpoint() === 'mobile';
   const q = useQuery({ queryKey: ['hkd-daily', scope], queryFn: () => fetchDaily(scope), placeholderData: keepPreviousData });
   if (q.isError) return <BlockError message="Không tải được chỉ tiêu hằng ngày." onRetry={() => q.refetch()} />;
@@ -96,7 +95,7 @@ function DailyTab({ scope }: { scope: string }) {
             <span><i className="swatch" style={{ background: C.sent }} /> Xử lý thành công</span>
           </div>
         </Panel>
-        <Panel title="Đăng ký app nhưng chưa nộp tờ khai" sub="8 tuần gần nhất" className="dashboard-card--static">
+        <Panel title="Đăng ký app nhưng chưa nộp tờ khai" sub="Theo tuần, 8 tuần gần nhất" className="dashboard-card--static hkd-weekly">
           {!d ? <Skel w="100%" h={220} /> : (
             <ReactECharts
               aria-hidden="true"
@@ -104,8 +103,14 @@ function DailyTab({ scope }: { scope: string }) {
               opts={{ renderer: 'svg' }}
               option={{
                 ...base,
-                grid: { left: 40, right: 12, top: 16, bottom: 28 },
-                xAxis: { type: 'category', data: d.weeks.map((w) => w.label), axisLabel, axisTick: { show: false }, axisLine: { lineStyle: { color: C.grid } } },
+                grid: { left: 40, right: 16, top: 16, bottom: 44 },
+                // Mobile chỉ ghi nhãn cách tuần; vẫn vẽ đủ 8 cột và giữ khoảng ngày đầy đủ khi chạm.
+                tooltip: { ...base.tooltip, confine: true, triggerOn: mobile ? 'click' : 'mousemove|click' },
+                xAxis: {
+                  type: 'category', data: d.weeks.map((w) => w.label),
+                  axisLabel: { ...axisLabel, interval: mobile ? 1 : 0, hideOverlap: true, lineHeight: 16, margin: 10, formatter: (v: string) => v.replace('–', '\n–') },
+                  axisTick: { show: false }, axisLine: { lineStyle: { color: C.grid } },
+                },
                 yAxis: { type: 'value', axisLabel, splitLine: { lineStyle: { color: C.grid } } },
                 series: [{ name: 'Số hộ', type: 'bar', data: d.weeks.map((w) => w.value), itemStyle: { color: C.overdue }, barMaxWidth: 22 }],
               }}
@@ -113,18 +118,18 @@ function DailyTab({ scope }: { scope: string }) {
           )}
         </Panel>
       </div>
-      <Panel title="Theo đơn vị" sub="30 ngày" className="dashboard-card--static hkd-table">
+      {role !== 'officer' && <Panel title="Theo đơn vị" sub="30 ngày" className="dashboard-card--static hkd-table">
         {!d ? <Skel w="100%" h={120} /> : (
-          <table className="mini-table">
+          <TopRows total={d.byUnit.length} noun="đơn vị"><table className="mini-table">
             <thead><tr><th scope="col">Đơn vị</th><th scope="col">Tờ khai tiếp nhận</th><th scope="col">Xử lý thành công</th><th scope="col">Nộp thuế theo hồ sơ</th><th scope="col">Đăng ký app, chưa nộp</th></tr></thead>
             <tbody>
               {d.byUnit.map((u) => (
                 <tr key={u.name}><th scope="row">{u.name}</th><td>{num(u.received)}</td><td>{pct(u.okRate * 100, 100)}</td><td>{pct(u.paidRate * 100, 100)}</td><td>{num(u.appMissing)}</td></tr>
               ))}
             </tbody>
-          </table>
+          </table></TopRows>
         )}
-      </Panel>
+      </Panel>}
     </div>
   );
 }
@@ -180,14 +185,14 @@ function StructureTab({ scope, dim, setDim }: { scope: string; dim: Dimension; s
             <div className="chart-legend" aria-hidden="true">
               {COMPLIANCE_ORDER.map((c) => <span key={c}><i className="swatch" style={{ background: COMPLIANCE_COLOR[c] }} /> {COMPLIANCE_LABEL[c]}</span>)}
             </div>
-            <table className="mini-table" style={{ marginTop: 12 }}>
+            <TopRows total={d.rows.length} noun="dòng"><table className="mini-table" style={{ marginTop: 12 }}>
               <thead><tr><th scope="col">{DIM_LABEL[dim]}</th><th scope="col">Tổng HKD</th>{COMPLIANCE_ORDER.map((c) => <th scope="col" key={c}>{COMPLIANCE_LABEL[c]}</th>)}</tr></thead>
               <tbody>
                 {d.rows.map((r) => (
                   <tr key={r.key}><th scope="row">{r.key}</th><td>{num(r.total)}</td>{COMPLIANCE_ORDER.map((c) => <td key={c}>{num(r.counts[c])}</td>)}</tr>
                 ))}
               </tbody>
-            </table>
+            </table></TopRows>
           </>
         )}
       </Panel>
@@ -199,6 +204,8 @@ function StructureTab({ scope, dim, setDim }: { scope: string; dim: Dimension; s
 
 function DebtTab({ scope, scopeName }: { scope: string; scopeName: string }) {
   const base = useChartBase();
+  const { role } = usePermissions();
+  const tables = role === 'officer' ? (['byWard'] as const) : (['byUnit', 'byWard'] as const);
   const q = useQuery({ queryKey: ['hkd-debt', scope], queryFn: () => fetchDebt(scope), placeholderData: keepPreviousData });
   if (q.isError) return <BlockError message="Không tải được số liệu nợ thuế." onRetry={() => q.refetch()} />;
   const d = q.data;
@@ -256,20 +263,20 @@ function DebtTab({ scope, scopeName }: { scope: string; scopeName: string }) {
             {REPORT_MONTHS.map((m) => (
               <li key={m}>
                 <span>Báo cáo nợ thuế tháng {m}</span>
-                <Button variant="outline" size="sm" disabled={!d} onClick={() => report(m)}><Download aria-hidden="true" /> Tải CSV</Button>
+                <IconButton icon={Download} label={`Tải báo cáo nợ thuế tháng ${m} dạng CSV`} disabled={!d} onClick={() => report(m)} />
               </li>
             ))}
           </ul>
         </Panel>
       </div>
-      <div className="charts">
-        {(['byUnit', 'byWard'] as const).map((k) => (
+      <div className={tables.length === 1 ? 'charts charts--single' : 'charts'}>
+        {tables.map((k) => (
           <Panel key={k} title={k === 'byUnit' ? 'Theo đơn vị' : 'Theo địa bàn'} className="dashboard-card--static hkd-table">
             {!d ? <Skel w="100%" h={120} /> : (
-              <table className="mini-table">
+              <TopRows total={d[k].length} noun="dòng"><table className="mini-table">
                 <thead><tr><th scope="col">{k === 'byUnit' ? 'Đơn vị' : 'Địa bàn'}</th><th scope="col">HKD nợ</th><th scope="col">Tổng nợ</th><th scope="col">Quá hạn</th></tr></thead>
                 <tbody>{d[k].map((u) => <tr key={u.name}><th scope="row">{u.name}</th><td>{num(u.hkd)}</td><td>{money(u.amount)}</td><td>{money(u.overdue)}</td></tr>)}</tbody>
-              </table>
+              </table></TopRows>
             )}
           </Panel>
         ))}
@@ -288,10 +295,10 @@ function SupportTab({ scope }: { scope: string }) {
   const table = (title: string, rows: NonNullable<typeof d>['officers'], first: string) => (
     <Panel title={title} sub="30 ngày" className="dashboard-card--static hkd-table">
       {!d ? <Skel w="100%" h={140} /> : (
-        <table className="mini-table">
+        <TopRows total={rows.length} noun="dòng"><table className="mini-table">
           <thead><tr><th scope="col">{first}</th><th scope="col">Tổng</th>{statuses.map((s) => <th scope="col" key={s}>{REQUEST_STATUS_LABEL[s]}</th>)}<th scope="col">Xử lý TB</th></tr></thead>
           <tbody>{rows.map((r) => <tr key={r.name}><th scope="row">{r.name}</th><td>{num(r.total)}</td>{statuses.map((s) => <td key={s}>{num(r.status[s])}</td>)}<td>{hours(r.avgHours)}</td></tr>)}</tbody>
-        </table>
+        </table></TopRows>
       )}
     </Panel>
   );
@@ -309,18 +316,18 @@ function SupportTab({ scope }: { scope: string }) {
       <div className="charts">
         <Panel title="Theo loại yêu cầu" className="dashboard-card--static hkd-table">
           {!d ? <Skel w="100%" h={120} /> : (
-            <table className="mini-table">
+            <TopRows total={d.types.length} noun="loại"><table className="mini-table">
               <thead><tr><th scope="col">Loại yêu cầu</th><th scope="col">Số yêu cầu</th><th scope="col">Tỷ lệ</th></tr></thead>
               <tbody>{d.types.map((t) => <tr key={t.name}><th scope="row">{t.name}</th><td>{num(t.total)}</td><td>{pct(t.total, d.total)}</td></tr>)}</tbody>
-            </table>
+            </table></TopRows>
           )}
         </Panel>
         <Panel title="Đang chờ HKD bổ sung" className="dashboard-card--static hkd-table">
           {!d ? <Skel w="100%" h={120} /> : d.waiting.length === 0 ? <p className="chart-note">Không có yêu cầu chờ bổ sung.</p> : (
-            <table className="mini-table">
+            <TopRows total={d.waiting.length} noun="yêu cầu"><table className="mini-table">
               <thead><tr><th scope="col">Mã</th><th scope="col">Ngày</th><th scope="col">Loại</th><th scope="col">Cán bộ</th><th scope="col">Trạng thái</th></tr></thead>
               <tbody>{d.waiting.map((r) => <tr key={r.id}><th scope="row" className="id">{r.id}</th><td>{dmy(r.date)}</td><td>{r.type}</td><td>{r.officerName}</td><td><StatusPill tone={STATUS_TONE[r.status]}>{REQUEST_STATUS_LABEL[r.status]}</StatusPill></td></tr>)}</tbody>
-            </table>
+            </table></TopRows>
           )}
         </Panel>
       </div>
@@ -395,10 +402,10 @@ function RemindersTab({ scope }: { scope: string }) {
       {(!d || d.byUnit.length > 1) && (
         <Panel title="HKD cần nhắc theo đơn vị" sub="Số HKD hiện còn việc cần làm" className="dashboard-card--static hkd-table">
           {!d ? <Skel w="100%" h={120} /> : (
-            <table className="mini-table">
+            <TopRows total={d.byUnit.length} noun="đơn vị"><table className="mini-table">
               <thead><tr><th scope="col">Đơn vị</th>{REMINDER_ORDER.map((k) => <th scope="col" key={k}>{REMINDER_LABEL[k]}</th>)}</tr></thead>
               <tbody>{d.byUnit.map((u) => <tr key={u.name}><th scope="row">{u.name}</th>{REMINDER_ORDER.map((k) => <td key={k} data-label={REMINDER_LABEL[k]}>{num(u.counts[k])}</td>)}</tr>)}</tbody>
-            </table>
+            </table></TopRows>
           )}
         </Panel>
       )}
@@ -411,7 +418,7 @@ function ObligationsList() {
   const ob = useQuery({ queryKey: ['obligations', p.unit], queryFn: () => fetchObligations(filterOf(p)), placeholderData: keepPreviousData });
   return <>
     <p className="workspace-note">Danh sách HKD còn nghĩa vụ khai hoặc nộp thuế; lọc theo mức độ cần xử lý.</p>
-    <ObligationChart groupNote={p.group !== 'all'} data={ob.data} error={ob.error} loading={ob.isLoading} onRetry={() => ob.refetch()} onPick={(kind, prio) => set({ kind, prio, notified: false, page: 1 })} />
+    <MobileDisclosure label="Tổng quan nghĩa vụ"><ObligationChart groupNote={p.group !== 'all'} data={ob.data} error={ob.error} loading={ob.isLoading} onRetry={() => ob.refetch()} onPick={(kind, prio) => set({ kind, prio, notified: false, page: 1 })} /></MobileDisclosure>
     <TaxpayersPane p={p} set={set} open={openDetail} reset={() => set({ tq: null, notified: null, kind: null, prio: null, group: null, page: 1 })} />
     <DetailOverlay detail={p.detail} filter={filterOf(p)} onClose={closeDetail} />
   </>;
@@ -426,6 +433,7 @@ const TABS = [
   { key: 'ho-tro', label: 'Hỗ trợ HKD' },
   { key: 'nhac-viec', label: 'Hiệu quả nhắc việc' },
   { key: 'danh-sach', label: 'Danh sách nghĩa vụ' },
+  { key: 'hoi-dap-ai', label: 'Hỏi đáp AI' },
 ];
 
 export default function HkdPage() {
@@ -440,7 +448,7 @@ export default function HkdPage() {
   const set = (patch: Record<string, string>) => navigate('/quan-ly-hkd', { unit: scope === defaultScope ? undefined : scope, muc: tab === TABS[0].key ? undefined : tab, chieu: dim === 'ward' ? undefined : dim, ...patch }, true);
 
   const body = (key: string) =>
-    key === 'danh-sach' ? <ObligationsList /> : key === 'chi-tieu' ? <DailyTab scope={scope} />
+    key === 'danh-sach' ? <ObligationsList /> : key === 'hoi-dap-ai' ? <AiQaTab scope={scope} /> : key === 'chi-tieu' ? <DailyTab scope={scope} />
       : key === 'co-cau' ? <StructureTab scope={scope} dim={dim} setDim={(v) => set({ chieu: v === 'ward' ? '' : v })} />
         : key === 'no-thue' ? <DebtTab scope={scope} scopeName={scopeLabel(scope)} />
           : key === 'nhac-viec' ? <RemindersTab scope={scope} />

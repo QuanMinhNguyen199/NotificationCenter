@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from './ui/button';
+import { IconButton } from './IconButton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ChoiceSelect } from './Controls';
 import { num } from '../lib/format';
@@ -40,9 +40,9 @@ function TablePager({ current, pageSize, total, onChange }: PaginationState) {
   const to = Math.min(total, current * pageSize);
   return <div className="table-pager">
     <span className="mr-auto text-muted-foreground">{num(from)}–{num(to)} trong {num(total)}</span>
-    <ChoiceSelect aria-label="Số dòng mỗi trang" value={pageSize} onValueChange={(size) => onChange(1, size)} options={[20,50,100].map((value) => ({ value, label: `${value} / trang` }))} />
-    <Button variant="outline" size="icon" aria-label="Trang trước" disabled={current <= 1} onClick={() => onChange(current - 1, pageSize)}><ChevronLeft /></Button>
+    <ChoiceSelect aria-label="Số dòng mỗi trang" value={pageSize} onValueChange={(size) => onChange(1, size)} options={[10, 20, 50].map((value) => ({ value, label: `${value} / trang` }))} />
+    <IconButton icon={ChevronLeft} label="Trang trước" disabled={current <= 1} onClick={() => onChange(current - 1, pageSize)} />
     <span className="num">{current} / {pages}</span>
-    <Button variant="outline" size="icon" aria-label="Trang sau" disabled={current >= pages} onClick={() => onChange(current + 1, pageSize)}><ChevronRight /></Button>
+    <IconButton icon={ChevronRight} label="Trang sau" disabled={current >= pages} onClick={() => onChange(current + 1, pageSize)} />
   </div>;
 }

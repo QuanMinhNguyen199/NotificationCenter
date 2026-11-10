@@ -60,6 +60,8 @@ export interface Summary {
   delivered: number | null;
   pending: number;
   failed: number;
+  /** Chưa rõ kết quả, hết hạn gửi hoặc bỏ qua: phần còn lại để Đã gửi + Chờ gửi + Gửi thất bại + khác = Tổng. */
+  other: number;
   uniqueTaxpayers: number;
   /** Thời gian phản hồi trung bình (phút) từ lúc tạo tới khi iHanoi tiếp nhận; null nếu chưa có thông báo có mốc tiếp nhận. */
   avgResponse: number | null;
@@ -95,6 +97,7 @@ export async function fetchSummary(f: StatsFilter): Promise<Summary> {
     delivered: rows.filter((r) => r.delivery === 'DELIVERED' || r.delivery === 'ACCEPTED').length,
     pending: rows.filter((r) => r.send === 'PENDING').length,
     failed: rows.filter((r) => r.send === 'FAILED').length,
+    other: rows.filter((r) => r.send === 'UNKNOWN' || r.send === 'EXPIRED' || r.send === 'SKIPPED').length,
     uniqueTaxpayers: new Set(rows.map((r) => r.taxpayerId)).size,
     avgResponse: responseOf(rows).total,
     updatedAt: UPDATED_AT,
@@ -198,6 +201,8 @@ export interface TaxpayerQuery extends StatsFilter {
   notified: boolean;
   kind: 'file' | 'pay' | null;
   priority: Priority | null;
+  /** Đã đăng ký app iHanoi nhưng còn hồ sơ khai chưa nộp (giả lập). */
+  app?: boolean;
   page: number;
   size: number;
 }
@@ -217,6 +222,7 @@ export async function fetchTaxpayers(qy: TaxpayerQuery): Promise<Page<Taxpayer>>
       if (qy.kind === 'file' && (!t.fileCount || (qy.priority && t.filePriority !== qy.priority))) return false;
       if (qy.kind === 'pay' && (!t.payCount || (qy.priority && t.payPriority !== qy.priority))) return false;
       if (!qy.kind && qy.priority && t.filePriority !== qy.priority && t.payPriority !== qy.priority) return false;
+      if (qy.app && !(appRegistered(t.id) && t.fileCount > 0)) return false;
       return matchQ(t, qy.q);
     })
     .sort((a, b) => top(a) - top(b) || a.id - b.id);
@@ -367,3 +373,54 @@ export async function updateAccount(id: string, patch: AccountPatch, actorId: st
 }
 
 export { UNITS };
+
+/* ---------- [Thêm] Gửi lại, lý do lỗi, đăng ký app (giả lập: hệ thống thật chưa trả các trường này) ---------- */
+
+const hashOf = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+
+export interface FailReason {
+  code: 'TIMEOUT' | 'NO_TOKEN' | 'NOT_REGISTERED' | 'MST_MISMATCH';
+  text: string;
+  /** Lỗi tạm thời gửi lại được; lỗi dữ liệu cần sửa trước khi gửi lại (đề xuất). */
+  retry: boolean;
+  fix?: string;
+}
+
+export const FAIL_REASONS: FailReason[] = [
+  { code: 'TIMEOUT', text: 'iHanoi không phản hồi trong thời gian chờ', retry: true },
+  { code: 'NO_TOKEN', text: 'Thiết bị chưa nhận được bản đẩy (ứng dụng đã gỡ hoặc tắt thông báo)', retry: true },
+  { code: 'NOT_REGISTERED', text: 'NNT chưa đăng ký tài khoản iHanoi', retry: false, fix: 'Hướng dẫn NNT đăng ký iHanoi rồi gửi lại.' },
+  { code: 'MST_MISMATCH', text: 'MST không khớp với tài khoản iHanoi', retry: false, fix: 'Kiểm tra lại MST trong hồ sơ NNT trước khi gửi lại.' },
+];
+
+export const failReason = (n: Pick<Notification, 'id'>) => FAIL_REASONS[hashOf(n.id) % FAIL_REASONS.length];
+
+const retryLog = new Map<string, { at: string; by: string }>();
+export const retryOf = (id: string) => retryLog.get(id);
+
+/** Gửi lại: thông báo lỗi tạm thời quay về Chờ gửi, vào lượt gửi kế tiếp. */
+export async function retryNotifications(ids: string[], by: string) {
+  await wait(500);
+  let ok = 0;
+  let skipped = 0;
+  ids.forEach((id) => {
+    const n = notifications.find((x) => x.id === id);
+    if (!n || n.send !== 'FAILED' || !failReason(n).retry) return void skipped++;
+    n.send = 'PENDING';
+    n.processedAt = undefined;
+    retryLog.set(id, { at: UPDATED_AT, by });
+    ok++;
+  });
+  return { ok, skipped };
+}
+
+/** Mã thông báo gửi thất bại, gửi lại được, theo đúng bộ lọc đang xem. */
+export async function fetchRetryableIds(qy: NotificationQuery) {
+  await wait(200);
+  return filterNotifications(qy, qy.day)
+    .filter((n) => n.send === 'FAILED' && failReason(n).retry && matchQ(taxpayers[n.taxpayerId], qy.q))
+    .map((n) => n.id);
+}
+
+/** NNT đã đăng ký ứng dụng iHanoi (giả lập ổn định theo mã NNT). */
+export const appRegistered = (id: number) => hashOf(`app-${id}`) % 100 < 58;
