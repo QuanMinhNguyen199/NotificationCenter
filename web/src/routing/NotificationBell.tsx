@@ -35,12 +35,10 @@ export function NotificationBell() {
     else navigate('/quan-ly-hkd', { muc: 'danh-sach', detail: `t:${i.taxpayer.id}` });
   };
 
-  const group = (title: string, list: BellItem[]) =>
+  // Một danh sách chung, mới nhất trước; icon của từng mục đã phân biệt ca chuyển tuyến và hộ bất thường.
+  const group = (list: BellItem[]) =>
     list.length > 0 && (
-      <section className="rt-pop__group" aria-label={`${title}, ${list.length} mục`}>
-        <h3 className="rt-pop__group-title">
-          {title} <span className="rt-count">{list.length}</span>
-        </h3>
+      <section className="rt-pop__group" aria-label="Thông báo mới">
         <ul>
           {list.map((i) => {
             const Icon = ICON[i.kind];
@@ -84,7 +82,7 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={6} className="rt-pop w-[min(380px,calc(100vw-24px))] gap-0 p-0">
         <div className="rt-pop__head">
-          <h2 className="rt-pop__title">Trong 24 giờ qua</h2>
+          <h2 className="rt-pop__title">Thông báo mới</h2>
           <ProtoBadge kind="mock" note="Thông báo cho cán bộ được mô phỏng, chưa nối hệ thống thật" />
           <Button variant="ghost" size="sm" className="rt-pop__mark" disabled={!unread} onClick={() => markRead(user.id, items.map((i) => i.id))}>
             Đánh dấu đã đọc
@@ -108,8 +106,7 @@ export function NotificationBell() {
             <p className="rt-pop__state">Không có ca chuyển tuyến mới hay hộ có dấu hiệu bất thường trong 24 giờ qua.</p>
           ) : (
             <>
-              {group('Ca chuyển tuyến mới', escalations)}
-              {group('Hộ có dấu hiệu bất thường', abnormal)}
+              {group([...escalations, ...abnormal].sort((a, b) => b.at.localeCompare(a.at)))}
             </>
           )}
         </div>

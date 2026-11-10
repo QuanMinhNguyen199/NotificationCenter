@@ -1,6 +1,7 @@
 import { MobileDisclosure } from '../components/MobileDisclosure';
 import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { usePermissions } from '../demo/DemoContext';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchActiveRun, fetchSummary } from '../api/mockApi';
@@ -30,13 +31,17 @@ export default function StatsPage() {
   const qc = useQueryClient();
   const { navigate } = useRoute();
   const f = filterOf(p);
+  const leader = role === 'base';
+  // Lãnh đạo: danh sách từng thông báo là việc tác nghiệp → thu gọn, mở khi bấm ô số/ngày hoặc nút "Xem danh sách".
+  const [listOpen, setListOpen] = useState(!leader || !!p.day || p.ns !== 'all' || p.nd !== 'all' || !!p.nq);
+  const showList = !leader || listOpen;
 
   // Số liệu đang gửi làm mới mỗi 30 giây khi tab Thống kê đang mở.
   // Đổi bộ lọc: giữ số cũ (làm mờ tại vùng kết quả) tới khi có số mới, khung không nhảy về skeleton; lần tải đầu vẫn là skeleton.
   const summary = useQuery({ queryKey: ['summary', f], queryFn: () => fetchSummary(f), refetchInterval: 30_000, placeholderData: keepPreviousData });
   const active = useQuery({ queryKey: ['active-run', f.unit], queryFn: () => fetchActiveRun(f), refetchInterval: 30_000 });
 
-  const scrollToList = () => document.getElementById('detail')?.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' });
+  const scrollToList = () => (setListOpen(true), requestAnimationFrame(() => document.getElementById('detail')?.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' })));
   const resetFilters = () => set({ unit: null, from: null, to: null, group: null, day: null, ns: null, nd: null, nq: null, tq: null, notified: null, kind: null, prio: null, rs: null, rq: null, page: 1 });
   const s = summary.data;
   const unusedGroup = GROUPS.find((g) => g.id === p.group && g.unused);
@@ -114,6 +119,8 @@ export default function StatsPage() {
         </div>
       ) : (
         <Kpis
+          keys={leader ? ['total', 'sent', 'failed', 'response'] : undefined}
+          labels={leader ? { response: 'Thời gian giao thông báo TB' } : undefined}
           stale={summary.isPlaceholderData}
           s={s}
           p={p}
@@ -129,7 +136,12 @@ export default function StatsPage() {
 
       {!mobile && trend}
 
-      <DetailTabs p={p} set={set} open={openDetail} reset={resetFilters} />
+      {leader && (
+        <button type="button" className="top-rows__toggle stats-list-toggle" aria-expanded={listOpen} aria-controls="detail" onClick={() => setListOpen((v) => !v)}>
+          {listOpen ? <>Ẩn danh sách thông báo <ChevronUp aria-hidden="true" /></> : <>Xem danh sách thông báo{s ? ` (${num(s.total)})` : ''} <ChevronDown aria-hidden="true" /></>}
+        </button>
+      )}
+      {showList && <DetailTabs p={p} set={set} open={openDetail} reset={resetFilters} />}
       {mobile && trend}
 
       <DetailOverlay detail={p.detail} filter={f} onClose={closeDetail} />

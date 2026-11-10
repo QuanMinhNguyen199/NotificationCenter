@@ -30,9 +30,10 @@ function RadioGroupItem({
     >
       <RadioGroupPrimitive.Indicator
         data-slot="radio-group-indicator"
-        className="flex size-4 items-center justify-center"
+        className="absolute inset-0 grid place-items-center"
       >
-        <span className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-foreground" />
+        {/* Chấm canh giữa bằng grid, không dùng translate: utility translate của Tailwind đè được CSS của app (lớp ưu tiên cao hơn) làm chấm lệch trên bản build. */}
+        <span className="size-[7px] rounded-full bg-primary-foreground" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )

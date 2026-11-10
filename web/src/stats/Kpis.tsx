@@ -68,23 +68,32 @@ const NS: Partial<Record<KpiKey, { ns: StatsParams['ns']; nd: StatsParams['nd'] 
   failed: { ns: 'FAILED', nd: 'all' },
 };
 
-export function Kpis({ s, p, onPick, unused, stale }: { s?: Summary; p: StatsParams; stale?: boolean; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string }) {
+export function Kpis({ s, p, onPick, unused, stale, keys, labels }: {
+  s?: Summary; p: StatsParams; stale?: boolean; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string;
+  /** Chỉ hiện các ô này (mặc định cả 7). */
+  keys?: KpiKey[];
+  /** Đổi nhãn theo màn, ví dụ phân biệt với "thời gian phản hồi của cán bộ" trên màn lãnh đạo. */
+  labels?: Partial<Record<KpiKey, string>>;
+}) {
+  const defs = keys ? DEFS.filter((d) => keys.includes(d.key)) : DEFS;
+  // Mobile: ô phụ ẩn sau nút "Xem thêm"; chỉ áp dụng khi màn đang hiện đủ 7 ô.
+  const secondary: KpiKey[] = defs.length === DEFS.length ? ['delivered', 'unique', 'response'] : [];
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className={`kpis${expanded ? ' kpis--expanded' : ''}${stale ? ' is-stale' : ''}`} aria-busy={stale} role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
-      {DEFS.map((d) => {
+    <div className={`kpis${expanded ? ' kpis--expanded' : ''}${defs.length !== DEFS.length ? ` kpis--${defs.length}` : ''}${stale ? ' is-stale' : ''}`} aria-busy={stale} role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
+      {defs.map((d) => {
         const v = s ? d.value(s) : undefined;
         const sel = d.selected(p);
         return (
           <button
             key={d.key}
             type="button"
-            className={`kpi${sel ? ' kpi--selected' : ''}${d.key === 'total' ? ' kpi--lead' : ''}${['delivered', 'unique', 'response'].includes(d.key) ? ' kpi--secondary' : ''}`}
+            className={`kpi${sel ? ' kpi--selected' : ''}${d.key === 'total' ? ' kpi--lead' : ''}${secondary.includes(d.key) ? ' kpi--secondary' : ''}`}
             aria-pressed={d.key === 'response' ? undefined : sel}
             aria-haspopup={d.key === 'response' ? 'dialog' : undefined}
             onClick={() => onPick(d.key, NS[d.key])}
           >
-            <span className="kpi__label">{d.label}</span>
+            <span className="kpi__label">{labels?.[d.key] ?? d.label}</span>
             {s === undefined ? (
               <>
                 <Skel w={96} h={30} />
@@ -104,9 +113,11 @@ export function Kpis({ s, p, onPick, unused, stale }: { s?: Summary; p: StatsPar
           </button>
         );
       })}
-      <button type="button" className="kpis__more" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-        {expanded ? 'Thu gọn chỉ số' : 'Xem thêm 3 chỉ số'}<ChevronDown aria-hidden="true" />
-      </button>
+      {secondary.length > 0 && (
+        <button type="button" className="kpis__more" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+          {expanded ? 'Thu gọn chỉ số' : `Xem thêm ${secondary.length} chỉ số`}<ChevronDown aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }
