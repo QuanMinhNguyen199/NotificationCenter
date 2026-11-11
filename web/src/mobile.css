@@ -120,8 +120,9 @@
   .m-card__row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
   .m-pager { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 12px; align-items: center; padding: 12px 0; }
   .m-pager > .num { text-align: center; font-size: 13px; }
-  .qa-item { padding-block: 16px; }
-  .qa-item__q, .qa-item__a { font-size: 14px; }
+  .qa-split { grid-template-columns: minmax(0, 1fr); }
+  .qa-split > .qa-list { border-right: 0; }
+  .qa-row { padding: 12px 0; border-left: 0; }
 
   :root .shell--mobile .action-bar { left: 16px; right: 16px; bottom: calc(80px + var(--safe-bottom)); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; gap: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--surface); box-shadow: var(--float-shadow); }
   .action-bar__state { grid-column: 1 / -1; font-size: 12px; }
@@ -145,3 +146,4 @@
   .cfg-body { padding-top: 12px; }
 
 }
+.sheet .qa-detail__head .cell-tp__name { display: none; }
