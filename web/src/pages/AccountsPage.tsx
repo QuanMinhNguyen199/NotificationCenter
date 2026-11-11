@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { fetchAccounts, updateAccount, type AccountPatch, type AccountRow } from '../api/mockApi';
@@ -170,26 +170,27 @@ function Group({ title, rows, canEdit, actorId, onEdit }: { title: string; rows:
       {bp === 'mobile' ? (
         <div className="m-list">
           {rows.map((a) => (
-            <article key={a.id} className="m-card">
+            <article key={a.id} className={editable(a) ? 'm-card m-card--link' : 'm-card'}>
               <div className="m-card__top">
                 <span className="cell-tp">
-                  <span className="cell-tp__name">
-                    {a.name}
-                    {a.id === actorId && <span className="acct-me"> (bạn)</span>}
+                  {editable(a) ? (
+                    <button type="button" className="m-card__link cell-tp__name" aria-label={`Sửa quyền ${a.name}`} onClick={() => onEdit(a)}>
+                      {a.name}
+                    </button>
+                  ) : (
+                    <span className="cell-tp__name">
+                      {a.name}
+                      {a.id === actorId && <span className="acct-me"> (bạn)</span>}
+                    </span>
+                  )}
+                  <span className="cell-tp__mst">
+                    {ROLE_LABEL[a.role]}
+                    {a.taxpayers ? ` · ${num(a.taxpayers)} NNT` : ''}
                   </span>
-                  <span className="cell-tp__mst">{a.username}</span>
                 </span>
                 <Status active={a.active} />
+                {editable(a) && <ChevronRight className="m-card__chev" aria-hidden="true" />}
               </div>
-              <span className="m-card__meta">
-                {ROLE_LABEL[a.role]}
-                {a.taxpayers ? ` · ${num(a.taxpayers)} NNT phụ trách` : ''}
-              </span>
-              {editable(a) && (
-                <Button variant="outline" className="w-full" onClick={() => onEdit(a)}>
-                  Sửa quyền
-                </Button>
-              )}
             </article>
           ))}
         </div>

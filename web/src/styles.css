@@ -1536,6 +1536,13 @@ html[data-auth-transition] :is(.shell, .shell *) { animation-duration: 0s !impor
 .qa-rate__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 @media (max-width: 767px) { .export-btn { margin-left: 0; } .chat-log__msg { max-width: 100%; } }
 
+/* Phạm vi cố định (cán bộ, khối tổng hợp cơ sở): chữ thường, không nền — là thông tin, không phải ô chọn. */
+.scope-text { display: inline-flex; align-items: center; min-height: 36px; font-size: 14px; color: var(--text); white-space: nowrap; }
+.scope-text__label { color: var(--text-muted); margin-right: 4px; }
+.leader-section__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 12px; }
+.leader-section__head .leader-section__title { margin: 0; }
+.leader-section__head .scope-text { min-height: 0; }
+
 /* Chuông + số ca mới trên điều hướng */
 .topbar__actions, .m-header__actions { display: inline-flex; align-items: center; gap: 8px; }
 .nav-count { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: #fff; color: var(--brand-ink); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }

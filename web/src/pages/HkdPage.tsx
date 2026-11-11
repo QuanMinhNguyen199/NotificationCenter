@@ -454,24 +454,24 @@ export default function HkdPage() {
           : key === 'nhac-viec' ? <RemindersTab scope={scope} />
             : <SupportTab scope={scope} />;
 
+  const scopeControl = fixedScope ? (
+    <span className="scope-text"><span className="scope-text__label">Phạm vi:</span>{scopeLabel(fixedScope)}</span>
+  ) : (
+    <GroupedSelect aria-label="Phạm vi" prefix="Phạm vi:" value={scope} groups={scopes} onValueChange={(u) => set({ unit: u === defaultScope ? '' : u })} style={{ minWidth: 200 }} />
+  );
+
   return (
     <div className="hkd-page">
       <h1 className="sr-only">Quản lý hộ kinh doanh</h1>
-      <div className="hkd-filter">
-        {fixedScope ? (
-          <span className="filters__fixed">Phạm vi: {scopeLabel(fixedScope)}</span>
-        ) : (
-          <GroupedSelect aria-label="Phạm vi" prefix="Phạm vi:" value={scope} groups={scopes} onValueChange={(u) => set({ unit: u === defaultScope ? '' : u })} style={{ minWidth: 200 }} />
-        )}
-        <span className="hkd-filter__stamp">Số liệu đến {dmy('2026-10-28')}</span>
-        <StatusPill tone="neutral">Dữ liệu minh họa</StatusPill>
-      </div>
       {mobile ? <>
+        <div className="hkd-filter">{scopeControl}</div>
         <ChoiceSelect aria-label="Nội dung quản lý HKD" value={tab} options={TABS.map((t) => ({ value: t.key, label: t.label }))} onValueChange={(muc) => set({ muc })} style={{ width: '100%', marginBottom: 16 }} />
         {body(tab)}
       </> : <ViewTabs
         value={tab}
         onValueChange={(k) => set({ muc: k === TABS[0].key ? '' : k })}
+        // Cả 7 tab đều lọc theo phạm vi nên phạm vi đứng cùng hàng tab, sát phải.
+        extra={scopeControl}
         items={TABS.map((t) => ({ key: t.key, label: t.label, children: tab === t.key ? body(t.key) : null }))}
       />}
     </div>

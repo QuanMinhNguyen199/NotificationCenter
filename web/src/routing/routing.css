@@ -103,9 +103,12 @@ button.rt-row:focus-visible { outline: 2px solid var(--brand); outline-offset: -
 .rt-item:hover { background: var(--ground); }
 .rt-item:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 0; }
 .rt-item > svg { width: 18px; height: 18px; margin-top: 2px; color: var(--text-muted); }
-.rt-item__title { display: block; font-size: 14px; line-height: 1.45; }
+.rt-item__title { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 14px; line-height: 1.45; }
 .rt-item--unread .rt-item__title { font-weight: 600; }
-.rt-item__sub { display: block; margin-top: 2px; font-size: 13px; line-height: 1.45; color: var(--text-muted); overflow-wrap: anywhere; }
+.rt-item__sub { display: flex; gap: 6px; min-width: 0; margin-top: 2px; font-size: 13px; line-height: 1.45; color: var(--text-muted); }
+.rt-item__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-item__sub time { flex: none; }
+.rt-item__sub time::before { content: "·"; margin-right: 6px; }
 .rt-item__dot { width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: var(--brand); }
 .rt-pop__foot { padding: 10px 14px; border-top: 1px solid var(--border); background: var(--ground); }
 .rt-pop__foot .proto-note { margin: 0; }

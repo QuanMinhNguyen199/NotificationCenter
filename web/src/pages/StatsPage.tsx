@@ -79,10 +79,10 @@ export default function StatsPage() {
         {active.isLoading ? (
           <Skel w={420} h={16} />
         ) : active.data ? (
-          mobile ? <div className="mobile-run">
-            <div><span className="mobile-run__label">Đợt gửi toàn cơ sở</span><p>{RUN[active.data.status].label} · <b>{num(active.data.pending)}</b> chờ gửi</p></div>
-            <IconButton icon={ArrowRight} label={`Xem đợt gửi ${active.data.id}, toàn cơ sở`} onClick={() => navigate('/gui-thong-bao', { muc: 'tu-dong', detail: `r:${active.data!.id}` })} />
-          </div> : <>
+          mobile ? <button type="button" className="mobile-run" aria-label={`Xem đợt gửi ${active.data.id}, toàn cơ sở`} onClick={() => navigate('/gui-thong-bao', { muc: 'tu-dong', detail: `r:${active.data!.id}` })}>
+            <span><span className="mobile-run__label">Đợt gửi toàn cơ sở</span><span className="mobile-run__text">{RUN[active.data.status].label} · <b>{num(active.data.pending)}</b> chờ gửi</span></span>
+            <ArrowRight className="mobile-run__icon" aria-hidden="true" />
+          </button> : <>
             <p>
               Đợt <span className="id">{active.data.id}</span> <span className="finding__scope">(toàn cơ sở)</span> {RUN[active.data.status].label.toLowerCase()}: đã gửi Noti{' '}
               <b className="num">

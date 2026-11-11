@@ -45,12 +45,14 @@ export function NotificationBell() {
             const unreadItem = !isRead(user.id, i.id);
             return (
               <li key={i.id}>
-                <button type="button" className={`rt-item${unreadItem ? ' rt-item--unread' : ''}`} onClick={() => go(i)}>
+                <button type="button" className={`rt-item${unreadItem ? ' rt-item--unread' : ''}`} title={`${i.title} — ${i.taxpayer.name}`} onClick={() => go(i)}>
                   <Icon aria-hidden="true" />
                   <span>
                     <span className="rt-item__title">{i.title}</span>
+                    {/* Tên hộ dài thì cắt "…", mốc thời gian luôn hiện đủ. */}
                     <span className="rt-item__sub">
-                      {i.taxpayer.name}, <time dateTime={i.at} title={dmyhm(i.at)}>{ago(i.at)}</time>
+                      <span className="rt-item__who">{i.taxpayer.name}</span>
+                      <time dateTime={i.at} title={dmyhm(i.at)}>{ago(i.at)}</time>
                     </span>
                   </span>
                   {unreadItem ? (

@@ -509,9 +509,14 @@ export default function SendPage() {
               <button type="button" className="tpl-row send-row" onClick={() => openDetail(s.id)}>
                 <span className="tpl-row__main">
                   <span className="tpl-row__name">{s.title}</span>
-                  <span className="tpl-row__purpose">
-                    <span className="id">{s.id}</span> · {s.createdBy}, {dmyhm(s.createdAt)} · {s.audienceLabel} · <span className="num">{num(s.total)}</span> NNT · {s.channels.map(channelName).join(', ')}
-                  </span>
+                  {bp === 'mobile' ? (
+                    // Điện thoại: chỉ giữ thời điểm và quy mô; người tạo, nhóm nhận, kênh xem trong chi tiết.
+                    <span className="tpl-row__purpose num">{dmyhm(s.createdAt)} · {num(s.total)} NNT</span>
+                  ) : (
+                    <span className="tpl-row__purpose">
+                      <span className="id">{s.id}</span> · {s.createdBy}, {dmyhm(s.createdAt)} · {s.audienceLabel} · <span className="num">{num(s.total)}</span> NNT · {s.channels.map(channelName).join(', ')}
+                    </span>
+                  )}
                 </span>
                 <span className="tpl-row__meta">
                   {s.status === 'SENDING' && bp !== 'mobile' && <span className="mini-prog" aria-hidden="true"><span style={{ width: `${progress(s) * 100}%` }} /></span>}

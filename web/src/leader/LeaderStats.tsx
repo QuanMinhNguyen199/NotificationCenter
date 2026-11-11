@@ -8,7 +8,6 @@ import * as echarts from 'echarts/core';
 import { MarkLineComponent } from 'echarts/components';
 import { BlockEmpty, BlockError, Panel, Skel } from '../components/Blocks';
 import { ProtoBadge, ProtoNote } from '../components/Proto';
-import { StatusPill } from '../components/Status';
 import { usePermissions } from '../demo/DemoContext';
 import ReactECharts from '../lib/Chart';
 import { downloadCsv } from '../lib/csv';
@@ -330,11 +329,10 @@ export default function LeaderStats() {
 
   return (
     <section className="leader-page" aria-label="Thống kê tổng hợp cơ sở">
-      <h2 className="leader-section__title">Thống kê tổng hợp cơ sở</h2>
-      <div className="hkd-filter">
-        <span className="filters__fixed">Phạm vi: Thuế cơ sở A</span>
-        <span className="hkd-filter__stamp">Số liệu đến {dmy(AS_OF)}</span>
-        <StatusPill tone="neutral">Dữ liệu minh họa</StatusPill>
+      {/* Khối này luôn tính cho cả Thuế cơ sở A; bộ lọc phạm vi ở thanh lọc phía dưới không áp vào đây. Phạm vi đi cùng hàng tiêu đề, không chiếm hàng riêng. */}
+      <div className="leader-section__head">
+        <h2 className="leader-section__title">Thống kê tổng hợp cơ sở</h2>
+        <span className="scope-text"><span className="scope-text__label">Phạm vi:</span>Thuế cơ sở A</span>
       </div>
       <ProtoNote kind="proposal">Tạm hiển thị cho lãnh đạo Thuế cơ sở; so sánh 25 đơn vị thường cần tài khoản cấp thành phố (chưa xác nhận).</ProtoNote>
       <KpiRow data={city.data} error={city.isError} onRetry={() => city.refetch()} />

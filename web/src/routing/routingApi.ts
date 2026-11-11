@@ -413,7 +413,7 @@ export async function fetchBell(scope: RoutingScope): Promise<BellItem[]> {
   const from = toIso(new Date(NOW.getTime() - 24 * 60 * 60_000));
   const esc: BellItem[] = store
     .filter((c) => inScope(scope, c.team) && c.createdAt >= from)
-    .map((c) => ({ id: `b-case-${c.id}`, kind: 'ESCALATION', at: c.createdAt, title: `${KIND_SHORT[c.kind]} chuyển tuyến: ${c.topic}`, taxpayer: taxpayers[c.taxpayerId], caseId: c.id }));
+    .map((c) => ({ id: `b-case-${c.id}`, kind: 'ESCALATION', at: c.createdAt, title: `${KIND_SHORT[c.kind]}: ${c.topic}`, taxpayer: taxpayers[c.taxpayerId], caseId: c.id }));
   const abn: BellItem[] = ABNORMAL.filter((a) => a.at >= from && inScope(scope, teamOfTaxpayer(a.taxpayerId))).map((a) => ({
     id: a.id,
     kind: a.kind,

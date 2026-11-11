@@ -31,9 +31,13 @@
   .m-filter > .utility-icon { grid-column: 3; grid-row: 1; }
   .m-filter-chips:empty { display: none; }
   .finding { margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; box-shadow: none; }
-  .mobile-run { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .mobile-run { all: unset; box-sizing: border-box; display: flex; width: 100%; min-height: 44px; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; }
+  .finding:has(> .mobile-run) { padding: 0; }
+  .finding > .mobile-run { padding: 10px 12px; border-radius: inherit; }
+  .mobile-run:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   .mobile-run__label { display: block; font-size: 12px; line-height: 1.5; color: var(--brand-ink); }
-  .mobile-run p { font-size: 14px; line-height: 1.5; margin: 0; }
+  .mobile-run__text { display: block; font-size: 14px; line-height: 1.5; }
+  .mobile-run__icon { flex: none; width: 20px; height: 20px; color: var(--brand-ink); }
   .finding__scope { color: var(--brand-ink); }
 
   :root .shell--mobile .kpis { margin: 12px 0; border-radius: 12px; overflow: hidden; gap: 1px; }
@@ -54,7 +58,8 @@
   :root .shell--mobile .hkd-kpis { overflow: hidden; border-radius: 12px; }
   :root .shell--mobile .hkd-kpi { padding: 12px; gap: 4px; min-height: 90px; }
   .hkd-filter { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }
-  .hkd-filter > .filters__fixed, .hkd-filter > [data-slot="select-trigger"] { grid-column: 1 / -1; width: 100%; }
+  .hkd-filter > .filters__fixed, .hkd-filter > .scope-text, .hkd-filter > [data-slot="select-trigger"] { grid-column: 1 / -1; width: 100%; }
+  .hkd-filter > .scope-text { min-height: 0; }
   .hkd-filter__stamp { margin-left: 0; font-size: 12px; }
   .hkd-filter > .pill, .hkd-filter > .proto { justify-self: end; font-size: 11px; }
   .filters__fixed { padding: 8px 12px; border-radius: 8px; }
@@ -101,6 +106,17 @@
   .m-card__top .cell-tp { flex: 1; min-width: 0; }
   .m-card__top .utility-icon { margin: -4px -4px -4px 0; }
   .m-card__meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; font-size: 12px; }
+  /* Thẻ mở chi tiết: nút ở tên phủ cả thẻ (::after), tên nút vẫn ngắn khi đọc bằng trình đọc màn hình. */
+  .m-card--link { position: relative; cursor: pointer; transition: border-color var(--dur-fast, 0.15s); }
+  .m-card--link:hover { border-color: var(--border-hover); }
+  .m-card--link:active { background: var(--ground); }
+  .m-card__link { all: unset; display: block; min-width: 0; font-weight: 600; overflow-wrap: anywhere; cursor: pointer; }
+  .m-card__link::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+  .m-card--link:has(.m-card__link:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .m-card__chev { flex: none; width: 18px; height: 18px; color: var(--text-muted); align-self: center; }
+  .m-card__text { margin: 0; font-size: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .m-card__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--text-muted); }
+  .m-card .progress__label { font-size: 12px; }
   .m-card__row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
   .m-pager { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 12px; align-items: center; padding: 12px 0; }
   .m-pager > .num { text-align: center; font-size: 13px; }

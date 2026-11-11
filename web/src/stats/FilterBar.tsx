@@ -69,8 +69,9 @@ function Fields({ draft, setDraft, preset, setPreset, stacked }: ReturnType<type
     if (next !== 'custom') setDraft({ ...draft, ...presetRange(next) });
   };
 
+  // Cán bộ: phạm vi cố định, hiện dạng chữ ở đầu thanh lọc (trong bottom sheet mobile thì bỏ vì không chọn được).
   const unit = fixedScope ? (
-    <span className="filters__fixed">Phạm vi: {scopeLabel(fixedScope)}</span>
+    stacked ? null : <span className="scope-text"><span className="scope-text__label">Phạm vi:</span>{scopeLabel(fixedScope)}</span>
   ) : (
     <GroupedSelect aria-label="Phạm vi" prefix={stacked ? undefined : 'Phạm vi:'} value={draft.unit} groups={scopes} onValueChange={(u) => setDraft({ ...draft, unit: u })} style={{ width: stacked ? '100%' : undefined, minWidth: 168 }} />
   );
@@ -119,10 +120,12 @@ function Fields({ draft, setDraft, preset, setPreset, stacked }: ReturnType<type
   if (stacked) {
     return (
       <>
-        <div className="filters__field">
-          <span className="filters__label">Phạm vi</span>
-          {unit}
-        </div>
+        {unit && (
+          <div className="filters__field">
+            <span className="filters__label">Phạm vi</span>
+            {unit}
+          </div>
+        )}
         <div className="filters__field">
           <span className="filters__label">Khoảng ngày thông báo</span>
           {period}

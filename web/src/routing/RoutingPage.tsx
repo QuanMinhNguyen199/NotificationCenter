@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
 import { ChoiceSelect, ViewTabs } from '../components/Controls';
-import { ProtoBadge, ProtoNote } from '../components/Proto';
+import { ProtoNote } from '../components/Proto';
 import { StatusPill } from '../components/Status';
 import { taxpayers } from '../data/mock';
 import { teamName, useStaff } from '../demo/DemoContext';
@@ -11,7 +11,7 @@ import { dm, dmyhm, duration, hm, num, pct } from '../lib/format';
 import { useRoute, type RoutePath } from '../lib/router';
 import { useBreakpoint } from '../lib/useMedia';
 import CaseDetail from './CaseDetail';
-import { KIND_SHORT, NOW_ISO, STATUS_LABEL, STATUS_ORDER, isOverdue, type CaseKind, type CaseStatus, type RoutingCase, type RoutingSummary } from './routingApi';
+import { KIND_SHORT, STATUS_LABEL, STATUS_ORDER, isOverdue, type CaseKind, type CaseStatus, type RoutingCase, type RoutingSummary } from './routingApi';
 import { ago, dueInfo, useCases, useRoutingScope } from './useRouting';
 import './routing.css';
 import { TopRows } from '../components/TopRows';
@@ -66,9 +66,7 @@ export default function RoutingPage() {
     <div className="rt-page">
       <h1 className="sr-only">Chuyển tuyến</h1>
       <div className="hkd-filter">
-        <span className="filters__fixed">{scope === 'ALL' ? 'Phạm vi: Toàn cơ sở' : `Hàng chung: ${teamName(scope)}`}</span>
-        <span className="hkd-filter__stamp">Số liệu đến {dmyhm(NOW_ISO)}</span>
-        <ProtoBadge kind="mock" note="Ca chuyển tuyến, hội thoại Geo AI, số hội thoại và các thao tác trên màn này đều mô phỏng" />
+        <span className="scope-text">{scope === 'ALL' ? <><span className="scope-text__label">Phạm vi:</span>Toàn cơ sở</> : <><span className="scope-text__label">Hàng chung:</span>{teamName(scope)}</>}</span>
       </div>
 
       <MobileDisclosure label="Chỉ số xử lý chuyển tuyến"><Kpis s={q.data?.summary} /></MobileDisclosure>

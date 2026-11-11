@@ -241,25 +241,19 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
         <>
           <div className="m-list">
             {q.data.rows.map((r) => (
-              <article key={r.id} className="m-card">
+              <article key={r.id} className="m-card m-card--link">
                 <div className="m-card__top">
                   <span className="cell-tp">
-                    <span className="cell-tp__name">{r.taxpayer.name}</span>
+                    <button type="button" className="m-card__link cell-tp__name" onClick={() => open(`n:${r.id}`)}>{r.taxpayer.name}</button>
                     <span className="cell-tp__mst">MST {r.taxpayer.mst}</span>
                   </span>
-                  <IconButton variant="ghost" icon={ChevronRight} label={`Xem thông báo của ${r.taxpayer.name}`} onClick={() => open(`n:${r.id}`)} />
+                  <ChevronRight className="m-card__chev" aria-hidden="true" />
                 </div>
-                <span className="m-card__meta">
-                  <GroupTags groups={r.groups} /> <span className="num">{dmyhm(r.createdAt)}</span>
-                </span>
-                <p>{r.title}</p>
-                <div className="m-card__row">
-                  <span>Gửi</span>
-                  <span><Pill map={SEND} value={r.send} /></span>
-                </div>
-                <div className="m-card__row">
-                  <span>Giao</span>
-                  <span><Pill map={DELIVERY} value={r.delivery} /></span>
+                <p className="m-card__text">{r.title}</p>
+                {/* Một trạng thái mới nhất: chưa gửi Noti thì nói trạng thái gửi, đã gửi thì nói kết quả tiếp nhận. */}
+                <div className="m-card__foot">
+                  {r.delivery === 'NA' ? <Pill map={SEND} value={r.send} /> : <Pill map={DELIVERY} value={r.delivery} />}
+                  <span className="num">{dmyhm(r.createdAt)}</span>
                 </div>
               </article>
             ))}
@@ -459,28 +453,19 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
         <>
           <div className="m-list">
             {q.data.rows.map((t) => (
-              <article key={t.id} className="m-card">
+              <article key={t.id} className="m-card m-card--link">
                 <div className="m-card__top">
                   <span className="cell-tp">
-                    <span className="cell-tp__name">{t.name}</span>
-                    <span className="cell-tp__mst">MST {t.mst}</span>
+                    <button type="button" className="m-card__link cell-tp__name" onClick={() => open(`t:${t.id}`)}>{t.name}</button>
+                    {/* Đa số HKD đang hoạt động: chỉ gắn nhãn hộ tạm ngừng. */}
+                    <span className="cell-tp__mst">MST {t.mst}{t.hkdStatus !== 'Đang hoạt động' && ` · ${t.hkdStatus}`}</span>
                   </span>
+                  <ChevronRight className="m-card__chev" aria-hidden="true" />
+                </div>
+                <div className="m-card__foot">
+                  <span className="num">{[t.fileCount && `${t.fileCount} hồ sơ thiếu`, t.payCount && `${t.payCount} khoản phải nộp`].filter(Boolean).join(' · ') || 'Không còn việc'}</span>
                   {topPriority(t) && <Pill map={PRIORITY} value={topPriority(t)!} />}
                 </div>
-                <span className="m-card__meta">{t.hkdStatus}</span>
-                <div className="m-card__pair">
-                  <div className="m-card__cell">
-                    <small>Hồ sơ khai còn thiếu</small>
-                    <b>{t.fileCount}</b>
-                  </div>
-                  <div className="m-card__cell">
-                    <small>Khoản còn phải nộp</small>
-                    <b>{t.payCount}</b>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full" onClick={() => open(`t:${t.id}`)}>
-                  Xem nghĩa vụ
-                </Button>
               </article>
             ))}
           </div>
@@ -587,21 +572,16 @@ export function RunsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn; 
         <>
           <div className="m-list">
             {q.data.rows.map((r) => (
-              <article key={r.id} className="m-card">
+              <article key={r.id} className="m-card m-card--link">
                 <div className="m-card__top">
                   <span className="cell-tp">
-                    <span className="cell-tp__name id">{r.id}</span>
+                    <button type="button" className="m-card__link cell-tp__name id" onClick={() => open(`r:${r.id}`)}>{r.id}</button>
                     <span className="cell-tp__mst">{dmy(r.date)}</span>
                   </span>
                   <Pill map={RUN} value={r.status} />
+                  <ChevronRight className="m-card__chev" aria-hidden="true" />
                 </div>
-                <span className="m-card__meta">
-                  Khung {r.window} · {num(r.total)} thông báo / {num(r.taxpayers)} NNT
-                </span>
                 <RunProgress r={r} />
-                <Button variant="outline" className="w-full" onClick={() => open(`r:${r.id}`)}>
-                  Xem đợt gửi
-                </Button>
               </article>
             ))}
           </div>
