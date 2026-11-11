@@ -39,7 +39,7 @@ const DEFS: Def[] = [
     note: (s) => (s.other ? `Gồm ${num(s.other)} chưa rõ, hết hạn hoặc bỏ qua` : ''),
     selected: () => false,
   },
-  { key: 'sent', label: 'Đã gửi Noti', value: (s) => s.sent, note: (s) => (s.total ? `${pct(s.sent, s.total)} tổng số` : ''), selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
+  { key: 'sent', label: 'Đã gửi', value: (s) => s.sent, note: (s) => (s.total ? `${pct(s.sent, s.total)} tổng số` : ''), selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
   {
     key: 'delivered',
     label: 'Đã tiếp nhận',

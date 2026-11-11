@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MotionConfig, motion } from 'motion/react';
+import { LazyMotion, MotionConfig, domAnimation, m } from 'motion/react';
 import { lazy, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { DemoProvider } from './demo/DemoContext';
@@ -29,15 +29,17 @@ function Routes() {
   // Đổi màn: nội dung hiện dần 160ms (chỉ độ mờ, không trượt) để phản hồi thao tác bấm điều hướng.
   return (
     <Suspense fallback={<div className="page-skel" aria-busy="true" aria-label="Đang tải màn hình" />}>
-      <motion.div key={path} initial={quiet ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={tween(DUR.state)}>
+      <m.div key={path} initial={quiet ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={tween(DUR.state)}>
         {path === '/chuyen-tuyen' ? <RoutingPage /> : path === '/thiet-lap' ? <ConfigPage /> : path === '/tai-khoan' ? <AccountsPage /> : path === '/gui-thong-bao' ? <SendPage /> : path === '/quan-ly-hkd' ? <HkdPage /> : <StatsPage />}
-      </motion.div>
+      </m.div>
     </Suspense>
   );
 }
 
 export default function App() {
   return (
+    // LazyMotion + m: chỉ nạp bộ tính năng animation DOM cơ bản (opacity, transform, hover/tap, exit), nhẹ hơn motion.* đầy đủ.
+    <LazyMotion features={domAnimation} strict>
     <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <DemoProvider>
@@ -53,5 +55,6 @@ export default function App() {
       <PalettePanel />
       <Toaster position="top-center" richColors={false} />
     </MotionConfig>
+    </LazyMotion>
   );
 }

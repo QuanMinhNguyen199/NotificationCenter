@@ -2,32 +2,42 @@
 name: Quản trị thông báo
 description: Bảng vận hành thông báo thuế cho quản trị trung tâm và cán bộ đơn vị; thời điểm và trạng thái đi trước, trang trí đi sau.
 colors:
-  brand: "#B91C1C"
-  brand-fill: "#B91C1C"
-  brand-fill-hover: "#991B1B"
-  brand-ink: "#991B1B"
-  link: "#B91C1C"
-  tint-50: "#FFFBEB"
-  tint-100: "#FEF3C7"
-  tint-200: "#FDE68A"
-  ground: "#FFFBF2"
+  # Đồng bộ từ :root trong web/src/styles.css ngày 11/11/2026 (sau critique/audit). Đây là nguồn đúng; các bảng màu cũ trong thân tài liệu đã bị thay.
+  brand: "#D50032"
+  brand-fill: "#D50032"
+  brand-fill-hover: "#B5002B"
+  brand-ink: "#950023"
+  link: "#950023"
+  tint-50: "#FDF0F3"
+  tint-100: "#FAE0E6"
+  tint-200: "#F5BFCC"
+  sidebar: "#B5002B"
+  gold: "#FEDB00"
+  ground: "#F8FAFC"
   surface: "#FFFFFF"
-  border: "#EBD9C6"
-  rule: "#F3E8DA"
-  control: "#D9C3A8"
-  well: "#F2F4F7"
-  text: "#2B1A12"
-  muted: "#6B4A3E"
-  faint: "#6B4A3E"
-  danger: "#991B1B"
-  warning-ink: "#854D0E"
-  warning-bg: "#FFF3D6"
-  success-ink: "#166534"
-  success-bg: "#E2F5E9"
-  danger-bg: "#FDE8E8"
-  data-overdue: "#B91C1C"
+  border: "#E2E8F0"
+  border-hover: "#94A3B8"
+  rule: "#F1F5F9"
+  control: "#CBD5E1"
+  text: "#0F172A"
+  text-secondary: "#475569"
+  muted: "#5B6578"
+  faint: "#5B6578"
+  danger: "#7F1D1D"
+  danger-bg: "#FDF0F3"
+  warning-ink: "#92400E"
+  warning-bg: "#FFFBEB"
+  success-ink: "#047857"
+  success-bg: "#ECFDF5"
+  info-ink: "#1D4ED8"
+  info-bg: "#EFF6FF"
+  data-bar: "#FAE0E6"
+  data-bar-dim: "#F0F0F0"
+  data-bar-hover: "#F5BFCC"
+  data-sent: "#9A3412"
+  data-overdue: "#DC2626"
   data-due-soon: "#FACC15"
-  data-in-term: "#EBD9C6"
+  data-in-term: "#5D9C59"
 typography:
   headline:
     fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, sans-serif"
@@ -80,7 +90,7 @@ components:
   button-primary:
     backgroundColor: "{colors.brand-fill}"
     textColor: "{colors.surface}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     height: "36px"
   button-primary-hover:
     backgroundColor: "{colors.brand-fill-hover}"
@@ -89,8 +99,13 @@ components:
   button-default:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    rounded: "{rounded.sm}"
+    borderColor: "{colors.control}"
+    rounded: "{rounded.md}"
     height: "36px"
+  button-default-hover:
+    backgroundColor: "{colors.tint-50}"
+    textColor: "{colors.brand-ink}"
+    borderColor: "{colors.tint-200}"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
@@ -140,6 +155,8 @@ components:
 ---
 
 # Design System: Quản trị thông báo
+
+> **Nguồn màu hiện hành (11/11/2026):** frontmatter ở đầu file, đồng bộ từ `:root` của `web/src/styles.css` và `web/src/theme.ts`. Các mục màu ghi ngày 02/11/2026 bên dưới (đỏ #B91C1C, vàng nhạt, nền kem #FFFBF2, biểu đồ xanh dương) là lịch sử quyết định, **không còn áp dụng**. Breakpoint chuẩn: 768 / 1024 / 1200px.
 
 
 > **Bộ màu thương hiệu (cập nhật 02/11/2026, theo yêu cầu người dùng, thay token xanh #1677FF của đặc tả):** Main red #B91C1C (nút chính, link, tab, switch, focus, đường dữ liệu chính, "Quá hạn"), Banner red #C8102E (logo), Yellow #FACC15 (khung gửi trên dải 24h, "Sắp hạn"), Pale yellow #FEF3C7 (trạng thái chọn: nav, KPI, chip), White #FFFFFF (thẻ, topbar, ô nhập), Cream #FFFBF2 (nền trang), Main text #2B1A12, Secondary text #6B4A3E, Borders #EBD9C6. KPI đang chọn: nền #FEF3C7, viền #A16207 (không dùng đỏ để tránh đọc nhầm là lỗi). Xanh lá #166534 và xanh dương #1E40AF/#E6EEFB chỉ còn trong pill trạng thái (Đã giao/Hoàn tất, Đã gửi/Đang gửi) theo quy ước đặc tả.
@@ -240,6 +257,7 @@ Góc mềm vừa phải, theo bậc: 4px cho tag, skeleton, swatch; 6px cho nút
 - **Shape:** bo 6px, cao 36px (44px mobile), chữ 500, không bóng.
 - **Primary:** nền brand-fill chữ trắng; hover brand-fill-hover; active brand-ink. Mỗi vùng hành động có tối đa một nút chính.
 - **Default:** nền trắng viền control. Nút chưa khả dụng dùng trạng thái disabled của AntD.
+- **Cập nhật 11/11/2026 (sau critique, người dùng chọn):** nút phụ (shadcn `outline`/`secondary`) và `ghost` dùng màu trung tính: chữ text #0F172A (ghost #475569), viền control #CBD5E1; hover/focus chuyển nền tint-50, viền tint-200, chữ brand-ink. Đỏ đặc chỉ cho một nút chính mỗi vùng; chữ đỏ chỉ cho số lỗi/quá hạn. Màu biểu đồ giữ bảng đã chốt (cột tint #FAE0E6, đường #9A3412; người dùng yêu cầu khôi phục sau khi thử slate cùng ngày). Thay quyết định nút viền đỏ cùng ngày.
 - **Focus:** viền 2px brand, cách 2px.
 
 ### Chips và Pills

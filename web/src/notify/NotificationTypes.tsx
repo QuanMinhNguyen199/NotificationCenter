@@ -17,7 +17,7 @@ export function NotificationTypes() {
     <Panel
       id="nt-types-title"
       title="Các loại thông báo"
-      sub={`${TYPES.length} loại; ${live} loại đang chạy trong hệ thống, ${TYPES.length - live} loại còn lại là giả lập để duyệt luồng.`}
+      sub={`${live}/${TYPES.length} loại đang chạy`}
       className="nt-panel"
     >
       {MODES.map((m) => {

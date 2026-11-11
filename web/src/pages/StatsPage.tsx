@@ -72,7 +72,13 @@ export default function StatsPage() {
           <LeaderStats />
         </Suspense>
       )}
-      {role === 'base' && <h2 className="leader-section__title" style={{ marginTop: 24 }}>Thống kê thông báo</h2>}
+      {/* Hai vùng tách bạch: kết quả cơ sở (kỳ cố định) ở trên, thống kê thông báo (theo bộ lọc) ở dưới; bộ lọc đứng ngay dưới tiêu đề vùng nó điều khiển. */}
+      {role === 'base' && <h2 className="leader-section__title stats-region">Thống kê thông báo</h2>}
+      <FilterBar
+        p={p}
+        stamp={<Freshness at={s?.updatedAt} busy={summary.isFetching && !!s} onRefresh={() => qc.invalidateQueries()} />}
+        apply={(d) => set({ unit: d.unit, from: d.from, to: d.to, group: d.group, day: null, page: 1 })} />
+
 
       {/* Phát hiện chính: đợt đang vận hành, một lần bấm tới thao tác */}
       <div className="finding">
@@ -84,7 +90,7 @@ export default function StatsPage() {
             <ArrowRight className="mobile-run__icon" aria-hidden="true" />
           </button> : <>
             <p>
-              Đợt <span className="id">{active.data.id}</span> <span className="finding__scope">(toàn cơ sở)</span> {RUN[active.data.status].label.toLowerCase()}: đã gửi Noti{' '}
+              Đợt <span className="id">{active.data.id}</span> <span className="finding__scope">(toàn cơ sở)</span> {RUN[active.data.status].label.toLowerCase()}: đã gửi{' '}
               <b className="num">
                 {num(active.data.sent)}/{num(active.data.total)}
               </b>
@@ -101,10 +107,6 @@ export default function StatsPage() {
         )}
       </div>
 
-      <FilterBar
-        p={p}
-        stamp={<Freshness at={s?.updatedAt} busy={summary.isFetching && !!s} onRefresh={() => qc.invalidateQueries()} />}
-        apply={(d) => set({ unit: d.unit, from: d.from, to: d.to, group: d.group, day: null, page: 1 })} />
 
       {s?.stale && (
         <div style={{ marginTop: 12 }}>
@@ -120,7 +122,7 @@ export default function StatsPage() {
       ) : (
         <Kpis
           keys={leader ? ['total', 'sent', 'failed', 'response'] : undefined}
-          labels={leader ? { response: 'Thời gian giao thông báo TB' } : undefined}
+          labels={leader ? { response: 'Thời gian giao thông báo trung bình' } : undefined}
           stale={summary.isPlaceholderData}
           s={s}
           p={p}

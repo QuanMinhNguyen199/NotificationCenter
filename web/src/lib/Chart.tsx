@@ -4,7 +4,8 @@ import * as echarts from 'echarts/core';
 import { BarChart, LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent } from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
-import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { C } from '../theme';
 
 echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, SVGRenderer]);
 
@@ -65,10 +66,51 @@ function useDeferredMount<T extends Element>() {
   return { ref, ready };
 }
 
+/*
+ * Màu hover thống nhất cho mọi biểu đồ (11/11/2026): mặc định của ECharts làm cột nhạt hoặc ngả xám khi rê chuột
+ * và phủ dải xám lên cột đang chỉ. Ở đây:
+ * - Dải chỉ theo trục dùng tint đỏ rất nhạt thay cho xám.
+ * - Cột đang rê đậm hơn một bậc cùng sắc (cột tint nhạt dùng barHover đã chốt), không làm mờ các cột khác.
+ * - Đường giữ nguyên độ dày khi rê.
+ * Series nào đã khai báo emphasis riêng thì giữ nguyên.
+ */
+const POINTER_SHADOW = 'rgba(213, 0, 50, 0.06)';
+function darken(hex: string, k = 0.14) {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const ch = (v: number) => Math.round(v * (1 - k)).toString(16).padStart(2, '0');
+  return `#${ch(n >> 16)}${ch((n >> 8) & 255)}${ch(n & 255)}`;
+}
+const hoverOf = (c: unknown) => (typeof c !== 'string' ? undefined : c.toUpperCase() === C.bar.toUpperCase() ? C.barHover : darken(c));
+type Obj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+function withHover(option: Obj | undefined): Obj | undefined {
+  if (!option) return option;
+  const tip = option.tooltip as Obj | undefined;
+  const ap = tip?.axisPointer as Obj | undefined;
+  const tooltip = ap?.type === 'shadow' && !ap.shadowStyle ? { ...tip, axisPointer: { ...ap, shadowStyle: { color: POINTER_SHADOW } } } : tip;
+  const list = Array.isArray(option.series) ? option.series : option.series ? [option.series] : [];
+  const series = list.map((s: Obj) => {
+    if (s.emphasis) return s;
+    if (s.type === 'line') return { ...s, emphasis: { scale: false, lineStyle: { width: s.lineStyle?.width ?? 2 } } };
+    if (s.type !== 'bar') return s;
+    const data = Array.isArray(s.data)
+      ? s.data.map((d: unknown) => {
+          const dc = (d as Obj | null)?.itemStyle?.color;
+          return dc ? { ...(d as Obj), emphasis: { itemStyle: { color: hoverOf(dc) } } } : d;
+        })
+      : s.data;
+    const base = hoverOf(s.itemStyle?.color);
+    return { ...s, data, emphasis: { focus: 'none', itemStyle: base ? { color: base } : {} } };
+  });
+  return { ...option, ...(tooltip ? { tooltip } : {}), series };
+}
+
 export default function Chart(props: Props) {
   const { ref, ready } = useDeferredMount<HTMLDivElement>();
+  const option = useMemo(() => withHover(props.option), [props.option]);
   if (!ready) {
     return <div ref={ref} className={props.className} style={{ height: 300, ...props.style }} aria-hidden="true" />;
   }
-  return <ReactEChartsCore echarts={echarts} lazyUpdate {...props} />;
+  return <ReactEChartsCore echarts={echarts} lazyUpdate {...props} option={option} />;
 }

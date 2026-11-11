@@ -19,6 +19,7 @@ import { fetchCityComparison, fetchOfficerPerf, type OfficerPerf, type UnitRow }
 import './leader.css';
 import { TopRows, TOP_N } from '../components/TopRows';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { DEMO_TODAY } from '../lib/demoClock';
 
 // Lib/Chart.tsx chỉ nạp cột và đường; màn này cần thêm đường trung bình (markLine).
 echarts.use([MarkLineComponent]);
@@ -27,7 +28,7 @@ const FONT = 'Inter Variable, Inter, sans-serif';
 const axisLabel = { color: C.faint, fontSize: 12, fontFamily: FONT };
 /** Cột của đơn vị khác: xám đủ đậm để thấy trên nền trắng (≈3,4:1), không tranh với màu brand của đơn vị mình. */
 const OTHER_BAR = '#7C8BA1';
-const AS_OF = '2026-10-28';
+const AS_OF = DEMO_TODAY;
 
 const rate = (v: number) => pct(v * 100, 100);
 const hours = (h: number | null) => (h == null ? '—' : `${h.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`);
@@ -152,10 +153,10 @@ function KpiRow({ data, error, onRetry }: { data?: CityData; error: boolean; onR
     <div className="hkd-kpis" aria-busy={!data}>
       <Kpi label="Tổng tờ khai tiếp nhận" value={own ? num(own.received) : sk} note={own && `30 ngày; ${num(own.accepted)} xử lý thành công`} />
       {/* Thất bại = 100% − thành công: gộp vào một ô để không lặp số. */}
-      <Kpi label="Xử lý thành công" value={own ? rate(own.okRate) : sk} note={own && data && `Thất bại ${rate(own.failRate)} · ${rank('okRate')}; TB thành phố ${rate(data.avg.okRate)}`} />
-      <Kpi label="Thời gian phản hồi TB của cán bộ" value={own ? hours(own.avgHours) : sk} note={own && data && `${rank('avgHours')}; TB thành phố ${hours(data.avg.avgHours)}`} />
+      <Kpi label="Xử lý thành công" value={own ? rate(own.okRate) : sk} note={own && data && `Thất bại ${rate(own.failRate)} · ${rank('okRate')}; trung bình thành phố ${rate(data.avg.okRate)}`} />
+      <Kpi label="Thời gian phản hồi trung bình của cán bộ" value={own ? hours(own.avgHours) : sk} note={own && data && `${rank('avgHours')}; trung bình thành phố ${hours(data.avg.avgHours)}`} />
       <Kpi label="Người dùng ứng dụng" value={own ? num(own.users) : sk} note={own && `HKD đã đăng ký, ${pct(own.users, own.hkd)} trên ${num(own.hkd)} HKD`} />
-      <Kpi label="Tỷ lệ nộp tờ khai" value={own ? rate(own.fileRate) : sk} note={own && data && `${rank('fileRate')}; TB thành phố ${rate(data.avg.fileRate)}`} />
+      <Kpi label="Tỷ lệ nộp tờ khai" value={own ? rate(own.fileRate) : sk} note={own && data && `${rank('fileRate')}; trung bình thành phố ${rate(data.avg.fileRate)}`} />
     </div>
   );
 }
@@ -205,7 +206,7 @@ function RankChart({ data, metric }: { data: CityData; metric: MetricKey }) {
               symbol: 'none',
               silent: true,
               lineStyle: { color: C.text, type: 'dashed', width: 1 },
-              label: { show: true, position: 'end', color: C.text, fontSize: 11, formatter: 'TB' },
+              label: { show: true, position: 'end', color: C.text, fontSize: 11, formatter: 'Trung bình' },
               data: [{ xAxis: +avg.toFixed(2) }],
             },
           }],
@@ -245,20 +246,19 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
     { key: 'accepted', label: 'Thành công', sort: (u) => u.accepted, render: (u) => num(u.accepted), desc: true },
     { key: 'okRate', label: 'Tỷ lệ XL thành công', sort: (u) => u.okRate, render: (u) => rate(u.okRate), desc: true },
     { key: 'fileRate', label: 'Tỷ lệ nộp tờ khai', sort: (u) => u.fileRate, render: (u) => rate(u.fileRate), desc: true },
-    { key: 'avgHours', label: 'Phản hồi TB', sort: (u) => u.avgHours, render: (u) => hours(u.avgHours) },
+    { key: 'avgHours', label: 'Phản hồi trung bình', sort: (u) => u.avgHours, render: (u) => hours(u.avgHours) },
     { key: 'users', label: 'Người dùng', sort: (u) => u.users, render: (u) => num(u.users), desc: true },
   ];
 
   return (
     <section className="leader-section" aria-labelledby="leader-city">
       <div className="leader-section__head">
-        <h2 id="leader-city" className="leader-section__title">
+        <h3 id="leader-city" className="leader-section__title">
           <SectionTitle badges={<>
             <ProtoBadge kind="mock" note="Số của 24 Thuế cơ sở khác do bản mẫu sinh ra; cần API số liệu cấp thành phố" />
             <ProtoBadge kind="proposal" note="Tỷ lệ nộp tờ khai tạm tính = tờ khai đã nộp ÷ tờ khai phải nộp trong kỳ. Văn bản ghi “/ tổng tờ khai đã tiếp nhận”; cần nghiệp vụ chốt mẫu số." />
           </>}>So sánh 25 Thuế cơ sở</SectionTitle>
-        </h2>
-        <p className="leader-section__sub">30 ngày đến {dmy(AS_OF)}. Chọn chỉ số để xếp hạng; Thuế cơ sở A là đơn vị đang xem.</p>
+        </h3>
       </div>
       {error ? <BlockError message="Không tải được số liệu so sánh giữa các Thuế cơ sở." onRetry={onRetry} /> : (
         <Panel
@@ -298,16 +298,15 @@ function OfficerSection() {
     { key: 'team', label: 'Tổ', sort: (o) => o.teamName, render: (o) => o.teamName },
     { key: 'decl', label: 'Tờ khai xử lý', sort: (o) => o.declarations, render: (o) => num(o.declarations), desc: true },
     { key: 'req', label: 'Yêu cầu hỗ trợ', sort: (o) => o.requests, render: (o) => num(o.requests), desc: true },
-    { key: 'hours', label: 'Phản hồi TB', sort: (o) => o.avgHours ?? Infinity, render: (o) => hours(o.avgHours) },
+    { key: 'hours', label: 'Phản hồi trung bình', sort: (o) => o.avgHours ?? Infinity, render: (o) => hours(o.avgHours) },
     { key: 'onTime', label: 'Đúng hạn (≤ 48 giờ)', sort: (o) => o.onTime ?? -1, render: (o) => (o.onTime == null ? '—' : rate(o.onTime)), desc: true },
   ];
   return (
     <section className="leader-section" aria-labelledby="leader-officers">
       <div className="leader-section__head">
-        <h2 id="leader-officers" className="leader-section__title">
+        <h3 id="leader-officers" className="leader-section__title">
           <SectionTitle badges={<ProtoBadge kind="proposal" note="Trước khi dùng để đánh giá cán bộ, lãnh đạo cần thống nhất cách tính, ngưỡng đúng hạn (tạm 48 giờ), ai được xem và cách tính khác biệt do địa bàn. Tỷ lệ đúng hạn là số giả lập." />}>Hiệu quả cán bộ trong Thuế cơ sở A</SectionTitle>
-        </h2>
-        <p className="leader-section__sub">Cán bộ quản lý HKD đang hoạt động, 30 ngày đến {dmy(AS_OF)}.</p>
+        </h3>
       </div>
       <Panel className="dashboard-card--static">
         {q.isError ? <BlockError message="Không tải được số liệu cán bộ." onRetry={() => q.refetch()} />
@@ -328,11 +327,12 @@ export default function LeaderStats() {
   if (role !== 'base') return null;
 
   return (
-    <section className="leader-page" aria-label="Thống kê tổng hợp cơ sở">
+    <section className="leader-page" aria-label="Kết quả cơ sở">
       {/* Khối này luôn tính cho cả Thuế cơ sở A; bộ lọc phạm vi ở thanh lọc phía dưới không áp vào đây. Phạm vi đi cùng hàng tiêu đề, không chiếm hàng riêng. */}
       <div className="leader-section__head">
-        <h2 className="leader-section__title">Thống kê tổng hợp cơ sở</h2>
+        <h2 className="leader-section__title">Kết quả cơ sở</h2>
         <span className="scope-text"><span className="scope-text__label">Phạm vi:</span>Thuế cơ sở A</span>
+        <span className="scope-text"><span className="scope-text__label">Kỳ:</span>30 ngày đến {dmy(AS_OF)}</span>
       </div>
       <ProtoNote kind="proposal">Tạm hiển thị cho lãnh đạo Thuế cơ sở; so sánh 25 đơn vị thường cần tài khoản cấp thành phố (chưa xác nhận).</ProtoNote>
       <KpiRow data={city.data} error={city.isError} onRetry={() => city.refetch()} />

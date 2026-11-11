@@ -3,7 +3,6 @@ import { GroupedSelect, OptionGroup, BottomSheet, DateRangeField } from '@/compo
 import { Button } from '@/components/ui/button';
 import { X, ChevronDown, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { usePermissions } from '../demo/DemoContext';
@@ -15,12 +14,9 @@ import { GROUP_LABEL } from '../components/Status';
 import { TODAY, type StatsParams } from './useStatsParams';
 
 type Preset = 'today' | '7' | '30' | 'custom';
-const iso = (d: Dayjs) => d.format('YYYY-MM-DD');
-const presetRange = (p: Exclude<Preset, 'custom'>) => {
-  const end = dayjs(TODAY);
-  const start = p === 'today' ? end : end.subtract(p === '7' ? 6 : 29, 'day');
-  return { from: iso(start), to: iso(end) };
-};
+// Lùi n ngày trên chuỗi ISO, tính theo UTC để không lệch múi giờ.
+const minusDays = (day: string, n: number) => new Date(Date.parse(`${day}T00:00:00Z`) - n * 864e5).toISOString().slice(0, 10);
+const presetRange = (p: Exclude<Preset, 'custom'>) => ({ from: p === 'today' ? TODAY : minusDays(TODAY, p === '7' ? 6 : 29), to: TODAY });
 function presetOf(from: string, to: string): Preset {
   for (const p of ['today', '7', '30'] as const) {
     const r = presetRange(p);

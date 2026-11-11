@@ -29,6 +29,19 @@ import { TopRows } from '../components/TopRows';
 
 const FONT = 'Inter Variable, Inter, sans-serif';
 const axisLabel = { color: C.faint, fontSize: 12, fontFamily: FONT };
+/** Bảng ẩn đọc được bằng trình đọc màn hình, thay cho biểu đồ aria-hidden (WCAG 1.1.1). */
+function SrTable({ caption, head, rows }: { caption: string; head: string[]; rows: (string | number)[][] }) {
+  return (
+    <div className="sr-only">
+      <table>
+        <caption>{caption}</caption>
+        <thead><tr>{head.map((h) => <th key={h} scope="col">{h}</th>)}</tr></thead>
+        <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => (j === 0 ? <th key={j} scope="row">{c}</th> : <td key={j}>{c}</td>))}</tr>)}</tbody>
+      </table>
+    </div>
+  );
+}
+
 const COMPLIANCE_COLOR: Record<Compliance, string> = { COMPLIANT: '#15803D', MISSING_FILE: C.dueSoon, IN_DEBT: C.overdue, BOTH: '#7F1D1D' };
 const COMPLIANCE_INK: Record<Compliance, string> = { COMPLIANT: '#fff', MISSING_FILE: C.dueSoonInk, IN_DEBT: '#fff', BOTH: '#fff' };
 const STATUS_TONE: Record<RequestStatus, 'info' | 'warning' | 'success' | 'neutral' | 'danger'> = { NEW: 'info', PROCESSING: 'info', NEED_MORE: 'warning', RESOLVED: 'success', REJECTED: 'neutral' };
@@ -66,7 +79,7 @@ function DailyTab({ scope }: { scope: string }) {
   return (
     <div className={`hkd-tab${q.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={q.isPlaceholderData}>
       <div className="hkd-kpis">
-        <Kpi label="Tờ khai tiếp nhận hôm nay" value={d ? num(d.today.received) : <Skel w={80} h={28} />} note={d && `TB 7 ngày trước: ${num(Math.round(d.avg7))}`} />
+        <Kpi label="Tờ khai tiếp nhận hôm nay" value={d ? num(d.today.received) : <Skel w={80} h={28} />} note={d && `Trung bình 7 ngày trước: ${num(Math.round(d.avg7))}`} />
         <Kpi label="Tỷ lệ xử lý thành công" value={d ? pct(d.okRate * 100, 100) : <Skel w={80} h={28} />} note="30 ngày" />
         <Kpi label="Tỷ lệ nộp thuế theo hồ sơ" value={d ? pct(d.paidRate * 100, 100) : <Skel w={80} h={28} />} note="Hồ sơ phải nộp đã nộp, 30 ngày" />
         <Kpi label="Đăng ký app, chưa nộp tờ khai" value={d ? num(d.appMissing) : <Skel w={80} h={28} />} note={d && `Trên ${num(d.registered)} hộ đã đăng ký`} tone="danger" />
@@ -90,6 +103,7 @@ function DailyTab({ scope }: { scope: string }) {
               }}
             />
           )}
+          {d && <SrTable caption="Tờ khai theo ngày" head={['Ngày', 'Tiếp nhận', 'Xử lý thành công']} rows={d.series.map((x) => [dm(x.date), num(x.received), num(x.accepted)])} />}
           <div className="chart-legend" aria-hidden="true">
             <span><i className="swatch" style={{ background: C.bar }} /> Tiếp nhận</span>
             <span><i className="swatch" style={{ background: C.sent }} /> Xử lý thành công</span>
@@ -116,6 +130,7 @@ function DailyTab({ scope }: { scope: string }) {
               }}
             />
           )}
+          {d && <SrTable caption="Hộ đăng ký app nhưng chưa nộp tờ khai, theo tuần" head={['Tuần', 'Số hộ']} rows={d.weeks.map((w) => [w.label, num(w.value)])} />}
         </Panel>
       </div>
       {role !== 'officer' && <Panel title="Theo đơn vị" sub="30 ngày" className="dashboard-card--static hkd-table">
@@ -253,12 +268,13 @@ function DebtTab({ scope, scopeName }: { scope: string; scopeName: string }) {
               }}
             />
           )}
+          {d && <SrTable caption="Nợ thuế theo tháng" head={['Tháng', 'Tổng nợ', 'Số HKD nợ']} rows={d.trend.map((t) => [t.month.slice(0, 2) + '/' + t.month.slice(5), money(t.amount), num(t.hkd)])} />}
           <div className="chart-legend" aria-hidden="true">
             <span><i className="swatch" style={{ background: C.bar }} /> Tổng nợ (tỷ đồng, trục trái)</span>
             <span><i className="swatch" style={{ background: C.sent }} /> Số HKD nợ (trục phải)</span>
           </div>
         </Panel>
-        <Panel title="Báo cáo định kỳ" sub="Theo tháng, tải về dạng CSV" className="dashboard-card--static">
+        <Panel title="Báo cáo định kỳ" className="dashboard-card--static">
           <ul className="report-list">
             {REPORT_MONTHS.map((m) => (
               <li key={m}>
@@ -296,7 +312,7 @@ function SupportTab({ scope }: { scope: string }) {
     <Panel title={title} sub="30 ngày" className="dashboard-card--static hkd-table">
       {!d ? <Skel w="100%" h={140} /> : (
         <TopRows total={rows.length} noun="dòng"><table className="mini-table">
-          <thead><tr><th scope="col">{first}</th><th scope="col">Tổng</th>{statuses.map((s) => <th scope="col" key={s}>{REQUEST_STATUS_LABEL[s]}</th>)}<th scope="col">Xử lý TB</th></tr></thead>
+          <thead><tr><th scope="col">{first}</th><th scope="col">Tổng</th>{statuses.map((s) => <th scope="col" key={s}>{REQUEST_STATUS_LABEL[s]}</th>)}<th scope="col">Xử lý trung bình</th></tr></thead>
           <tbody>{rows.map((r) => <tr key={r.name}><th scope="row">{r.name}</th><td>{num(r.total)}</td>{statuses.map((s) => <td key={s}>{num(r.status[s])}</td>)}<td>{hours(r.avgHours)}</td></tr>)}</tbody>
         </table></TopRows>
       )}
@@ -309,7 +325,7 @@ function SupportTab({ scope }: { scope: string }) {
         <Kpi label="Đã giải quyết" value={d ? num(d.resolved) : <Skel w={80} h={28} />} note={d && `${pct(d.resolved, d.total)}, ngoài ra ${num(d.rejected)} từ chối`} />
         <Kpi label="Đang xử lý" value={d ? num(d.open) : <Skel w={80} h={28} />} />
         <Kpi label="Chờ HKD bổ sung" value={d ? num(d.needMore) : <Skel w={80} h={28} />} tone="danger" />
-        <Kpi label="Thời gian xử lý TB" value={d ? hours(d.avgHours) : <Skel w={80} h={28} />} />
+        <Kpi label="Thời gian xử lý trung bình" value={d ? hours(d.avgHours) : <Skel w={80} h={28} />} />
       </div>
       {table('Theo cán bộ', d?.officers ?? [], 'Cán bộ')}
       {table('Theo địa bàn', d?.wards ?? [], 'Địa bàn')}
@@ -360,8 +376,8 @@ function RemindersTab({ scope }: { scope: string }) {
           {off.map((k) => REMINDER_LABEL[k.kind]).join(', ')}: đang tắt trong Thiết lập, số liệu là của thời gian còn bật.
         </p>
       )}
-      <p className="workspace-note">Theo dõi HKD còn việc cần làm và kết quả sau nhắc. <button className="link-btn" onClick={() => navigate('/thong-ke')}>Xem thống kê gửi thông báo</button></p>
-      <Panel title="Hiệu quả theo loại nhắc" sub="30 ngày" className="dashboard-card--static hkd-table">
+      <Panel title="Hiệu quả theo loại nhắc" sub="30 ngày" className="dashboard-card--static hkd-table"
+        extra={<Button variant="outline" onClick={() => navigate('/thong-ke')}>Xem thống kê gửi thông báo</Button>}>
         {!d ? <Skel w="100%" h={160} /> : (
           <table className="mini-table rem-table">
             <thead><tr><th scope="col">Loại nhắc</th><th scope="col">HKD đã nhắc</th><th scope="col">Hoàn thành sau nhắc</th><th scope="col">Còn phải nhắc</th></tr></thead>
@@ -400,7 +416,7 @@ function RemindersTab({ scope }: { scope: string }) {
         </Panel>
       {/* So sánh đơn vị chỉ có nghĩa khi có từ 2 đơn vị (cán bộ chỉ có chính mình). */}
       {(!d || d.byUnit.length > 1) && (
-        <Panel title="HKD cần nhắc theo đơn vị" sub="Số HKD hiện còn việc cần làm" className="dashboard-card--static hkd-table">
+        <Panel title="HKD cần nhắc theo đơn vị" className="dashboard-card--static hkd-table">
           {!d ? <Skel w="100%" h={120} /> : (
             <TopRows total={d.byUnit.length} noun="đơn vị"><table className="mini-table">
               <thead><tr><th scope="col">Đơn vị</th>{REMINDER_ORDER.map((k) => <th scope="col" key={k}>{REMINDER_LABEL[k]}</th>)}</tr></thead>
@@ -417,7 +433,6 @@ function ObligationsList() {
   const { p, set, openDetail, closeDetail } = useStatsParams();
   const ob = useQuery({ queryKey: ['obligations', p.unit], queryFn: () => fetchObligations(filterOf(p)), placeholderData: keepPreviousData });
   return <>
-    <p className="workspace-note">Danh sách HKD còn nghĩa vụ khai hoặc nộp thuế; lọc theo mức độ cần xử lý.</p>
     <MobileDisclosure label="Tổng quan nghĩa vụ"><ObligationChart groupNote={p.group !== 'all'} data={ob.data} error={ob.error} loading={ob.isLoading} onRetry={() => ob.refetch()} onPick={(kind, prio) => set({ kind, prio, notified: false, page: 1 })} /></MobileDisclosure>
     <TaxpayersPane p={p} set={set} open={openDetail} reset={() => set({ tq: null, notified: null, kind: null, prio: null, group: null, page: 1 })} />
     <DetailOverlay detail={p.detail} filter={filterOf(p)} onClose={closeDetail} />

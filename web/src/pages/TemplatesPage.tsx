@@ -149,9 +149,8 @@ export default function TemplatesPage() {
 
   return (
     <div className="acct-page">
-      <h1 className="sr-only">Mẫu tin</h1>
+      <h2 className="sr-only">Thư viện mẫu</h2>
       <div className="page-toolbar">
-        <p className="workspace-note">Soạn nội dung dùng lại. Xuất bản mẫu để chọn khi gửi; xuất bản chưa gửi tới NNT.</p>
         {canEditTemplates && (
           <Button onClick={() => setOpen('new')}>
             <Plus aria-hidden="true" /> Mẫu tin mới

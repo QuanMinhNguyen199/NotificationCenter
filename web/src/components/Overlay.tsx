@@ -47,7 +47,7 @@ export default function Overlay({
         side="right"
         showCloseButton={!mobile}
         className="gap-0 p-0 sm:max-w-none"
-        style={{ width: mobile ? '100vw' : Math.min(width, window.innerWidth - 48), maxWidth: '100vw' }}
+        style={{ width: mobile ? '100vw' : `min(${width}px, 100vw - 48px)`, maxWidth: '100vw' }}
       >
         <SheetHeader className={mobile ? 'flex-row items-center gap-1 border-b px-2 py-2' : 'border-b px-6 py-4'}>
           {mobile && (

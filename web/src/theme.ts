@@ -1,6 +1,6 @@
 // Màu dùng trong ECharts (SVG không đọc biến CSS); giữ khớp với token trong styles.css.
 // Token (03/11/2026): brand theo logo Thuế thành phố Hà Nội — đỏ Pantone 199 C #D50032, vàng Pantone 108 C #FEDB00;
-// nền #F8FAFC, bề mặt trắng, viền #E2E8F0, chữ #0F172A / #64748B.
+// nền #F8FAFC, bề mặt trắng, viền #E2E8F0, chữ #0F172A / #5B6578 (muted tối hơn từ 11/11/2026 để đạt AA trên nền tint).
 // Chrome trung tính; màu ngữ nghĩa dành cho trạng thái và dữ liệu cần chú ý.
 export const C = {
   brand: '#D50032',
@@ -20,15 +20,15 @@ export const C = {
   rule: '#F1F5F9',
   control: '#CBD5E1',
   text: '#0F172A',
-  muted: '#64748B',
-  faint: '#64748B',
+  muted: '#5B6578',
+  faint: '#5B6578',
   danger: '#7F1D1D',
   warning: '#F59E0B',
   success: '#10B981',
   // Màu dữ liệu biểu đồ
   grid: '#E2E8F0',
   // Màu biểu đồ đã chốt qua công cụ chỉnh màu chung (chart-colors.json, 03/11/2026).
-  // Biểu đồ xu hướng: cột tổng phát sinh là tint nhạt của 199 C, đường đã gửi nâu cam đậm.
+  // Biểu đồ xu hướng: cột tổng phát sinh là tint nhạt của 199 C, đường đã gửi nâu cam đậm (khôi phục 11/11/2026 theo yêu cầu người dùng).
   bar: '#FAE0E6',
   barDim: '#F0F0F0',
   barHover: '#F5BFCC',

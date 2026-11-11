@@ -11,6 +11,7 @@ import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
 import { C } from '../theme';
 import { TARGETS, fetchEffectiveness, type EffectDay, type Effectiveness } from './notifyPlanApi';
 import './notify.css';
+import { DEMO_TODAY } from '../lib/demoClock';
 
 const FONT = 'Inter Variable, Inter, sans-serif';
 const axisLabel = { color: C.faint, fontSize: 12, fontFamily: FONT };
@@ -62,7 +63,7 @@ export function SendEffectiveness() {
   const head = (
     <div className="nt-eff-head">
       <h2 className="nt-title">Hiệu quả gửi 30 ngày <ProtoBadge kind="mock" note="số liệu hiệu quả gửi do bản mock tạo ra" /></h2>
-      <p className="panel__sub">{d ? `${dmy(d.from)} – ${dmy(d.to)}, ${scope}.` : `30 ngày tới ${dmy('2026-10-28')}, ${scope}.`}</p>
+      <p className="panel__sub">{d ? `${dmy(d.from)} – ${dmy(d.to)}, ${scope}.` : `30 ngày tới ${dmy(DEMO_TODAY)}, ${scope}.`}</p>
     </div>
   );
 
@@ -104,7 +105,7 @@ function TrendPanel({ m, d }: { m: Metric; d?: Effectiveness }) {
   const low = d ? d.days.reduce((a, b) => (m.value(b) < m.value(a) ? b : a)) : null;
   const yMin = Math.min(m.yMin, Math.floor(Math.min(...(values.length ? values : [m.yMin])) - 1));
   return (
-    <Panel title={m.title} sub="Theo ngày, so với mục tiêu" className="dashboard-card--static">
+    <Panel title={m.title} sub="Theo ngày" className="dashboard-card--static">
       {!d ? <Skel w="100%" h={220} /> : (
         <>
           <ReactECharts

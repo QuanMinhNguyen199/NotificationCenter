@@ -17,7 +17,7 @@ export const CHART_COLOR_GROUPS: { title: string; items: { key: ChartColorKey; l
       { key: 'bar', label: 'Cột tổng phát sinh' },
       { key: 'barDim', label: 'Cột ngày không chọn' },
       { key: 'barHover', label: 'Cột khi rê chuột' },
-      { key: 'sent', label: 'Đường đã gửi Noti' },
+      { key: 'sent', label: 'Đường đã gửi' },
     ],
   },
   {

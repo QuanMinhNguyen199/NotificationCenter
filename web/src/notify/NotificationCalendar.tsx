@@ -106,11 +106,10 @@ export function NotificationCalendar() {
     <Panel
       id="nt-cal-title"
       title={<span className="nt-title">Lịch thông báo theo ngày <ProtoBadge kind="mock" note="lịch tính từ nghĩa vụ mô phỏng của từng hộ, chưa nối nguồn thật" /></span>}
-      sub="Dự kiến theo hạn khai, hạn nộp, doanh thu và chữ ký số của từng hộ."
       className="nt-panel"
     >
       {head}
-      <p className="nt-channel">Tất cả gửi qua Noti iHanoi. Loại theo khung giờ gửi trong {INITIAL_CONFIG.sendStart}–{INITIAL_CONFIG.sendEnd} của ngày dự kiến; loại theo sự kiện gửi ngay khi có kết quả.</p>
+      <p className="nt-channel">Tất cả gửi qua thông báo đẩy iHanoi. Loại theo khung giờ gửi trong {INITIAL_CONFIG.sendStart}–{INITIAL_CONFIG.sendEnd} của ngày dự kiến; loại theo sự kiện gửi ngay khi có kết quả.</p>
       {body}
     </Panel>
   );

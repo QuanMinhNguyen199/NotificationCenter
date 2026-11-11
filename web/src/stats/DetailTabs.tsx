@@ -486,11 +486,11 @@ const RUN_OPTIONS = [{ value: 'all', label: 'Mọi trạng thái đợt' }, ...(
 export function RunProgress({ r }: { r: SendRun }) {
   return (
     <div className="progress">
-      <div className="progress__track" role="progressbar" aria-valuemin={0} aria-valuemax={r.total} aria-valuenow={r.sent} aria-label="Tiến độ đã gửi Noti">
+      <div className="progress__track" role="progressbar" aria-valuemin={0} aria-valuemax={r.total} aria-valuenow={r.sent} aria-label="Tiến độ đã gửi">
         <div className="progress__fill" style={{ width: `${(r.sent / Math.max(r.total, 1)) * 100}%` }} />
       </div>
       <span className="progress__label">
-        Đã gửi Noti {num(r.sent)}/{num(r.total)} — {pct(r.sent, r.total)}
+        Đã gửi {num(r.sent)}/{num(r.total)} — {pct(r.sent, r.total)}
       </span>
     </div>
   );

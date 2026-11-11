@@ -227,7 +227,7 @@ function CaseList({ cases, status, kind, openId, showTeam, onOpen, onClearKind }
               <button type="button" className="rt-row" aria-current={openId === c.id ? 'true' : undefined} onClick={() => onOpen(c.id)}>
                 <span className="rt-row__main">
                   <span className="rt-row__line">
-                    <span className="rt-kind">{KIND_SHORT[c.kind]}</span>
+                    <span className={`pill rt-kind rt-kind--${c.kind === 'QUESTION' ? 'question' : 'declaration'}`}>{KIND_SHORT[c.kind]}</span>
                     <span className="rt-row__topic">{c.topic}</span>
                   </span>
                   <span className="rt-row__tp">

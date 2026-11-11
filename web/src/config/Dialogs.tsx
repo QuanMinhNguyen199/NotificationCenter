@@ -2,7 +2,7 @@ import { DialogFrame, DateTimeField, OptionGroup, ViewTabs, Feedback, TextareaFi
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
-import dayjs, { type Dayjs } from 'dayjs';
+import { DEMO_NOW } from '../lib/demoClock';
 import { useState } from 'react';
 import Overlay from '../components/Overlay';
 import { StatusPill } from '../components/Status';
@@ -161,18 +161,18 @@ export function SaveDialog({
   const bp = useBreakpoint();
   const mobile = bp === 'mobile';
   const [mode, setMode] = useState<'now' | 'at'>('now');
-  const [at, setAt] = useState<Dayjs | null>(dayjs('2026-10-29T00:00'));
+  const [at, setAt] = useState<string | null>('2026-10-29T00:00');
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
   useHideNavWhile(open && mobile);
 
   const reasonErr = touched && !reason.trim() ? 'Nhập lý do thay đổi.' : '';
-  const atErr = touched && mode === 'at' && (!at || at.isBefore(dayjs('2026-10-28T09:16'))) ? 'Chọn thời điểm sau hiện tại.' : '';
+  const atErr = touched && mode === 'at' && (!at || at <= DEMO_NOW) ? 'Chọn thời điểm sau hiện tại.' : '';
 
   const submit = () => {
     setTouched(true);
-    if (!reason.trim() || (mode === 'at' && (!at || at.isBefore(dayjs('2026-10-28T09:16'))))) return;
-    onConfirm({ reason: reason.trim(), effective: mode === 'now' ? 'now' : at!.format('YYYY-MM-DDTHH:mm') });
+    if (!reason.trim() || (mode === 'at' && (!at || at <= DEMO_NOW))) return;
+    onConfirm({ reason: reason.trim(), effective: mode === 'now' ? 'now' : at! });
   };
 
   const changes = mobile ? (
@@ -222,7 +222,7 @@ export function SaveDialog({
           <div className="flex min-h-9 items-center gap-2"><RadioGroupItem value="at" id="eff-at" /><Label htmlFor="eff-at">Từ ngày, giờ chỉ định</Label></div>
         </RadioGroup>
         {mode === 'at' && (
-          <DateTimeField value={at?.format('YYYY-MM-DDTHH:mm') ?? '2026-10-29T00:00'} onValueChange={(value) => setAt(dayjs(value))} invalid={!!atErr} describedBy={atErr ? 'effective-error' : undefined} />
+          <DateTimeField value={at ?? '2026-10-29T00:00'} onValueChange={(value) => setAt(value)} invalid={!!atErr} describedBy={atErr ? 'effective-error' : undefined} />
         )}
         {atErr && <span className="field__error" id="effective-error" role="alert">{atErr}</span>}
       </div>

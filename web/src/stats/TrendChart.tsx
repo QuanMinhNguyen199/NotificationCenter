@@ -36,7 +36,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
         textStyle: { color: C.text, fontSize: 12, fontFamily: 'Inter Variable, Inter, sans-serif' },
         formatter: (items: { dataIndex: number }[]) => {
           const d = s.byDay[items[0].dataIndex];
-          return `<b>${dmy(d.date)}</b><br/>Tổng phát sinh: <b>${num(d.total)}</b><br/>Đã gửi Noti của tập này: <b>${num(d.sent)}</b>`;
+          return `<b>${dmy(d.date)}</b><br/>Tổng phát sinh: <b>${num(d.total)}</b><br/>Đã gửi của tập này: <b>${num(d.sent)}</b>`;
         },
       },
       xAxis: {
@@ -65,7 +65,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
           emphasis: { itemStyle: { color: C.barHover } },
         },
         {
-          name: 'Đã gửi Noti',
+          name: 'Đã gửi',
           type: 'line',
           data: s.byDay.map((d) => d.sent),
           symbol: 'circle',
@@ -87,7 +87,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
       extra={
         <div className="chart-legend" aria-hidden="true">
           <span><i className="swatch" style={{ background: C.bar }} /> Tổng phát sinh</span>
-          <span><i className="swatch swatch--line" style={{ background: C.sent }} /> Đã gửi Noti của cùng tập</span>
+          <span><i className="swatch swatch--line" style={{ background: C.sent }} /> Đã gửi của cùng tập</span>
         </div>
       }
     >
@@ -113,7 +113,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
         <div className="sr-only">
         <table>
           <caption>Thông báo phát sinh và đã gửi theo ngày</caption>
-          <thead><tr><th>Ngày</th><th>Tổng phát sinh</th><th>Đã gửi Noti</th></tr></thead>
+          <thead><tr><th>Ngày</th><th>Tổng phát sinh</th><th>Đã gửi</th></tr></thead>
           <tbody>{s.byDay.map((d) => <tr key={d.date}><td>{dmy(d.date)}</td><td>{num(d.total)}</td><td>{num(d.sent)}</td></tr>)}</tbody>
         </table>
         </div>
@@ -121,7 +121,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
       {picked ? (
         <div className="day-pick" role="status">
           <span>
-            Đang lọc ngày <b>{dmy(picked.date)}</b>: {num(picked.total)} phát sinh, {num(picked.sent)} đã gửi Noti.
+            Đang lọc ngày <b>{dmy(picked.date)}</b>: {num(picked.total)} phát sinh, {num(picked.sent)} đã gửi.
           </span>
           <span style={{ display: 'flex', gap: 8 }}>
             {mobile && (

@@ -29,8 +29,12 @@ button.rt-row:hover { background: var(--ground); }
 button.rt-row:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 0; }
 .rt-row[aria-current='true'] { background: var(--tint-50); box-shadow: inset 3px 0 0 var(--brand); }
 .rt-row__main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.rt-row__line { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.rt-kind { flex: none; font-size: 12px; font-weight: 600; color: #475569; }
+.rt-row__line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* Loại ca: badge mực đặc như con dấu văn bản (11/11/2026, người dùng chọn). Khác dạng với pill trạng thái nền nhạt,
+   nên không bị đọc nhầm thành trạng thái. Câu hỏi slate #475569 (chữ trắng 7,6:1); Tờ khai xanh mực #1E3A5F (11,6:1). */
+.rt-kind { flex: none; color: #FFFFFF; font-weight: 600; }
+.rt-kind--question { background: var(--text-secondary); }
+.rt-kind--declaration { background: #1E3A5F; }
 .rt-row__topic { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; line-height: 1.5; }
 .rt-row__tp { font-size: 14px; color: var(--text-muted); line-height: 1.45; overflow-wrap: anywhere; }
 .rt-row__meta { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--text-muted); line-height: 1.45; min-width: 0; }

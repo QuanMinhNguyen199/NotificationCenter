@@ -75,7 +75,6 @@ export function AiQaTab({ scope }: { scope: string }) {
 
   return (
     <div className={`hkd-tab${res.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={res.isPlaceholderData}>
-      <ProtoNote kind="mock">Câu hỏi, câu trả lời và đánh giá đều là dữ liệu giả lập; hệ thống thật chưa lưu lịch sử hỏi đáp Geo AI.</ProtoNote>
       <MobileDisclosure label="Tổng quan hỏi đáp AI"><div className="hkd-kpis">
         <div className="hkd-kpi">
           <span className="kpi__label">Câu hỏi 30 ngày</span>
@@ -169,6 +168,8 @@ export function AiQaTab({ scope }: { scope: string }) {
           </>
         )}
       </section>
+      {/* Ghi chú bản mẫu đặt cuối để danh sách câu hỏi lên sớm hơn, nhất là trên điện thoại. */}
+      <ProtoNote kind="mock">Câu hỏi, câu trả lời và đánh giá đều là dữ liệu giả lập; hệ thống thật chưa lưu lịch sử hỏi đáp Geo AI.</ProtoNote>
     </div>
   );
 }
@@ -191,10 +192,15 @@ function QaDetail({ item, pos, count, onDone, onCancel }: { item: QaRow; pos: nu
         </p>
       )}
       <div className="qa-detail__qa">
-        <p className="qa-detail__label">Câu hỏi</p>
-        <p className="qa-detail__q">{item.question}</p>
-        <p className="qa-detail__label">Geo AI trả lời</p>
-        <p className="qa-detail__a">{item.answer}</p>
+        {/* Hai khối nền khác màu: câu hỏi của NNT (trắng) và câu trả lời của Geo AI (tint thương hiệu), để không đọc lẫn. */}
+        <div className="qa-block qa-block--q">
+          <p className="qa-block__label">Câu hỏi của NNT</p>
+          <p className="qa-block__text">{item.question}</p>
+        </div>
+        <div className="qa-block qa-block--a">
+          <p className="qa-block__label">Geo AI trả lời</p>
+          <p className="qa-block__text">{item.answer}</p>
+        </div>
       </div>
       <RateForm key={item.id} item={item} onDone={onDone} onCancel={onCancel} />
     </>

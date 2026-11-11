@@ -16,7 +16,6 @@ function AutomaticSends() {
   const { p, set, openDetail, closeDetail } = useStatsParams();
   const reset = () => set({ unit: null, from: null, to: null, group: null, rs: null, rq: null, page: 1 });
   return <>
-    <p className="workspace-note">Đợt nhắc do hệ thống tự tạo theo quy tắc. Duyệt, tạm dừng hoặc hủy chỉ áp dụng cho đợt đang chọn.</p>
     <FilterBar p={p} apply={(d) => set({ ...d, page: 1 })} />
     <RunsPane p={p} set={set} open={openDetail} reset={reset} />
     <DetailOverlay detail={p.detail} filter={filterOf(p)} onClose={closeDetail} />
@@ -34,11 +33,11 @@ export default function NotificationWorkspace() {
   return <>
     <h1 className="sr-only">Thông báo</h1>
     <ViewTabs value={current} onValueChange={(muc) => confirmLeave(() => navigate('/gui-thong-bao', { muc }))} items={[
-      { key: 'chu-dong', label: canSend ? 'Gửi chủ động' : 'Lịch sử gửi', children: current === 'chu-dong' ? <><p className="workspace-note">{canSend ? 'Chọn người nhận và nội dung để gửi; theo dõi kết quả ngay tại đây.' : 'Các lần gửi có NNT bạn phụ trách.'}</p><SendPage /></> : null },
+      { key: 'chu-dong', label: canSend ? 'Gửi chủ động' : 'Lịch sử gửi', children: current === 'chu-dong' ? <SendPage /> : null },
       { key: 'tu-dong', label: 'Đợt tự động', children: current === 'tu-dong' ? <AutomaticSends /> : null },
-      { key: 'lich', label: 'Lịch thông báo', children: current === 'lich' ? <><p className="workspace-note">Thông báo dự kiến theo ngày, tính từ nghĩa vụ của từng hộ trong phạm vi bạn phụ trách.</p><NotificationCalendar /></> : null },
-      { key: 'loai', label: 'Loại thông báo', children: current === 'loai' ? <><p className="workspace-note">Tám loại thông báo, điều kiện gửi và cách gửi của từng loại.</p><NotificationTypes /></> : null },
-      { key: 'hieu-qua', label: 'Hiệu quả gửi', children: current === 'hieu-qua' ? <><p className="workspace-note">Hai chỉ tiêu theo dõi chất lượng gửi so với mục tiêu.</p><SendEffectiveness /></> : null },
+      { key: 'lich', label: 'Lịch thông báo', children: current === 'lich' ? <NotificationCalendar /> : null },
+      { key: 'loai', label: 'Loại thông báo', children: current === 'loai' ? <NotificationTypes /> : null },
+      { key: 'hieu-qua', label: 'Hiệu quả gửi', children: current === 'hieu-qua' ? <SendEffectiveness /> : null },
       ...(canViewTemplates ? [{ key: 'thu-vien', label: 'Thư viện mẫu', children: current === 'thu-vien' ? <TemplatesPage /> : null }] : []),
     ]} />
   </>;

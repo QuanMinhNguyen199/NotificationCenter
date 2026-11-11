@@ -21,7 +21,7 @@ import { dmyhm, num } from '../lib/format';
 import { useRoute } from '../lib/router';
 import { useBreakpoint } from '../lib/useMedia';
 import { useGuard } from '../shell/guard';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m as M } from 'motion/react';
 import { DUR, tween } from '../lib/motion';
 import { PushPreview } from '../stats/Details';
 import { CHANNEL_STATUS } from './ChannelsPage';
@@ -165,7 +165,7 @@ function SendDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       {/* Bung/thu bằng chiều cao; chỉ cắt nội dung trong lúc chuyển động để chữ không bị cắt khi đã mở. */}
                       <AnimatePresence initial={false}>
                       {open === r.taxpayerId && (
-                        <motion.div key="detail" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }} exit={{ height: 0, opacity: 0, overflow: 'hidden' }} style={{ overflow: 'hidden' }} transition={tween(DUR.state)}>
+                        <M.div key="detail" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }} exit={{ height: 0, opacity: 0, overflow: 'hidden' }} style={{ overflow: 'hidden' }} transition={tween(DUR.state)}>
                         {/* Mỗi kênh một khối xếp dọc: tên kênh → lý do (nếu có, tô theo mức) → từng lần thử trên một dòng. */}
                         <div className="rcpt__detail">
                           {r.deliveries.map((d) => (
@@ -200,7 +200,7 @@ function SendDetail({ id, onClose }: { id: string; onClose: () => void }) {
                             </section>
                           ))}
                         </div>
-                        </motion.div>
+                        </M.div>
                       )}
                       </AnimatePresence>
                     </li>
@@ -491,9 +491,8 @@ export default function SendPage() {
 
   return (
     <div className="acct-page">
-      <h1 className="sr-only">Gửi thông báo</h1>
+      <h2 className="sr-only">Gửi chủ động</h2>
       <div className="page-toolbar">
-        <span />
         {canSend && <Button onClick={() => navigate('/gui-thong-bao', { tao: '1' })}><Plus aria-hidden="true" /> Tạo lần gửi</Button>}
       </div>
       {q.isError ? (

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { buildHash, useRoute, type RoutePath } from '../lib/router';
 import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
@@ -27,7 +27,7 @@ const ALL_NAV: { path: RoutePath; label: string; short: string; icon: ReactNode 
   { path: '/thong-ke', label: 'Thống kê', short: 'Thống kê', icon: <BarChart3 className="size-5" /> },
   { path: '/quan-ly-hkd', label: 'Quản lý HKD', short: 'HKD', icon: <Store className="size-5" /> },
   { path: '/gui-thong-bao', label: 'Thông báo', short: 'Thông báo', icon: <Send className="size-5" /> },
-  { path: '/chuyen-tuyen', label: 'Chuyển tuyến', short: 'Hộp việc', icon: <Inbox className="size-5" /> },
+  { path: '/chuyen-tuyen', label: 'Chuyển tuyến', short: 'Chuyển tuyến', icon: <Inbox className="size-5" /> },
   { path: '/thiet-lap', label: 'Thiết lập', short: 'Thiết lập', icon: <CalendarClock className="size-5" /> },
   { path: '/tai-khoan', label: 'Tài khoản', short: 'Tài khoản', icon: <UserCog className="size-5" /> },
 ];
@@ -142,7 +142,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { user } = usePermissions();
   const openCases = useOpenCaseCount();
   // Số ca Mới cạnh mục Chuyển tuyến.
-  const count = (to: RoutePath) => (to === '/chuyen-tuyen' && openCases > 0 ? <span className="nav-count" aria-label={`${openCases} ca mới`}>{openCases > 99 ? '99+' : openCases}</span> : null);
+  const count = (to: RoutePath) => (to === '/chuyen-tuyen' && openCases > 0 ? <span className="nav-count" aria-hidden="true">{openCases > 99 ? '99+' : openCases}</span> : null);
+  // Số đọc cho trình đọc màn hình, đặt ngoài vùng aria-hidden.
+  const srCount = (to: RoutePath) => (to === '/chuyen-tuyen' && openCases > 0 ? <span className="sr-only">, {openCases} ca mới</span> : null);
   // Tài khoản bị tạm khóa: không hiện dữ liệu.
   const content = user.active ? children : <p className="locked-note" role="status">Tài khoản {user.name} đang tạm khóa. Liên hệ lãnh đạo cơ sở để mở lại.</p>;
   const canPin = bp === 'desktop';
@@ -255,7 +257,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 }}
               >
                 <span className="bottom-nav__icon" aria-hidden="true">{item.icon}{count(item.path)}</span>
-                <span>{item.short}</span>
+                <span>{item.short}</span>{srCount(item.path)}
               </a>
             ))}
           </nav>
@@ -277,11 +279,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       <AnimatePresence>
         {floating && byClick && (
-          <motion.div className="sidebar-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={transition} onClick={close} aria-hidden="true" />
+          <m.div className="sidebar-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={transition} onClick={close} aria-hidden="true" />
         )}
       </AnimatePresence>
 
-      <motion.aside
+      <m.aside
         ref={asideRef}
         className={`sidebar${floating ? ' sidebar--floating' : ''}`}
         initial={false}
@@ -307,12 +309,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </button>
           )}
         </div>
-        <nav className="sidebar__nav" ref={navRef}>
+        <nav className="sidebar__nav" aria-label="Điều hướng chính" ref={navRef}>
           <span ref={pillRef} className="nav-pill" aria-hidden="true" />
           {nav.map((item) => {
             const active = item.path === path;
             return (
-              <motion.a
+              <m.a
                 key={item.path}
                 href={buildHash(item.path)}
                 className={`nav-item${active ? ' nav-item--active' : ''}`}
@@ -328,11 +330,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <span aria-hidden="true" className="nav-item__icon">{item.icon}</span>
                 <span className="nav-item__label">{item.label}</span>
                 {count(item.path)}
-              </motion.a>
+                {srCount(item.path)}
+              </m.a>
             );
           })}
         </nav>
-      </motion.aside>
+      </m.aside>
 
       <div className="shell__main">
         <header className="topbar">

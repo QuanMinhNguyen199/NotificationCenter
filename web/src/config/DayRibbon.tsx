@@ -1,5 +1,6 @@
 import type { ConfigValues } from '../data/config';
 import { toMinutes } from '../lib/format';
+import { DEMO_NOW } from '../lib/demoClock';
 
 const DAY = 24 * 60;
 const at = (t: string) => `${(toMinutes(t) / DAY) * 100}%`;
@@ -56,7 +57,7 @@ export function DayRibbon({ v, applied, compact }: { v: ConfigValues; applied?: 
 }
 
 /** Ba lần chạy tiếp theo tính từ thời điểm demo 28/10/2026 09:15, giờ Việt Nam. */
-export function nextRuns(v: ConfigValues, now = '2026-10-28T09:15') {
+export function nextRuns(v: ConfigValues, now = DEMO_NOW) {
   if (!v.autoScan) return [];
   const nowMin = toMinutes(now.slice(11, 16));
   const start = new Date(`${now.slice(0, 10)}T00:00:00`);

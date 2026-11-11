@@ -30,7 +30,6 @@ export function ListToolbar({ search, filters, count, actions, activeCount = 0 }
     </div>
     <BottomSheet open={open} onClose={() => setOpen(false)} title="Lọc danh sách"
       footer={<Button className="w-full" onClick={() => setOpen(false)}>Xem kết quả</Button>}>
-      <p className="mobile-filter-hint">Danh sách cập nhật khi bạn chọn điều kiện.</p>
       <div className="mobile-list-filters">{mobileFields(filters)}</div>
     </BottomSheet>
   </div>;

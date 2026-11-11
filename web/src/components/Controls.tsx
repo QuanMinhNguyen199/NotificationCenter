@@ -7,13 +7,14 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from './ui/sheet';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from './ui/sheet';
 import { Textarea } from './ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { useBreakpoint } from '../lib/useMedia';
 import { useHideNavWhile } from '../shell/overlay';
+import { DEMO_TODAY } from '../lib/demoClock';
 
 export function ChoiceSelect<T extends string | number>({ value, onValueChange, options, prefix, style, ...props }: {
   value: T; onValueChange: (value: T) => void; options: { value: T; label: ReactNode }[];
@@ -67,9 +68,9 @@ export function DateTimeField({ value, onValueChange, invalid, describedBy }: {
   const date = new Date(`${day}T00:00:00`);
   return <div className="date-time-field">
     <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild>
-      <Button variant="outline" aria-label="Ngày hiệu lực" aria-invalid={invalid} aria-describedby={describedBy}>{date.toLocaleDateString('vi-VN')}</Button>
+      <Button variant="outline" aria-label={`Ngày hiệu lực: ${date.toLocaleDateString('vi-VN')}`} aria-invalid={invalid} aria-describedby={describedBy}>{date.toLocaleDateString('vi-VN')}</Button>
     </PopoverTrigger><PopoverContent className="w-auto p-0" align="start">
-      <Calendar mode="single" locale={vi} selected={date} defaultMonth={date} disabled={{ before: new Date('2026-10-28T00:00:00') }} onSelect={(d) => {
+      <Calendar mode="single" locale={vi} selected={date} defaultMonth={date} disabled={{ before: new Date(`${DEMO_TODAY}T00:00:00`) }} onSelect={(d) => {
         if (d) { const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; onValueChange(`${date}T${time}`); setOpen(false); }
       }} />
     </PopoverContent></Popover>
@@ -170,7 +171,7 @@ export function BottomSheet({ open, onClose, title, footer, children }: { open: 
   useHideNavWhile(open);
   const returnTo = useRef<HTMLElement | null>(null);
   return <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-    <SheetContent side="bottom" className="sheet max-h-[90dvh] gap-0 rounded-t-xl p-0"
+    <SheetContent side="bottom" aria-describedby={undefined} className="sheet max-h-[90dvh] gap-0 rounded-t-xl p-0"
       onOpenAutoFocus={() => { returnTo.current = document.activeElement as HTMLElement | null; }}
       onCloseAutoFocus={(event) => {
         if (returnTo.current?.isConnected && returnTo.current !== document.body) {
@@ -178,7 +179,7 @@ export function BottomSheet({ open, onClose, title, footer, children }: { open: 
           returnTo.current.focus();
         }
       }}>
-      <SheetHeader className="border-b pr-14"><SheetTitle>{title}</SheetTitle><SheetDescription className="sr-only">Đóng để quay lại màn hình.</SheetDescription></SheetHeader>
+      <SheetHeader className="border-b pr-14"><SheetTitle>{title}</SheetTitle></SheetHeader>
       <div className="min-h-0 overflow-y-auto p-4">{children}</div>
       {footer && <SheetFooter className="border-t p-4">{footer}</SheetFooter>}
     </SheetContent>
@@ -189,8 +190,8 @@ export function DialogFrame({ open, onClose, title, footer, width = 640, childre
   const mobile = useBreakpoint() === 'mobile';
   if (mobile) return <BottomSheet open={open} onClose={onClose} title={title} footer={footer}>{children}</BottomSheet>;
   return <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-    <DialogContent className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden rounded-lg p-0 sm:max-w-none" style={{ width, maxWidth: 'calc(100vw - 32px)' }}>
-      <DialogHeader className="border-b px-6 py-4 pr-14"><DialogTitle>{title}</DialogTitle><DialogDescription className="sr-only">Xem lại nội dung trước khi xác nhận.</DialogDescription></DialogHeader>
+    <DialogContent aria-describedby={undefined} className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden rounded-lg p-0 sm:max-w-none" style={{ width, maxWidth: 'calc(100vw - 32px)' }}>
+      <DialogHeader className="border-b px-6 py-4 pr-14"><DialogTitle>{title}</DialogTitle></DialogHeader>
       <div className="min-h-0 overflow-y-auto px-6 py-4">{children}</div>
       {footer && <DialogFooter className="m-0 rounded-none border-t bg-card px-6 py-3">{footer}</DialogFooter>}
     </DialogContent>
@@ -203,7 +204,7 @@ export function DateRangeField({ from, to, latest, onValueChange }: { from: stri
   const date = (s: string) => new Date(`${s}T00:00:00`);
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   return <Popover open={open} onOpenChange={(v) => { setOpen(v); if(v) setRange({ from: date(from), to: date(to) }); }}>
-    <PopoverTrigger asChild><Button variant="outline" aria-label="Từ ngày đến ngày" className="bg-card">{date(from).toLocaleDateString('vi-VN')} – {date(to).toLocaleDateString('vi-VN')}</Button></PopoverTrigger>
+    <PopoverTrigger asChild><Button variant="outline" aria-label={`Từ ngày ${date(from).toLocaleDateString('vi-VN')} đến ngày ${date(to).toLocaleDateString('vi-VN')}`} className="bg-card">{date(from).toLocaleDateString('vi-VN')} – {date(to).toLocaleDateString('vi-VN')}</Button></PopoverTrigger>
     <PopoverContent align="start" className="w-auto p-0">
       <Calendar mode="range" locale={vi} selected={range} defaultMonth={date(from)} disabled={{ after: date(latest) }} onSelect={setRange} />
       <div className="flex justify-end border-t p-2"><Button disabled={!range?.from || !range.to} onClick={() => { if(range?.from && range.to) { onValueChange(iso(range.from), iso(range.to)); setOpen(false); } }}>Chọn khoảng ngày</Button></div>

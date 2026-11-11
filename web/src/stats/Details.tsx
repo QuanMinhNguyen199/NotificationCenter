@@ -531,7 +531,7 @@ function ResponseDetail({ filter }: { filter: StatsFilter }) {
           </div>
           <dl className="resp__legs">
             <div>
-              <dt><i className="resp__dot resp__dot--send" aria-hidden="true" />Tạo → gửi Noti</dt>
+              <dt><i className="resp__dot resp__dot--send" aria-hidden="true" />Tạo → gửi</dt>
               <dd>{duration(r.toSend!)}</dd>
               <p>Gồm thời gian chờ tới khung giờ gửi và xếp lượt gửi.</p>
             </div>

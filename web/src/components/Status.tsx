@@ -9,7 +9,7 @@ export function StatusPill({ tone, children }: { tone: Tone; children: ReactNode
 }
 
 export const SEND: Record<SendStatus, { label: string; tone: Tone }> = {
-  SENT: { label: 'Đã gửi Noti', tone: 'info' },
+  SENT: { label: 'Đã gửi', tone: 'info' },
   PENDING: { label: 'Chờ gửi', tone: 'warning' },
   FAILED: { label: 'Gửi thất bại', tone: 'danger' },
   UNKNOWN: { label: 'Chưa rõ kết quả', tone: 'neutral' },

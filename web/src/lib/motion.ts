@@ -19,11 +19,21 @@ export const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 export const tween = (duration: number) => ({ type: 'tween' as const, duration, ease: EASE_OUT });
 
 /**
- * Animation cho ECharts: lần vẽ đầu ngắn, lần cập nhật chuyển từ số cũ sang số mới (không vẽ lại từ đầu).
- * Giảm chuyển động thì tắt hẳn.
+ * Animation cho ECharts (11/11/2026, theo yêu cầu người dùng):
+ * - Lần vẽ đầu: cột mọc từ trục lên, đường vẽ dần từ trái sang phải, 600ms ease-out; mỗi cột trễ thêm 18ms
+ *   (tổng trễ tối đa 360ms) để mắt đọc theo thứ tự thời gian thay vì cả khối bật ra cùng lúc.
+ * - Đổi bộ lọc: chuyển từ số cũ sang số mới trong 320ms, không vẽ lại từ đầu, không trễ.
+ * - Giảm chuyển động hoặc đang chuyển cảnh đăng nhập: tắt hẳn, vẽ thẳng số cuối.
  */
 export const chartMotion = (reduced: boolean) =>
-  // Đang chuyển cảnh đăng nhập: vẽ thẳng số cuối, biểu đồ đứng yên khi lớp che mở ra.
   reduced || authTransition.get()
     ? { animation: false }
-    : { animation: true, animationDuration: 300, animationEasing: 'cubicOut', animationDurationUpdate: 240, animationEasingUpdate: 'cubicOut' };
+    : {
+        animation: true,
+        animationDuration: 600,
+        animationEasing: 'cubicOut',
+        animationDelay: (i: number) => Math.min(i * 18, 360),
+        animationDurationUpdate: 320,
+        animationEasingUpdate: 'cubicOut',
+        animationDelayUpdate: 0,
+      };
