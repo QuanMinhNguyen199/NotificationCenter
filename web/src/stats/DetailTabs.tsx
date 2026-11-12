@@ -2,10 +2,11 @@ import { ListToolbar } from '@/components/ListToolbar';
 import { IconButton } from '@/components/IconButton';
 import { ChoiceSelect, ViewTabs } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Download, RotateCcw, Search as SearchIcon, Send, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Search as SearchIcon, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProtoBadge } from '@/components/Proto';
-import { downloadCsv } from '../lib/csv';
+import { downloadXlsx } from '../lib/xlsx';
+import { ExcelButton } from '../components/ExcelButton';
 import { useCurrentUser } from '../demo/DemoContext';
 import { Input } from '@/components/ui/input';
 import { DataTable, type DataColumns } from '@/components/DataTable';
@@ -225,7 +226,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
         <ListReset show={!!(p.nq || p.ns !== 'all' || p.nd !== 'all' || p.day)} onReset={() => set({ nq: null, ns: null, nd: null, day: null, page: 1 })} /></>}
         count={<span className="detail__count">{q.data ? `${num(q.data.total)} thông báo` : ''}</span>}
         activeCount={[p.ns !== 'all', p.nd !== 'all', !!p.day].filter(Boolean).length}
-        actions={<ExportButton disabled={!q.data?.total} label="Xuất danh sách thông báo ra CSV" onExport={() => exportNotifications(query)} />}
+        actions={<ExcelButton className="export-btn" disabled={!q.data?.total} label="Xuất danh sách thông báo ra Excel" onExport={() => exportNotifications(query)} />}
       />
       {p.ns === 'FAILED' && <RetryBar query={query} />}
       <div className={q.isPlaceholderData ? 'pane-results is-stale' : 'pane-results'} aria-busy={q.isPlaceholderData}>
@@ -270,32 +271,9 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
 
 /* ---------- [Thêm] Xuất tệp, gửi lại (view.docx mục 1) ---------- */
 
-export function ExportButton({ onExport, disabled, label }: { onExport: () => Promise<void>; disabled?: boolean; label: string }) {
-  const [busy, setBusy] = useState(false);
-  return (
-    <IconButton
-      icon={Download}
-      className="export-btn"
-      disabled={disabled}
-      loading={busy}
-      label={busy ? 'Đang xuất tệp…' : label}
-      onClick={async () => {
-        setBusy(true);
-        try {
-          await onExport();
-        } catch {
-          toast.error('Không xuất được tệp. Thử lại sau.');
-        } finally {
-          setBusy(false);
-        }
-      }}
-    />
-  );
-}
-
 async function exportNotifications(qy: NotificationQuery) {
   const all = await fetchNotifications(qy);
-  downloadCsv(`thong-bao_${qy.from}_${qy.to}.csv`, [
+  downloadXlsx(`thong-bao_${qy.from}_${qy.to}`, [
     ['Mã', 'Thời điểm tạo', 'NNT', 'MST', 'Nhóm', 'Tiêu đề', 'Kết quả gửi', 'Kết quả giao', 'Lý do lỗi (giả lập)', 'Đợt gửi'],
     ...all.rows.map((r) => [r.id, dmyhm(r.createdAt), r.taxpayer.name, r.taxpayer.mst, r.groups.join(' + '), r.title, SEND[r.send].label, DELIVERY[r.delivery].label, r.send === 'FAILED' ? failReason(r).text : '', r.runId]),
   ]);
@@ -344,7 +322,7 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
   const tpQuery: TaxpayerQuery = { ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, app: p.app, page: 1, size: 1e6 };
   const exportTaxpayers = async () => {
     const all = await fetchTaxpayers(tpQuery);
-    downloadCsv(`ho-kinh-doanh_${p.unit}.csv`, [
+    downloadXlsx(`ho-kinh-doanh_${p.unit}`, [
       ['NNT', 'MST', 'Trạng thái HKD', 'Hồ sơ khai còn thiếu', 'Ưu tiên khai', 'Khoản còn phải nộp', 'Ưu tiên nộp', 'Đăng ký iHanoi (giả lập)', 'Cập nhật'],
       ...all.rows.map((t) => [t.name, t.mst, t.hkdStatus, t.fileCount, t.filePriority ? PRIORITY[t.filePriority].label : '', t.payCount, t.payPriority ? PRIORITY[t.payPriority].label : '', appRegistered(t.id) ? 'Có' : 'Chưa', dmyhm(t.updatedAt)]),
     ]);
@@ -430,7 +408,7 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
         <ListReset show={!!(p.tq || p.kind || p.prio || p.notified || p.app)} onReset={() => set({ tq: null, kind: null, prio: null, notified: null, app: null, page: 1 })} /></>}
         count={<span className="detail__count">{q.data ? `${num(q.data.total)} NNT` : ''}</span>}
         activeCount={[!!p.kind, !!p.prio, !!p.notified, !!p.app].filter(Boolean).length}
-        actions={<ExportButton disabled={!q.data?.total} label="Xuất danh sách hộ ra CSV" onExport={exportTaxpayers} />}
+        actions={<ExcelButton className="export-btn" disabled={!q.data?.total} label="Xuất danh sách hộ ra Excel" onExport={exportTaxpayers} />}
       />
       {p.app && (
         <p className="caption-line proto-inline">

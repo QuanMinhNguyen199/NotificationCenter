@@ -1,9 +1,7 @@
 import { MobileDisclosure } from '@/components/MobileDisclosure';
-import { IconButton } from '@/components/IconButton';
 import { ChoiceSelect, GroupedSelect, OptionGroup, ViewTabs } from '@/components/Controls';
 import { Button } from '@/components/ui/button';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Download } from 'lucide-react';
 import type { ReactNode } from 'react';
 import {
   COMPLIANCE_LABEL, COMPLIANCE_ORDER, REMINDER_HINT, REMINDER_LABEL, REMINDER_ORDER, REPORT_MONTHS, REQUEST_STATUS_LABEL,
@@ -23,7 +21,8 @@ import { filterOf, useStatsParams } from '../stats/useStatsParams';
 import { useRoute } from '../lib/router';
 import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
 import { C } from '../theme';
-import { downloadCsv } from '../lib/csv';
+import { downloadXlsx } from '../lib/xlsx';
+import { ExcelButton } from '../components/ExcelButton';
 import { AiQaTab } from '../hkd/AiQaTab';
 import { TopRows } from '../components/TopRows';
 
@@ -228,7 +227,7 @@ function DebtTab({ scope, scopeName }: { scope: string; scopeName: string }) {
     if (!d) return;
     const t = d.trend.find((x) => x.month === month)!;
     const k = d.total ? t.amount / d.total : 0;
-    downloadCsv(`bao-cao-no-thue-${month.replace('/', '-')}.csv`, [
+    downloadXlsx(`bao-cao-no-thue-${month.replace('/', '-')}`, [
       [`Báo cáo nợ thuế HKD tháng ${month}`, scopeName, 'Dữ liệu minh họa'],
       [],
       ['Đơn vị', 'Số HKD nợ', 'Tổng nợ (đồng)', 'Nợ quá hạn (đồng)'],
@@ -279,7 +278,7 @@ function DebtTab({ scope, scopeName }: { scope: string; scopeName: string }) {
             {REPORT_MONTHS.map((m) => (
               <li key={m}>
                 <span>Báo cáo nợ thuế tháng {m}</span>
-                <IconButton icon={Download} label={`Tải báo cáo nợ thuế tháng ${m} dạng CSV`} disabled={!d} onClick={() => report(m)} />
+                <ExcelButton label={`Tải báo cáo nợ thuế tháng ${m} dạng Excel`} disabled={!d} onExport={() => report(m)} />
               </li>
             ))}
           </ul>

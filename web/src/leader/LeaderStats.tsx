@@ -1,42 +1,25 @@
 import { MobileDisclosure } from '@/components/MobileDisclosure';
 import { ChoiceSelect } from '@/components/Controls';
-import { IconButton } from '@/components/IconButton';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
-import * as echarts from 'echarts/core';
-import { MarkLineComponent } from 'echarts/components';
 import { BlockEmpty, BlockError, Panel, Skel } from '../components/Blocks';
 import { ProtoBadge, ProtoNote } from '../components/Proto';
 import { usePermissions } from '../demo/DemoContext';
-import ReactECharts from '../lib/Chart';
-import { downloadCsv } from '../lib/csv';
+import { downloadXlsx } from '../lib/xlsx';
+import { ExcelButton } from '../components/ExcelButton';
 import { dmy, num, pct } from '../lib/format';
-import { chartMotion } from '../lib/motion';
-import { useBreakpoint, useReducedMotion } from '../lib/useMedia';
-import { C } from '../theme';
+import { useBreakpoint } from '../lib/useMedia';
 import { fetchCityComparison, fetchOfficerPerf, type OfficerPerf, type UnitRow } from './leaderApi';
 import './leader.css';
 import { TopRows, TOP_N } from '../components/TopRows';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DEMO_TODAY } from '../lib/demoClock';
 
-// Lib/Chart.tsx chỉ nạp cột và đường; màn này cần thêm đường trung bình (markLine).
-echarts.use([MarkLineComponent]);
-
-const FONT = 'Inter Variable, Inter, sans-serif';
-const axisLabel = { color: C.faint, fontSize: 12, fontFamily: FONT };
-/** Cột của đơn vị khác: xám đủ đậm để thấy trên nền trắng (≈3,4:1), không tranh với màu brand của đơn vị mình. */
-const OTHER_BAR = '#7C8BA1';
 const AS_OF = DEMO_TODAY;
 
 const rate = (v: number) => pct(v * 100, 100);
 const hours = (h: number | null) => (h == null ? '—' : `${h.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`);
-
-function useChartBase() {
-  const reduced = useReducedMotion();
-  return { ...chartMotion(reduced), textStyle: { fontFamily: FONT } };
-}
 
 function Kpi({ label, value, note }: { label: string; value: ReactNode; note?: ReactNode }) {
   return (
@@ -163,9 +146,7 @@ function KpiRow({ data, error, onRetry }: { data?: CityData; error: boolean; onR
 
 /* ---------- 2. So sánh 25 Thuế cơ sở ---------- */
 
-function RankChart({ data, metric }: { data: CityData; metric: MetricKey }) {
-  const base = useChartBase();
-  const mobile = useBreakpoint() === 'mobile';
+function RankChart({ data, metric, tableToggle }: { data: CityData; metric: MetricKey; tableToggle: ReactNode }) {
   const m = METRICS[metric];
   const all = ranked(data.units, metric);
   const avg = m.value(data.avg);
@@ -173,56 +154,53 @@ function RankChart({ data, metric }: { data: CityData; metric: MetricKey }) {
   const ownRank = all.indexOf(own) + 1;
   // Thu gọn: 5 đơn vị đầu + đơn vị mình (nếu ngoài top 5); mở để xem đủ 25.
   const [open, setOpen] = useState(false);
-  const rows = open ? all : ownRank <= TOP_N ? all.slice(0, TOP_N) : [...all.slice(0, TOP_N), own];
-  const rankOfRow = (u: UnitRow) => all.indexOf(u) + 1;
+  const collapsed = !open && ownRank > TOP_N;
+  const rows = open ? all : collapsed ? [...all.slice(0, TOP_N), own] : all.slice(0, TOP_N);
+  const hidden = collapsed ? ownRank - TOP_N - 1 : 0;
   const better = m.lowerBetter ? m.value(own) <= avg : m.value(own) >= avg;
+  // Trục bắt đầu từ 0 để độ dài thanh phản ánh đúng tỷ lệ giữa các đơn vị.
+  const max = Math.max(avg, ...all.map(m.value)) || 1;
+  const at = (v: number) => `${(v / max) * 100}%`;
+  const row = (u: UnitRow) => (
+    <li key={u.id} className={`rank__row${u.own ? ' is-own' : ''}`}>
+      <span className="rank__pos">{all.indexOf(u) + 1}</span>
+      <span className="rank__name">{u.name}{u.own && <span className="sr-only"> (đơn vị mình)</span>}</span>
+      <span className="rank__track" aria-hidden="true">
+        <span className="rank__bar" style={{ width: at(m.value(u)) }} />
+        <span className="rank__avg" style={{ left: at(avg) }} />
+      </span>
+      <span className="rank__val">{m.fmt(m.value(u))}</span>
+    </li>
+  );
   return (
     <>
-      <ReactECharts
-        aria-hidden="true"
-        style={{ height: rows.length * 22 + 24 }}
-        opts={{ renderer: 'svg' }}
-        notMerge
-        option={{
-          ...base,
-          tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: (v: number) => m.fmt(v) },
-          grid: { left: mobile ? 108 : 124, right: mobile ? 64 : 72, top: 4, bottom: 20 },
-          xAxis: { type: 'value', show: false, max: (v: { max: number }) => v.max * 1.02 },
-          yAxis: {
-            type: 'category',
-            inverse: true,
-            data: rows.map((u) => `${rankOfRow(u)}. ${u.name}`),
-            axisLabel: { ...axisLabel, color: C.text, formatter: (v: string) => (v.endsWith(own.name) ? `{own|${v}}` : v), rich: { own: { color: C.brandInk, fontWeight: 700, fontSize: 12 } } },
-            axisTick: { show: false },
-            axisLine: { show: false },
-          },
-          series: [{
-            name: m.label,
-            type: 'bar',
-            barWidth: '64%',
-            data: rows.map((u) => ({ value: +m.value(u).toFixed(2), itemStyle: { color: u.own ? C.brand : OTHER_BAR } })),
-            label: { show: true, position: 'right', color: C.text, fontSize: 11, formatter: (e: { value: number }) => m.fmt(e.value) },
-            markLine: {
-              symbol: 'none',
-              silent: true,
-              lineStyle: { color: C.text, type: 'dashed', width: 1 },
-              label: { show: true, position: 'end', color: C.text, fontSize: 11, formatter: 'Trung bình' },
-              data: [{ xAxis: +avg.toFixed(2) }],
-            },
-          }],
-        }}
-      />
-      <button type="button" className="top-rows__toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        {open ? <>Thu gọn <ChevronUp aria-hidden="true" /></> : <>Xem đủ {all.length} đơn vị <ChevronDown aria-hidden="true" /></>}
-      </button>
-      <div className="chart-legend" aria-hidden="true">
-        <span><i className="swatch" style={{ background: C.brand }} /> {own.name} (đơn vị mình)</span>
-        <span><i className="swatch" style={{ background: OTHER_BAR }} /> Thuế cơ sở khác</span>
-        <span><i className="swatch swatch--line leader-swatch-dash" /> Trung bình thành phố: {m.fmt(avg)}</span>
-      </div>
-      <p className="chart-note">
-        <b>{own.name}</b> xếp hạng {ownRank}/{all.length} về {m.label.toLowerCase()}: {m.fmt(m.value(own))}, {better ? 'tốt hơn hoặc bằng' : 'kém hơn'} trung bình thành phố ({m.fmt(avg)}).
+      <p className="rank__summary">
+        <b>{own.name}</b> đứng thứ <b>{ownRank}/{all.length}</b> với {m.fmt(m.value(own))},{' '}
+        <span className={better ? 'rank__delta is-good' : 'rank__delta is-bad'}>{better ? 'tốt hơn hoặc bằng' : 'kém hơn'}</span> trung bình thành phố.
       </p>
+      <div className="rank">
+        <div className="rank__head" aria-hidden="true">
+          <span className="rank__track">
+            <span className="rank__avg-label" style={{ left: at(avg) }}>Trung bình {m.fmt(avg)}</span>
+          </span>
+        </div>
+        <ol className="rank__list" aria-label={`Xếp hạng ${all.length} Thuế cơ sở theo ${m.label.toLowerCase()}; trung bình thành phố ${m.fmt(avg)}`}>
+          {rows.slice(0, TOP_N).map(row)}
+          {hidden > 0 && (
+            <li className="rank__gap">
+              <span className="rank__track"><span className="rank__avg" style={{ left: at(avg) }} /></span>
+              <span className="rank__gap-text">{hidden} đơn vị ở giữa</span>
+            </li>
+          )}
+          {rows.slice(TOP_N).map(row)}
+        </ol>
+      </div>
+      <div className="rank__toggles">
+        <button type="button" className="top-rows__toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {open ? <>Thu gọn <ChevronUp aria-hidden="true" /></> : <>Xem đủ {all.length} đơn vị <ChevronDown aria-hidden="true" /></>}
+        </button>
+        {tableToggle}
+      </div>
     </>
   );
 }
@@ -233,7 +211,7 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
   const mobile = useBreakpoint() === 'mobile';
   const exportCsv = () => {
     if (!data) return;
-    downloadCsv(`so-sanh-25-thue-co-so-${AS_OF}.csv`, [
+    downloadXlsx(`so-sanh-25-thue-co-so-${AS_OF}`, [
       [`So sánh 25 Thuế cơ sở, 30 ngày đến ${dmy(AS_OF)}`, 'Dữ liệu giả lập'],
       [],
       ['Đơn vị', 'Tờ khai tiếp nhận', 'Tiếp nhận thành công', 'Tỷ lệ xử lý thành công (%)', 'Tỷ lệ nộp tờ khai (%)', 'Phản hồi TB (giờ)', 'Người dùng ứng dụng', 'Tổng HKD'],
@@ -267,15 +245,15 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
           className="dashboard-card--static leader-rank"
           extra={<div className="leader-rank__tools">
             <ChoiceSelect aria-label="Chỉ số so sánh" value={metric} onValueChange={setMetric} options={METRIC_KEYS.map((k) => ({ value: k, label: METRICS[k].label }))} style={{ minWidth: mobile ? '100%' : 240 }} />
-            <IconButton icon={Download} label="Xuất so sánh 25 Thuế cơ sở ra CSV" disabled={!data} onClick={exportCsv} />
+            <ExcelButton label="Xuất so sánh 25 Thuế cơ sở ra Excel" disabled={!data} onExport={exportCsv} />
           </div>}
         >
           {!data ? <Skel w="100%" h={200} /> : <>
-            <RankChart data={data} metric={metric} />
-            {/* Bảng số liệu (cho trình đọc màn hình và người cần số chính xác) mở tại chỗ, không hiện sẵn. */}
-            <button type="button" className="top-rows__toggle" aria-expanded={showTable} aria-controls="leader-city-table" onClick={() => setShowTable((v) => !v)}>
-              {showTable ? <>Ẩn bảng số liệu <ChevronUp aria-hidden="true" /></> : <>Xem dạng bảng <ChevronDown aria-hidden="true" /></>}
-            </button>
+            {/* Bảng đủ các chỉ số, mở tại chỗ, không hiện sẵn. */}
+            <RankChart data={data} metric={metric} tableToggle={
+              <button type="button" className="top-rows__toggle" aria-expanded={showTable} aria-controls="leader-city-table" onClick={() => setShowTable((v) => !v)}>
+                {showTable ? <>Ẩn bảng số liệu <ChevronUp aria-hidden="true" /></> : <>Xem dạng bảng <ChevronDown aria-hidden="true" /></>}
+              </button>} />
             {showTable && <div id="leader-city-table" className="leader-rank__table">
               {data.units.length === 0 ? <BlockEmpty>Chưa có số liệu của các Thuế cơ sở.</BlockEmpty> : (
                 <SortTable label="So sánh 25 Thuế cơ sở" rows={data.units} rowKey={(u) => u.id} rowHead={rowHead} cols={cols}

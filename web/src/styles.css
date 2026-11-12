@@ -1447,7 +1447,8 @@ html[data-auth-transition] :is(.shell, .shell *) { animation-duration: 0s !impor
 .qa-list { list-style: none; margin: 0; padding: 0; }
 /* Hỏi đáp AI: danh sách gọn bên trái, khung đọc + đánh giá câu đang chọn bên phải. */
 .qa-split { display: grid; grid-template-columns: minmax(300px, 2fr) minmax(0, 3fr); gap: 0; border-top: 1px solid var(--rule); }
-.qa-split > .qa-list { border-right: 1px solid var(--rule); }
+.qa-side { min-width: 0; border-right: 1px solid var(--rule); }
+.detail .qa-side .m-pager { padding: 12px 16px 12px 0; }
 .qa-row { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 12px 16px 12px 13px; border: 0; border-left: 3px solid transparent; border-bottom: 1px solid var(--rule); background: transparent; text-align: left; cursor: pointer; font: inherit; color: var(--text); }
 .qa-row:hover { background: var(--ground); }
 .qa-row:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
@@ -1631,3 +1632,11 @@ html[data-bp="mobile"] ::-webkit-scrollbar { display: none; width: 0; height: 0;
   .data-table--fixed table { table-layout: fixed; width: 100%; }
   .data-table--fixed td { overflow-wrap: anywhere; }
 }
+
+/* Nút xuất Excel: xanh lá nhận diện Excel (#107C41, chữ/icon trắng 5,2:1) để báo trước loại tệp tải về. Ngoại lệ có chủ ý so với chrome trung tính, theo yêu cầu người dùng 12/11/2026. */
+:root .excel-btn { background: #107C41; border-color: #107C41; color: #fff; }
+/* Selector dài để thắng rule hover chung của nút default (khối [data-slot="button"] phía trên). */
+:root [data-slot="button"].excel-btn:not(:disabled):not([aria-disabled="true"]):hover:not(:active) { background-color: #0C5E31; }
+:root [data-slot="button"].excel-btn:not(:disabled):not([aria-disabled="true"]):active { background-color: #094A26; }
+:root .excel-btn:focus-visible { outline: 2px solid #107C41; outline-offset: 2px; }
+:root .excel-btn:disabled { background: #107C41; opacity: 0.45; }

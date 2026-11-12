@@ -4,7 +4,7 @@ import { IconButton } from '@/components/IconButton';
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Download, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BottomSheet, ChoiceSelect } from '@/components/Controls';
@@ -15,7 +15,8 @@ import { RATING_LABEL, fetchQa, rateQa, type QaItem, type QaRating } from '../ap
 import { officerOf, TEAMS } from '../data/org';
 import { taxpayers } from '../data/mock';
 import { useCurrentUser, useStaff } from '../demo/DemoContext';
-import { downloadCsv } from '../lib/csv';
+import { downloadXlsx } from '../lib/xlsx';
+import { ExcelButton } from '../components/ExcelButton';
 import { useBreakpoint } from '../lib/useMedia';
 import { dmyhm, num, pct } from '../lib/format';
 
@@ -64,7 +65,7 @@ export function AiQaTab({ scope }: { scope: string }) {
 
   const exportCsv = () => {
     if (!d) return;
-    downloadCsv(`hoi-dap-ai_${scope}.csv`, [
+    downloadXlsx(`hoi-dap-ai_${scope}`, [
       ['Mã', 'Thời điểm', 'NNT', 'MST', 'Chủ đề', 'Câu hỏi', 'Trả lời của AI', 'Chuyển cán bộ', 'Đánh giá', 'Ghi chú đánh giá'],
       ...d.all.map((x) => {
         const t = taxpayers[x.taxpayerId];
@@ -116,7 +117,7 @@ export function AiQaTab({ scope }: { scope: string }) {
           <label className="qa-check">
             <input type="checkbox" checked={escalated} onChange={(e) => { setEscalated(e.target.checked); setPage(1); }} />
             Chỉ câu đã chuyển cán bộ
-          </label></>} count={<span className="detail__count">{d ? `${num(d.total)} câu hỏi` : ''}</span>} actions={<IconButton icon={Download} label="Xuất lịch sử hỏi đáp AI ra CSV" className="export-btn" disabled={!d?.total} onClick={exportCsv} />} activeCount={Number(rating !== 'all') + Number(escalated)} />
+          </label></>} count={<span className="detail__count">{d ? `${num(d.total)} câu hỏi` : ''}</span>} actions={<ExcelButton label="Xuất lịch sử hỏi đáp AI ra Excel" className="export-btn" disabled={!d?.total} onExport={exportCsv} />} activeCount={Number(rating !== 'all') + Number(escalated)} />
 
         {res.isError ? (
           <BlockError message="Không tải được lịch sử hỏi đáp." onRetry={() => res.refetch()} />
@@ -128,27 +129,35 @@ export function AiQaTab({ scope }: { scope: string }) {
           <>
             {/* Danh sách và khung chi tiết: đọc và đánh giá đúng một câu đang chọn, không mở form giữa danh sách. */}
             <div className="qa-split">
-              <ul className="qa-list" aria-label="Câu hỏi">
-                {d.rows.map((x) => {
-                  const on = !mobile && current?.id === x.id;
-                  return (
-                    <li key={x.id}>
-                      <button type="button" className={`qa-row${on ? ' qa-row--on' : ''}`} aria-current={on || undefined} onClick={() => pick(x.id)}>
-                        <span className="qa-row__top">
-                          <span className="qa-row__name">{x.taxpayer.name}</span>
-                          <span className="qa-row__time num">{dmyhm(x.askedAt)}</span>
-                        </span>
-                        <span className="qa-row__q">{x.question}</span>
-                        <span className="qa-row__meta">
-                          <span className="qa-row__topic">{x.topic}</span>
-                          {x.escalated && <StatusPill tone="info">Đã chuyển cán bộ</StatusPill>}
-                          {x.rating && <StatusPill tone={RATING_TONE[x.rating]}>{RATING_LABEL[x.rating]}</StatusPill>}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              {/* Phân trang thuộc danh sách nên nằm cùng cột trái; cột phải chỉ để xem và đánh giá. */}
+              <div className="qa-side">
+                <ul className="qa-list" aria-label="Câu hỏi">
+                  {d.rows.map((x) => {
+                    const on = !mobile && current?.id === x.id;
+                    return (
+                      <li key={x.id}>
+                        <button type="button" className={`qa-row${on ? ' qa-row--on' : ''}`} aria-current={on || undefined} onClick={() => pick(x.id)}>
+                          <span className="qa-row__top">
+                            <span className="qa-row__name">{x.taxpayer.name}</span>
+                            <span className="qa-row__time num">{dmyhm(x.askedAt)}</span>
+                          </span>
+                          <span className="qa-row__q">{x.question}</span>
+                          <span className="qa-row__meta">
+                            <span className="qa-row__topic">{x.topic}</span>
+                            {x.escalated && <StatusPill tone="info">Đã chuyển cán bộ</StatusPill>}
+                            {x.rating && <StatusPill tone={RATING_TONE[x.rating]}>{RATING_LABEL[x.rating]}</StatusPill>}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="m-pager">
+                  <IconButton icon={ChevronLeft} label="Trang trước" disabled={page <= 1} onClick={() => (setPage(page - 1), setSel(null))} />
+                  <span className="num">Trang {num(page)} / {num(pages)}</span>
+                  <IconButton icon={ChevronRight} label="Trang sau" disabled={page >= pages} onClick={() => (setPage(page + 1), setSel(null))} />
+                </div>
+              </div>
               {!mobile && current && (
                 <div className="qa-detail" aria-label={`Câu hỏi của ${current.taxpayer.name}`} role="region">
                   <QaDetail item={current} pos={idx + 1} count={d.rows.length} onDone={next} />
@@ -160,11 +169,6 @@ export function AiQaTab({ scope }: { scope: string }) {
                 <QaDetail item={current} pos={idx + 1} count={d.rows.length} onDone={() => setSheet(false)} onCancel={() => setSheet(false)} />
               </BottomSheet>
             )}
-            <div className="m-pager">
-              <IconButton icon={ChevronLeft} label="Trang trước" disabled={page <= 1} onClick={() => (setPage(page - 1), setSel(null))} />
-              <span className="num">Trang {num(page)} / {num(pages)}</span>
-              <IconButton icon={ChevronRight} label="Trang sau" disabled={page >= pages} onClick={() => (setPage(page + 1), setSel(null))} />
-            </div>
           </>
         )}
       </section>

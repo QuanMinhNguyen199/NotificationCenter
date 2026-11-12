@@ -502,7 +502,7 @@ Mỗi nội dung chi tiết có một nơi chính: thông báo đã gửi ở Th
 
 ## Nút tiện ích dùng icon (10/11/2026)
 
-Theo yêu cầu người dùng: thao tác Tìm, Xuất/Tải CSV, Làm mới, mở bộ lọc và đặt lại trên toolbar dùng nút chỉ icon. Dùng `components/IconButton.tsx`: có aria-label cụ thể, tooltip khi hover/focus, kích thước bằng control trên desktop và tối thiểu 44×44px trên mobile/thiết bị chạm. Xuất tệp đang chạy thay icon bằng spinner, khóa bấm và có aria-busy. Số điều kiện lọc vẫn hiện bằng badge. Nút quyết định Gửi, Lưu, Hủy, Áp dụng giữ chữ; Xuất bản mẫu tin là hành động nghiệp vụ riêng, không đổi thành icon tải xuống.
+Theo yêu cầu người dùng: thao tác Tìm, Xuất/Tải Excel, Làm mới, mở bộ lọc và đặt lại trên toolbar dùng nút chỉ icon. Dùng `components/IconButton.tsx`: có aria-label cụ thể, tooltip khi hover/focus, kích thước bằng control trên desktop và tối thiểu 44×44px trên mobile/thiết bị chạm. Nút xuất tệp dùng `components/ExcelButton.tsx`: tải về .xlsx, nền xanh Excel `#107C41`, icon tải xuống (ngoại lệ màu theo yêu cầu người dùng 12/11/2026). Xuất tệp đang chạy thay icon bằng spinner, khóa bấm và có aria-busy. Số điều kiện lọc vẫn hiện bằng badge. Nút quyết định Gửi, Lưu, Hủy, Áp dụng giữ chữ; Xuất bản mẫu tin là hành động nghiệp vụ riêng, không đổi thành icon tải xuống.
 
 
 ## Bố cục điện thoại (10/11/2026)
