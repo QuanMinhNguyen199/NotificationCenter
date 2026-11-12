@@ -110,4 +110,16 @@ Theo yêu cầu gộp chức năng trùng của người dùng, điều hướng
 
 - **Bằng chứng:** `web/doc/view.docx` chia nội dung thành Cán bộ và Lãnh đạo, không yêu cầu thêm mục điều hướng hoặc tab Lãnh đạo.
 - **Quyết định triển khai:** dùng các màn nghiệp vụ hiện có và hiển thị theo quyền. Số liệu tổng hợp, so sánh cơ sở và hiệu quả cán bộ nằm trong Thống kê cho lãnh đạo cơ sở; bảng Theo đơn vị nằm trong Quản lý HKD cho lãnh đạo; phân quyền nằm trong Tài khoản. Link `#/lanh-dao` từ bản làm sai mở về Thống kê.
-- **Chưa xác nhận:** quyền so sánh 25 Thuế cơ sở, mẫu số tỷ lệ nộp tờ khai và chỉ số đánh giá cán bộ. Số liệu tổng hợp hiện là mock 30 ngày đến 28/10/2026, có phạm vi và kỳ riêng với bộ lọc thông báo.
+- **Phạm vi kết quả cơ sở (12/11/2026, yêu cầu người dùng):** tạm cho lãnh đạo cơ sở chọn xem từng cơ sở trong 25 Thuế cơ sở A–Y, mặc định A; giới hạn phạm vi theo quyền sẽ bổ sung sau. KPI và cơ sở được nhấn mạnh trong xếp hạng đi theo lựa chọn; bộ lọc thống kê thông báo bên dưới độc lập. Chỉ A có dữ liệu cán bộ trong bản mẫu; cơ sở khác hiện trạng thái chưa có dữ liệu.
+- **Chưa xác nhận:** giới hạn quyền so sánh 25 Thuế cơ sở sau giai đoạn mở tạm, mẫu số tỷ lệ nộp tờ khai và chỉ số đánh giá cán bộ. Số liệu tổng hợp hiện là mock 30 ngày đến 28/10/2026, có phạm vi và kỳ riêng với bộ lọc thông báo.
+
+### Ngày nghỉ trong lịch thông báo (12/11/2026)
+
+- **Đề xuất của người dùng, áp dụng ở dạng giả lập**, chờ nghiệp vụ thuế xác nhận:
+  - Hạn khai, nộp rơi vào thứ Bảy, Chủ nhật hoặc ngày lễ được lùi sang ngày làm việc kế tiếp. Số ngày quá hạn tính từ hạn đã lùi (ví dụ hạn 20/12/2026 rơi vào Chủ nhật thì tính từ 21/12).
+  - Ngày nghỉ lễ không gửi tin theo khung giờ. Nhắc hạn và nhắc chữ ký số gửi vào ngày gần nhất trước kỳ nghỉ; quá hạn, doanh thu, dự báo đổi nhóm gửi vào ngày đầu tiên sau kỳ nghỉ. Khi tin bị dời, số ngày quá hạn và mức quá hạn được tính lại theo ngày gửi thực tế. Mỗi nghĩa vụ chỉ nhận một tin quá hạn trong một ngày.
+  - Tin theo sự kiện (kết quả hồ sơ, nộp thuế, chuyển tuyến) vẫn gửi ngay. Cuối tuần vẫn gửi như ngày thường.
+  - Hạn trả lời ca chuyển tuyến (1 ngày làm việc) cũng bỏ qua ngày lễ.
+- **Giả định:** danh sách ngày lễ 2026–2027 trong `web/src/lib/workdays.ts` là bản tạm, chưa theo thông báo nghỉ lễ chính thức. Cần một nơi quản lý ngày nghỉ theo năm (gồm nghỉ bù, làm bù) ở màn Cấu hình.
+- **Hệ quả cần lưu ý:** dời tin sau kỳ nghỉ dài làm dồn khối lượng vào ngày đi làm lại. Trong dữ liệu giả lập, 11/02/2027 (ngày đi làm lại sau Tết) có 2.462 tin, cao nhất tháng; phần lớn ngày khác dưới 1.500 tin. Cần xác nhận khung giờ gửi và kênh iHanoi chịu được mức này, hoặc rải tin ra 2–3 ngày.
+- **Kiểm chứng:** đối chiếu với nghiệp vụ các hạn rơi vào ngày nghỉ (20/12/2026, 31/01/2027, 30/04/2027); với dữ liệu thật, đếm số hộ nộp vào ngày làm việc kế tiếp mà hệ thống cũ vẫn đánh dấu trễ.

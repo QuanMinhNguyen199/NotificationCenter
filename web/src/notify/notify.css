@@ -40,6 +40,15 @@
 .nt-cell.is-selected .nt-cell__day { color: var(--text); font-weight: 600; }
 .nt-cell__count { font-size: 18px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
 .nt-today { display: inline-block; padding: 0 5px; border-radius: 4px; background: var(--brand-ink); color: #fff; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; }
+/* Ngày nghỉ: cuối tuần chỉ nhạt số ngày; ngày lễ có nhãn chữ và nền gạch chéo (không dùng màu làm tín hiệu duy nhất). */
+.nt-week .is-weekend { color: var(--text-muted); font-weight: 400; }
+.nt-cell--weekend .nt-cell__day { color: var(--text-muted); font-weight: 400; }
+.nt-cell--holiday { background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--border) 6px 7px); }
+.nt-off { display: inline-block; padding: 0 5px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 11px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+.nt-off__short { display: none; }
+.nt-day__off { margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--rule); font-size: 13px; line-height: 1.5; color: var(--text); }
+.nt-day__off--weekend { background: transparent; padding: 0; color: var(--text-muted); }
+.nt-row__moved { display: inline-block; padding: 0 6px; border-radius: 4px; background: var(--rule); color: var(--text); font-size: 12px; line-height: 20px; }
 .nt-mix { display: flex; height: 4px; margin-top: auto; border-radius: 2px; overflow: hidden; gap: 1px; background: var(--surface); }
 .nt-mix i { display: block; min-width: 2px; flex-basis: 0; }
 
@@ -47,6 +56,9 @@
   .nt-cell { min-height: 60px; padding: 4px 5px; }
   .nt-cell.is-selected { padding: 3px 4px; }
   .nt-cell__count { font-size: 15px; }
+  .nt-off__long { display: none; }
+  .nt-off__short { display: inline; }
+  .nt-off { padding: 0 3px; }
   .nt-today { font-size: 0; padding: 0; width: 6px; height: 6px; border-radius: 50%; line-height: 0; }
 }
 

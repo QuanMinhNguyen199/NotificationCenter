@@ -2,6 +2,7 @@
 // Toàn bộ là dữ liệu giả lập, tính tất định từ danh sách NNT trong data/mock.ts; "hôm nay" = 28/10/2026.
 import { INITIAL_CONFIG } from '../data/config';
 import { taxpayers } from '../data/mock';
+import { holidayName, isWeekend, nonHolidayFrom, workdayFrom } from '../lib/workdays';
 
 const wait = (ms = 520) => new Promise((r) => setTimeout(r, ms));
 
@@ -86,9 +87,13 @@ export interface PlanEntry {
   time: string | null;
   reason: string;
   level?: 1 | 2 | 3;
+  /** Ngày dự kiến ban đầu khi tin bị dời vì rơi vào ngày nghỉ lễ. */
+  movedFrom?: string;
 }
 
-interface Cycle { deadline: number; period: string }
+/** deadline: hạn đã lùi sang ngày làm việc kế tiếp nếu hạn gốc (nominal) rơi vào ngày nghỉ. */
+interface Cycle { deadline: number; nominal: number; period: string }
+const workIdx = (i: number) => idxOf(workdayFrom(isoOf(i), 1));
 
 function cycles(monthly: boolean, from: number, to: number): Cycle[] {
   const out: Cycle[] = [];
@@ -96,14 +101,14 @@ function cycles(monthly: boolean, from: number, to: number): Cycle[] {
     if (monthly) {
       for (let m = 1; m <= 12; m++) {
         const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
-        const d = idx(ny, nm, 20);
-        if (d >= from && d <= to) out.push({ deadline: d, period: `tháng ${m}/${y}` });
+        const n = idx(ny, nm, 20), d = workIdx(n);
+        if (d >= from && d <= to) out.push({ deadline: d, nominal: n, period: `tháng ${m}/${y}` });
       }
     } else {
       for (let q = 1; q <= 4; q++) {
         const ny = q === 4 ? y + 1 : y, nm = q === 4 ? 1 : q * 3 + 1;
-        const d = idx(ny, nm, lastDay(ny, nm));
-        if (d >= from && d <= to) out.push({ deadline: d, period: `quý ${['I', 'II', 'III', 'IV'][q - 1]}/${y}` });
+        const n = idx(ny, nm, lastDay(ny, nm)), d = workIdx(n);
+        if (d >= from && d <= to) out.push({ deadline: d, nominal: n, period: `quý ${['I', 'II', 'III', 'IV'][q - 1]}/${y}` });
       }
     }
   }
@@ -127,11 +132,35 @@ function resolveOffset(id: number, kind: string, deadline: number) {
   return 31 + Math.floor(v * 60);
 }
 
-function planOf(tpId: number, from: number, to: number, push: (e: Omit<PlanEntry, 'id' | 'name' | 'mst' | 'date'> & { day: number }) => void) {
+const DOW = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const dowOf = (i: number) => DOW[new Date(i * DAY).getUTCDay()];
+/** "hạn 21/12" hoặc "hạn 21/12, lùi từ CN 20/12" khi hạn gốc rơi vào ngày nghỉ. */
+const dueText = (c: Cycle) => (c.deadline === c.nominal ? `hạn ${ddmm(c.deadline)}` : `hạn ${ddmm(c.deadline)}, lùi từ ${dowOf(c.nominal)} ${ddmm(c.nominal)}`);
+
+type Push = (e: Omit<PlanEntry, 'id' | 'name' | 'mst' | 'date' | 'movedFrom'> & {
+  day: number; movedFrom?: number;
+  /** Tin cùng key chỉ gửi một lần mỗi ngày (tin bị dời trùng ngày với tin kế tiếp của cùng nghĩa vụ). */
+  key?: string;
+  /** Lý do và mức tính lại theo ngày gửi thực tế (ví dụ số ngày quá hạn sau khi dời). */
+  at?: (day: number) => Pick<PlanEntry, 'reason' | 'level'>;
+}) => void;
+
+function planOf(tpId: number, from: number, to: number, rawPush: Push) {
   const t = taxpayers[tpId];
   const active = t.hkdStatus === 'Đang hoạt động';
   const monthly = h(tpId, 'freq') < 0.3;
   const within = (d: number) => d >= from && d <= to;
+  // Tin theo khung giờ không gửi vào ngày nghỉ lễ: nhắc trước hạn (nhắc hạn, chữ ký số) gửi sớm hơn, loại khác gửi sau.
+  // Cuối tuần vẫn gửi. Tin theo sự kiện gửi ngay. (Đề xuất, chờ nghiệp vụ chốt.)
+  const EARLY: NotiType[] = ['due', 'signature'];
+  const sent = new Set<string>();
+  const push: Push = ({ key, at, ...e }) => {
+    if (e.time === null) { if (within(e.day)) rawPush(e); return; }
+    const day = idxOf(nonHolidayFrom(isoOf(e.day), EARLY.includes(e.type) ? -1 : 1));
+    if (!within(day)) return;
+    if (key) { if (sent.has(`${key}|${day}`)) return; sent.add(`${key}|${day}`); }
+    rawPush({ ...e, ...(at ? at(day) : null), day, movedFrom: day !== e.day ? e.day : undefined });
+  };
 
   // Nghĩa vụ khai và nộp: nhắc hạn, quá hạn theo mức, kết quả khi hoàn thành.
   const kinds: { key: 'file' | 'pay'; has: boolean; what: string; result: NotiType }[] = [
@@ -144,14 +173,19 @@ function planOf(tpId: number, from: number, to: number, push: (e: Omit<PlanEntry
       const done = c.deadline + resolveOffset(tpId, k.key, c.deadline);
       const remind = c.deadline - INITIAL_CONFIG.daysBefore;
       const label = `${k.what} ${c.period}`;
-      if (done > remind && within(remind)) {
-        push({ day: remind, type: 'due', taxpayerId: tpId, time: slot(tpId, 'due', remind), reason: `${label}, hạn ${ddmm(c.deadline)}` });
+      if (done > remind) {
+        push({ day: remind, type: 'due', taxpayerId: tpId, time: slot(tpId, 'due', remind), reason: `${label}, ${dueText(c)}` });
       }
       for (const s of SEVERITY) {
         for (let n = s.from; n <= s.to; n += s.every) {
           const d = c.deadline + n;
           if (d >= done) break;
-          if (within(d)) push({ day: d, type: 'overdue', level: s.level, taxpayerId: tpId, time: slot(tpId, 'od', d), reason: `${label} quá hạn ${n} ngày (hạn ${ddmm(c.deadline)})` });
+          push({ day: d, type: 'overdue', level: s.level, taxpayerId: tpId, time: slot(tpId, 'od', d), reason: '', key: `od|${label}`,
+            at: (day) => {
+              const late = day - c.deadline;
+              const lv = SEVERITY.find((x) => late >= x.from && late <= x.to)?.level ?? 3;
+              return { level: lv, reason: `${label} quá hạn ${late} ngày (${dueText(c)})` };
+            } });
         }
       }
       if (within(done + 1)) {
@@ -171,13 +205,13 @@ function planOf(tpId: number, from: number, to: number, push: (e: Omit<PlanEntry
     const p = INITIAL_CONFIG.nearThresholdPct + Math.floor(h(tpId, 'revp') * 19);
     for (const { y, m } of months) {
       const d = idx(y, m, 1 + Math.floor(h(tpId, 'revd', m) * 27));
-      if (within(d)) push({ day: d, type: 'revenue', taxpayerId: tpId, time: slot(tpId, 'rev', d), reason: `Doanh thu lũy kế đạt ${p}% ngưỡng sử dụng hóa đơn` });
+      push({ day: d, type: 'revenue', taxpayerId: tpId, time: slot(tpId, 'rev', d), reason: `Doanh thu lũy kế đạt ${p}% ngưỡng sử dụng hóa đơn` });
     }
   }
   if (active && h(tpId, 'fc') < 0.025) {
     for (const { y, m } of months) {
       const d = idx(y, m, 1 + Math.floor(h(tpId, 'fcd', m) * 27));
-      if (within(d)) push({ day: d, type: 'forecast', taxpayerId: tpId, time: slot(tpId, 'fc', d), reason: `Doanh thu dự báo năm ${y} vượt ngưỡng nhóm hiện tại` });
+      push({ day: d, type: 'forecast', taxpayerId: tpId, time: slot(tpId, 'fc', d), reason: `Doanh thu dự báo năm ${y} vượt ngưỡng nhóm hiện tại` });
     }
   }
   for (const { y, m } of months) {
@@ -191,12 +225,16 @@ function planOf(tpId: number, from: number, to: number, push: (e: Omit<PlanEntry
     const exp = idx(2026, 7, 1) + Math.floor(h(tpId, 'cksd') * 730);
     for (const before of [30, 7]) {
       const d = exp - before;
-      if (within(d)) push({ day: d, type: 'signature', taxpayerId: tpId, time: slot(tpId, 'cks', d), reason: `Chữ ký số hết hạn ${ddmmyyyy(exp)}, còn ${before} ngày` });
+      push({ day: d, type: 'signature', taxpayerId: tpId, time: slot(tpId, 'cks', d), reason: `Chữ ký số hết hạn ${ddmmyyyy(exp)}, còn ${before} ngày` });
     }
   }
 }
 
-export interface PlanDay { date: string; total: number; byType: Record<NotiType, number> }
+export interface PlanDay {
+  date: string; total: number; byType: Record<NotiType, number>;
+  /** Ngày nghỉ: cuối tuần hoặc ngày lễ (danh sách ngày lễ giả lập, lib/workdays.ts). */
+  off?: { kind: 'weekend' | 'holiday'; name?: string };
+}
 export interface PlanMonth {
   ym: string;
   days: PlanDay[];
@@ -220,17 +258,22 @@ export async function fetchPlanMonth(ym: string, canSee: (id: number) => boolean
     scopeCount++;
     planOf(t.id, from, to, (e) => {
       const date = isoOf(e.day);
-      (entries[date] ??= []).push({ id: `P${++n}`, date, type: e.type, taxpayerId: e.taxpayerId, name: t.name, mst: t.mst, time: e.time, reason: e.reason, level: e.level });
+      (entries[date] ??= []).push({ id: `P${++n}`, date, type: e.type, taxpayerId: e.taxpayerId, name: t.name, mst: t.mst, time: e.time, reason: e.reason, level: e.level,
+        movedFrom: e.movedFrom === undefined ? undefined : isoOf(e.movedFrom) });
     });
   }
   const days: PlanDay[] = [];
+  const offOf = (date: string): PlanDay['off'] => {
+    const name = holidayName(date);
+    return name ? { kind: 'holiday', name } : isWeekend(date) ? { kind: 'weekend' } : undefined;
+  };
   for (let i = from; i <= to; i++) {
     const date = isoOf(i);
     const list = (entries[date] ??= []);
     list.sort((a, b) => ORDER[a.type] - ORDER[b.type] || (a.level ?? 0) - (b.level ?? 0) || (a.time ?? '').localeCompare(b.time ?? '') || a.name.localeCompare(b.name, 'vi'));
     const byType = zero();
     list.forEach((e) => byType[e.type]++);
-    days.push({ date, total: list.length, byType });
+    days.push({ date, total: list.length, byType, off: offOf(date) });
   }
   return { ym, days, entries, scopeCount };
 }

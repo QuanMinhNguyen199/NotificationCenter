@@ -1,6 +1,7 @@
 // Mock API cho Chuyển tuyến: ca do Geo AI chuyển tới cán bộ và chuông báo cho cán bộ.
 // Toàn bộ dữ liệu là giả lập; thay bằng API Chuyển tuyến thật khi backend sẵn sàng.
 import { taxpayers } from '../data/mock';
+import { isWorkday } from '../lib/workdays';
 import { STAFF, TEAMS, officerOf } from '../data/org';
 import type { Taxpayer } from '../data/types';
 
@@ -25,11 +26,11 @@ const NOW = toDate(NOW_ISO);
 const addMin = (iso: string, min: number) => toIso(new Date(toDate(iso).getTime() + min * 60_000));
 export const minutesBetween = (a: string, b: string) => (toDate(b).getTime() - toDate(a).getTime()) / 60_000;
 
-/** Đề xuất: hạn trả lời = cùng giờ của ngày làm việc kế tiếp (bỏ thứ Bảy, Chủ nhật). */
+/** Đề xuất: hạn trả lời = cùng giờ của ngày làm việc kế tiếp (bỏ thứ Bảy, Chủ nhật và ngày lễ giả lập ở lib/workdays.ts). */
 export function dueOf(createdAt: string) {
   const d = toDate(createdAt);
   do d.setDate(d.getDate() + 1);
-  while (d.getDay() === 0 || d.getDay() === 6);
+  while (!isWorkday(toIso(d)));
   return toIso(d);
 }
 

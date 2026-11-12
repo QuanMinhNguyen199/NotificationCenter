@@ -10,7 +10,7 @@ import { downloadXlsx } from '../lib/xlsx';
 import { ExcelButton } from '../components/ExcelButton';
 import { dmy, num, pct } from '../lib/format';
 import { useBreakpoint } from '../lib/useMedia';
-import { fetchCityComparison, fetchOfficerPerf, type OfficerPerf, type UnitRow } from './leaderApi';
+import { CITY_UNITS, OWN_UNIT, fetchCityComparison, fetchOfficerPerf, type OfficerPerf, type UnitRow } from './leaderApi';
 import './leader.css';
 import { TopRows, TOP_N } from '../components/TopRows';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -164,7 +164,7 @@ function RankChart({ data, metric, tableToggle }: { data: CityData; metric: Metr
   const row = (u: UnitRow) => (
     <li key={u.id} className={`rank__row${u.own ? ' is-own' : ''}`}>
       <span className="rank__pos">{all.indexOf(u) + 1}</span>
-      <span className="rank__name">{u.name}{u.own && <span className="sr-only"> (đơn vị mình)</span>}</span>
+      <span className="rank__name">{u.name}{u.own && <span className="sr-only"> (đang xem)</span>}</span>
       <span className="rank__track" aria-hidden="true">
         <span className="rank__bar" style={{ width: at(m.value(u)) }} />
         <span className="rank__avg" style={{ left: at(avg) }} />
@@ -218,7 +218,7 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
       ...ranked(data.units, 'fileRate').map((u) => [u.name, u.received, u.accepted, +(u.okRate * 100).toFixed(1), +(u.fileRate * 100).toFixed(1), +u.avgHours.toFixed(1), u.users, u.hkd]),
     ]);
   };
-  const rowHead: Col<UnitRow> = { key: 'name', label: 'Đơn vị', sort: (u) => u.id, render: (u) => <>{u.name}{u.own && <span className="leader-own-tag">Đơn vị mình</span>}</> };
+  const rowHead: Col<UnitRow> = { key: 'name', label: 'Đơn vị', sort: (u) => u.id, render: (u) => <>{u.name}{u.own && <span className="leader-own-tag">Đang xem</span>}</> };
   const cols: Col<UnitRow>[] = [
     { key: 'received', label: 'Tiếp nhận', sort: (u) => u.received, render: (u) => num(u.received), desc: true },
     { key: 'accepted', label: 'Thành công', sort: (u) => u.accepted, render: (u) => num(u.accepted), desc: true },
@@ -269,8 +269,8 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
 
 /* ---------- 3. Hiệu quả cán bộ ---------- */
 
-function OfficerSection() {
-  const q = useQuery({ queryKey: ['leader-officers'], queryFn: fetchOfficerPerf });
+function OfficerSection({ unit }: { unit: string }) {
+  const q = useQuery({ queryKey: ['leader-officers'], queryFn: fetchOfficerPerf, enabled: unit === OWN_UNIT });
   const rowHead: Col<OfficerPerf> = { key: 'name', label: 'Cán bộ', sort: (o) => o.name.split(' ').slice(-1)[0], render: (o) => o.name };
   const cols: Col<OfficerPerf>[] = [
     { key: 'team', label: 'Tổ', sort: (o) => o.teamName, render: (o) => o.teamName },
@@ -283,11 +283,12 @@ function OfficerSection() {
     <section className="leader-section" aria-labelledby="leader-officers">
       <div className="leader-section__head">
         <h3 id="leader-officers" className="leader-section__title">
-          <SectionTitle badges={<ProtoBadge kind="proposal" note="Trước khi dùng để đánh giá cán bộ, lãnh đạo cần thống nhất cách tính, ngưỡng đúng hạn (tạm 48 giờ), ai được xem và cách tính khác biệt do địa bàn. Tỷ lệ đúng hạn là số giả lập." />}>Hiệu quả cán bộ trong Thuế cơ sở A</SectionTitle>
+          <SectionTitle badges={<ProtoBadge kind="proposal" note="Trước khi dùng để đánh giá cán bộ, lãnh đạo cần thống nhất cách tính, ngưỡng đúng hạn (tạm 48 giờ), ai được xem và cách tính khác biệt do địa bàn. Tỷ lệ đúng hạn là số giả lập." />}>Hiệu quả cán bộ trong Thuế cơ sở {unit}</SectionTitle>
         </h3>
       </div>
       <Panel className="dashboard-card--static">
-        {q.isError ? <BlockError message="Không tải được số liệu cán bộ." onRetry={() => q.refetch()} />
+        {unit !== OWN_UNIT ? <BlockEmpty>Chưa có dữ liệu cán bộ của Thuế cơ sở {unit} trong bản mẫu.</BlockEmpty>
+          : q.isError ? <BlockError message="Không tải được số liệu cán bộ." onRetry={() => q.refetch()} />
           : !q.data ? <Skel w="100%" h={240} />
             : q.data.length === 0 ? <BlockEmpty>Chưa có cán bộ quản lý HKD đang hoạt động.</BlockEmpty>
               : <SortTable label="Hiệu quả cán bộ" rows={q.data} rowKey={(o) => o.id} rowHead={rowHead} cols={cols} initial={{ key: 'hours', dir: 'asc' }} />}
@@ -300,22 +301,29 @@ function OfficerSection() {
 
 export default function LeaderStats() {
   const { role } = usePermissions();
+  // Tạm mở đủ 25 cơ sở theo yêu cầu; giới hạn phạm vi sẽ bổ sung sau.
+  const [unit, setUnit] = useState(OWN_UNIT);
   const city = useQuery({ queryKey: ['leader-city'], queryFn: fetchCityComparison, enabled: role === 'base' });
+  const data = useMemo(() => city.data && ({
+    ...city.data,
+    // Trong view này, own đánh dấu cơ sở đang xem để KPI và xếp hạng đồng bộ.
+    units: city.data.units.map((u) => ({ ...u, own: u.id === unit })),
+  }), [city.data, unit]);
 
   if (role !== 'base') return null;
 
   return (
     <section className="leader-page" aria-label="Kết quả cơ sở">
-      {/* Khối này luôn tính cho cả Thuế cơ sở A; bộ lọc phạm vi ở thanh lọc phía dưới không áp vào đây. Phạm vi đi cùng hàng tiêu đề, không chiếm hàng riêng. */}
+      {/* Phạm vi kết quả cơ sở độc lập với bộ lọc thống kê thông báo bên dưới. */}
       <div className="leader-section__head">
         <h2 className="leader-section__title">Kết quả cơ sở</h2>
-        <span className="scope-text"><span className="scope-text__label">Phạm vi:</span>Thuế cơ sở A</span>
+        <ChoiceSelect aria-label="Phạm vi kết quả cơ sở" prefix="Phạm vi:" value={unit} onValueChange={setUnit} options={CITY_UNITS} style={{ width: 240, maxWidth: '100%' }} />
         <span className="scope-text"><span className="scope-text__label">Kỳ:</span>30 ngày đến {dmy(AS_OF)}</span>
       </div>
-      <ProtoNote kind="proposal">Tạm hiển thị cho lãnh đạo Thuế cơ sở; so sánh 25 đơn vị thường cần tài khoản cấp thành phố (chưa xác nhận).</ProtoNote>
-      <KpiRow data={city.data} error={city.isError} onRetry={() => city.refetch()} />
-      <MobileDisclosure label="So sánh 25 Thuế cơ sở"><CityCompare data={city.data} error={city.isError} onRetry={() => city.refetch()} /></MobileDisclosure>
-      <MobileDisclosure label="Hiệu quả cán bộ"><OfficerSection /></MobileDisclosure>
+      <ProtoNote kind="proposal">Tạm cho phép xem cả 25 Thuế cơ sở; giới hạn phạm vi theo quyền sẽ bổ sung sau.</ProtoNote>
+      <KpiRow data={data} error={city.isError} onRetry={() => city.refetch()} />
+      <MobileDisclosure label="So sánh 25 Thuế cơ sở"><CityCompare data={data} error={city.isError} onRetry={() => city.refetch()} /></MobileDisclosure>
+      <MobileDisclosure label="Hiệu quả cán bộ"><OfficerSection unit={unit} /></MobileDisclosure>
     </section>
   );
 }

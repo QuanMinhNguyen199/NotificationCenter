@@ -17,7 +17,11 @@ function rng(seed: number) {
 
 export const OWN_UNIT = 'A';
 /** 25 Thuế cơ sở trên địa bàn thành phố: A … Y. */
-const UNIT_IDS = Array.from({ length: 25 }, (_, i) => String.fromCharCode(65 + i));
+export const CITY_UNITS = Array.from({ length: 25 }, (_, i) => {
+  const value = String.fromCharCode(65 + i);
+  return { value, label: `Thuế cơ sở ${value}` };
+});
+const UNIT_IDS = CITY_UNITS.map((u) => u.value);
 
 export interface UnitRow {
   id: string;

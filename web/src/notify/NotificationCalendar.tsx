@@ -43,7 +43,9 @@ export function NotificationCalendar() {
     const total = d.days.reduce((s, x) => s + countOf(x, filter), 0);
     const hh = new Set<number>();
     Object.values(d.entries).forEach((l) => l.forEach((e) => (filter === 'all' || e.type === filter) && hh.add(e.taxpayerId)));
-    return { max, total, households: hh.size };
+    let moved = 0;
+    Object.values(d.entries).forEach((l) => l.forEach((e) => e.movedFrom && (filter === 'all' || e.type === filter) && moved++));
+    return { max, total, households: hh.size, moved };
   }, [d, filter]);
 
   // Ngày đang chọn: ngày người dùng bấm, nếu không thì ngày đầu tiên trong tháng có lịch.
@@ -80,7 +82,7 @@ export function NotificationCalendar() {
         <p className="nt-summary" role="status">
           {stats.total === 0
             ? <>{monthLabel(ym)} chưa có {typeName} dự kiến trong phạm vi {scope.toLowerCase()}.</>
-            : <><b>{num(stats.total)}</b> {typeName} dự kiến trong {monthLabel(ym).toLowerCase()}, gửi tới <b>{num(stats.households)}</b> hộ ({scope}).</>}
+            : <><b>{num(stats.total)}</b> {typeName} dự kiến trong {monthLabel(ym).toLowerCase()}, gửi tới <b>{num(stats.households)}</b> hộ ({scope}){stats.moved > 0 && <>; <b>{num(stats.moved)}</b> tin được dời vì rơi vào ngày nghỉ lễ</>}.</>}
         </p>
         <Legend filter={filter} />
         {stats.total === 0 ? (
@@ -94,7 +96,7 @@ export function NotificationCalendar() {
           <div className="nt-cal-layout">
             <MonthGrid days={d.days} filter={filter} max={stats.max} selected={selected} onSelect={setPicked} />
             <aside className="nt-detail" aria-label="Lịch gửi của ngày đang chọn">
-              {selected ? <DayDetail key={`${selected}-${filter}`} date={selected} entries={d.entries[selected] ?? []} filter={filter} /> : <BlockEmpty>Chọn một ngày để xem danh sách hộ được nhắc.</BlockEmpty>}
+              {selected ? <DayDetail key={`${selected}-${filter}`} date={selected} off={d.days.find((x) => x.date === selected)?.off} entries={d.entries[selected] ?? []} filter={filter} /> : <BlockEmpty>Chọn một ngày để xem danh sách hộ được nhắc.</BlockEmpty>}
             </aside>
           </div>
         )}
@@ -110,6 +112,9 @@ export function NotificationCalendar() {
     >
       {head}
       <p className="nt-channel">Tất cả gửi qua thông báo đẩy iHanoi. Loại theo khung giờ gửi trong {INITIAL_CONFIG.sendStart}–{INITIAL_CONFIG.sendEnd} của ngày dự kiến; loại theo sự kiện gửi ngay khi có kết quả.</p>
+      <ProtoNote kind="proposal">
+        Hạn rơi vào thứ Bảy, Chủ nhật hoặc ngày lễ được lùi sang ngày làm việc kế tiếp. Ngày nghỉ lễ không gửi tin theo khung giờ: nhắc hạn và nhắc chữ ký số gửi trước kỳ nghỉ, loại khác gửi sau kỳ nghỉ. Cuối tuần vẫn gửi. Danh sách ngày lễ là dữ liệu giả lập.
+      </ProtoNote>
       {body}
     </Panel>
   );
@@ -138,9 +143,10 @@ function MixBar({ day, filter }: { day: PlanDay; filter: Filter }) {
 
 function ariaFor(day: PlanDay, filter: Filter) {
   const n = countOf(day, filter);
-  if (!n) return `${dayLabel(day.date)}: không có thông báo`;
+  const off = day.off?.kind === 'holiday' ? `, nghỉ lễ ${day.off.name}` : '';
+  if (!n) return `${dayLabel(day.date)}${off}: không có thông báo`;
   const parts = filter === 'all' ? TYPES.filter((t) => day.byType[t.id]).map((t) => `${t.label} ${day.byType[t.id]}`) : [];
-  return `${dayLabel(day.date)}: ${num(n)} thông báo${parts.length ? ` (${parts.join(', ')})` : ''}${day.date === TODAY ? ', hôm nay' : ''}`;
+  return `${dayLabel(day.date)}${off}: ${num(n)} thông báo${parts.length ? ` (${parts.join(', ')})` : ''}${day.date === TODAY ? ', hôm nay' : ''}`;
 }
 
 function MonthGrid({ days, filter, max, selected, onSelect }: { days: PlanDay[]; filter: Filter; max: number; selected: string | null; onSelect: (d: string) => void }) {
@@ -162,7 +168,7 @@ function MonthGrid({ days, filter, max, selected, onSelect }: { days: PlanDay[];
   const level = (n: number) => (!n || !max ? 0 : n / max > 0.66 ? 3 : n / max > 0.33 ? 2 : 1);
   return (
     <div className="nt-grid-wrap">
-      <div className="nt-week" aria-hidden="true">{WEEK.map((w) => <span key={w}>{w}</span>)}</div>
+      <div className="nt-week" aria-hidden="true">{WEEK.map((w, i) => <span key={w} className={i >= 5 ? 'is-weekend' : undefined}>{w}</span>)}</div>
       <div className="nt-grid" ref={ref} role="group" aria-label="Các ngày trong tháng. Dùng phím mũi tên để chuyển ngày." onKeyDown={onKey}>
         {Array.from({ length: lead }, (_, i) => <span key={`b${i}`} className="nt-cell nt-cell--blank" aria-hidden="true" />)}
         {days.map((day, i) => {
@@ -172,12 +178,13 @@ function MonthGrid({ days, filter, max, selected, onSelect }: { days: PlanDay[];
               key={day.date}
               type="button"
               data-i={i}
-              className={`nt-cell nt-heat-${level(n)}${day.date === selected ? ' is-selected' : ''}${day.date === TODAY ? ' is-today' : ''}`}
+              className={`nt-cell nt-heat-${level(n)}${day.off ? ` nt-cell--${day.off.kind}` : ''}${day.date === selected ? ' is-selected' : ''}${day.date === TODAY ? ' is-today' : ''}`}
+              title={day.off?.kind === 'holiday' ? `Nghỉ lễ: ${day.off.name}` : undefined}
               aria-pressed={day.date === selected}
               aria-label={ariaFor(day, filter)}
               onClick={() => onSelect(day.date)}
             >
-              <span className="nt-cell__day">{+day.date.slice(8, 10)}{day.date === TODAY && <span className="nt-today">Hôm nay</span>}</span>
+              <span className="nt-cell__day">{+day.date.slice(8, 10)}{day.date === TODAY && <span className="nt-today">Hôm nay</span>}{day.off?.kind === 'holiday' && <OffTag />}</span>
               <span className="nt-cell__count">{n ? num(n) : '–'}</span>
               <MixBar day={day} filter={filter} />
             </button>
@@ -204,6 +211,7 @@ function Agenda({ days, entries, filter, selected, onSelect }: { days: PlanDay[]
               <span className="nt-agenda__date">
                 <b>{dayLabel(day.date)}</b>
                 {day.date === TODAY && <span className="nt-today">Hôm nay</span>}
+                {day.off?.kind === 'holiday' && <span className="nt-off">Nghỉ lễ</span>}
               </span>
               <span className="nt-agenda__count">{num(countOf(day, filter))}</span>
               <ChevronDown className="nt-agenda__chev" aria-hidden="true" />
@@ -211,7 +219,7 @@ function Agenda({ days, entries, filter, selected, onSelect }: { days: PlanDay[]
                 {top.map((t) => <span key={t.id}><i className="swatch" style={{ background: t.color }} /> {t.short} {num(day.byType[t.id])}</span>)}
               </span>
             </button>
-            {open && <div id={panelId} className="nt-agenda__panel"><DayDetail key={`${day.date}-${filter}`} date={day.date} entries={entries[day.date] ?? []} filter={filter} compact /></div>}
+            {open && <div id={panelId} className="nt-agenda__panel"><DayDetail key={`${day.date}-${filter}`} date={day.date} off={day.off} entries={entries[day.date] ?? []} filter={filter} compact /></div>}
           </li>
         );
       })}
@@ -225,7 +233,12 @@ const FIRST = 5;
 const FIRST_COMPACT = 3;
 const MORE = 20;
 
-function DayDetail({ date, entries, filter, compact }: { date: string; entries: PlanEntry[]; filter: Filter; compact?: boolean }) {
+/** Nhãn ngày lễ trên ô lịch; ô hẹp chỉ còn "Lễ". */
+function OffTag() {
+  return <span className="nt-off"><span className="nt-off__long">Nghỉ lễ</span><span className="nt-off__short" aria-hidden="true">Lễ</span></span>;
+}
+
+function DayDetail({ date, off, entries, filter, compact }: { date: string; off?: PlanDay['off']; entries: PlanEntry[]; filter: Filter; compact?: boolean }) {
   const [shown, setShown] = useState<Partial<Record<NotiType, number>>>({});
   const rows = filter === 'all' ? entries : entries.filter((e) => e.type === filter);
   const groups = TYPES.map((t) => ({ t, list: rows.filter((e) => e.type === t.id) })).filter((g) => g.list.length);
@@ -237,6 +250,13 @@ function DayDetail({ date, entries, filter, compact }: { date: string; entries: 
           <h3>{dayLabel(date)}/{date.slice(0, 4)}</h3>
           <span className="nt-day__total">{num(rows.length)} thông báo</span>
         </div>
+      )}
+      {off && (
+        <p className={`nt-day__off nt-day__off--${off.kind}`}>
+          {off.kind === 'holiday'
+            ? <><b>Nghỉ lễ {off.name}.</b> Không gửi tin theo khung giờ trong ngày này; tin theo sự kiện vẫn gửi ngay.</>
+            : <>Cuối tuần: vẫn gửi tin như ngày thường. Hạn nộp rơi vào ngày này được lùi sang ngày làm việc kế tiếp.</>}
+        </p>
       )}
       {!rows.length && <BlockEmpty>Không có thông báo dự kiến trong ngày này.</BlockEmpty>}
       {hasOverdue && (
@@ -266,6 +286,7 @@ function DayDetail({ date, entries, filter, compact }: { date: string; entries: 
                     <span className="nt-row__time">{e.time ?? 'Khi có kết quả'}</span>
                     <span className="nt-row__reason">{e.reason}</span>
                     {e.level && <StatusPill tone={LEVEL_TONE[e.level]}>Mức {e.level}</StatusPill>}
+                    {e.movedFrom && <span className="nt-row__moved">Dời từ {dayLabel(e.movedFrom)} (nghỉ lễ)</span>}
                   </div>
                 </li>
               ))}
