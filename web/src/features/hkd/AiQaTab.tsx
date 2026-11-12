@@ -1,0 +1,253 @@
+import { ListToolbar } from '@/shared/components/ListToolbar';
+import { MobileDisclosure } from '@/shared/components/MobileDisclosure';
+import { IconButton } from '@/shared/components/IconButton';
+import { useMemo, useState } from 'react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { BottomSheet, ChoiceSelect } from '@/shared/components/Controls';
+import { BlockEmpty, BlockError, Skel } from '@/shared/components/Blocks';
+import { StatusPill } from '@/shared/components/Status';
+import { ProtoBadge } from '@/shared/components/Proto';
+import { RATING_LABEL, fetchQa, rateQa, type QaItem, type QaRating } from '@/shared/api/profileApi';
+import { officerOf, TEAMS } from '@/shared/data/org';
+import { taxpayers } from '@/shared/data/mock';
+import { useCurrentUser, useStaff } from '@/shared/demo/useDemo';
+import { downloadXlsx } from '@/shared/lib/xlsx';
+import { ExcelButton } from '@/shared/components/ExcelButton';
+import { useBreakpoint } from '@/shared/lib/useMedia';
+import { dmyhm, num, pct } from '@/shared/lib/format';
+
+const RATING_TONE: Record<QaRating, 'success' | 'danger' | 'warning'> = { OK: 'success', WRONG: 'danger', INCOMPLETE: 'warning' };
+const PAGE = 10;
+/** Dòng hỏi đáp kèm hồ sơ NNT (fetchQa gắn sẵn). */
+type QaRow = QaItem & { taxpayer: (typeof taxpayers)[number] };
+
+/** NNT trong phạm vi xem; null = toàn cơ sở. */
+function useScopeIds(scope: string) {
+  const staff = useStaff();
+  return useMemo(() => {
+    if (scope === 'ALL') return null;
+    const owners = new Set(TEAMS.some((t) => t.id === scope) ? staff.filter((s) => s.team === scope).map((s) => s.id) : [scope]);
+    const ids = new Set<number>();
+    officerOf.forEach((o, id) => owners.has(o) && ids.add(id));
+    return ids;
+  }, [scope, staff]);
+}
+
+/** [Thêm] Lịch sử hỏi đáp AI: xem, xuất, đánh giá câu trả lời (view.docx mục 2 và mục Chung). */
+export function AiQaTab({ scope }: { scope: string }) {
+  const ids = useScopeIds(scope);
+  const [q, setQ] = useState('');
+  const [term, setTerm] = useState('');
+  const [rating, setRating] = useState<'all' | 'unrated' | QaRating>('all');
+  const [escalated, setEscalated] = useState(false);
+  const [page, setPage] = useState(1);
+  // Câu đang xem: desktop hiện ở khung bên phải, mobile mở bottom sheet.
+  const [sel, setSel] = useState<string | null>(null);
+  const [sheet, setSheet] = useState(false);
+  const mobile = useBreakpoint() === 'mobile';
+  const query = { ids, q: term, rating, escalated, page, size: PAGE };
+  const res = useQuery({ queryKey: ['ai-qa', scope, term, rating, escalated, page], queryFn: () => fetchQa(query), placeholderData: keepPreviousData });
+  const d = res.data;
+  const pages = d ? Math.max(1, Math.ceil(d.total / PAGE)) : 1;
+  const rows = d?.rows ?? [];
+  const current = rows.find((x) => x.id === sel) ?? rows[0];
+  const idx = current ? rows.indexOf(current) : -1;
+  const pick = (id: string) => { setSel(id); if (mobile) setSheet(true); };
+  // Lưu xong chuyển sang câu chưa đánh giá kế tiếp trên trang (nếu còn), để làm việc liên tục không phải tìm lại vị trí.
+  const next = () => {
+    const after = rows.slice(idx + 1).find((x) => !x.rating) ?? rows[idx + 1];
+    if (after) setSel(after.id);
+  };
+
+  const exportCsv = () => {
+    if (!d) return;
+    downloadXlsx(`hoi-dap-ai_${scope}`, [
+      ['Mã', 'Thời điểm', 'NNT', 'MST', 'Chủ đề', 'Câu hỏi', 'Trả lời của AI', 'Chuyển cán bộ', 'Đánh giá', 'Ghi chú đánh giá'],
+      ...d.all.map((x) => {
+        const t = taxpayers[x.taxpayerId];
+        return [x.id, dmyhm(x.askedAt), t.name, t.mst, x.topic, x.question, x.answer, x.escalated ? 'Có' : 'Không', x.rating ? RATING_LABEL[x.rating] : 'Chưa đánh giá', x.ratingNote ?? ''];
+      }),
+    ]);
+  };
+
+  return (
+    <div className={`hkd-tab${res.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={res.isPlaceholderData}>
+      <MobileDisclosure label="Tổng quan hỏi đáp AI"><div className="hkd-kpis">
+        <div className="hkd-kpi">
+          <span className="kpi__label">Câu hỏi 30 ngày</span>
+          <span className="kpi__value">{d ? num(d.stats.total) : <Skel w={80} h={28} />}</span>
+        </div>
+        <div className="hkd-kpi">
+          <span className="kpi__label">Chuyển cán bộ</span>
+          <span className="kpi__value">{d ? num(d.stats.escalated) : <Skel w={80} h={28} />}</span>
+          {d && <span className="kpi__note">{pct(d.stats.escalated, d.stats.total)} số câu hỏi</span>}
+        </div>
+        <div className="hkd-kpi">
+          <span className="kpi__label">Bị đánh dấu sai</span>
+          <span className="kpi__value kpi__value--failed">{d ? num(d.stats.wrong) : <Skel w={80} h={28} />}</span>
+          {d && <span className="kpi__note">Trên {num(d.stats.rated)} câu đã đánh giá</span>}
+        </div>
+        <div className="hkd-kpi">
+          <span className="kpi__label">Chưa đủ</span>
+          <span className="kpi__value">{d ? num(d.stats.incomplete) : <Skel w={80} h={28} />}</span>
+        </div>
+      </div></MobileDisclosure>
+
+      <section className="panel detail" aria-label="Lịch sử hỏi đáp AI">
+        <ListToolbar search={<form className="table-search" role="search" onSubmit={(e) => { e.preventDefault(); setTerm(q.trim()); setPage(1); }}>
+            <Input aria-label="Tìm theo tên, MST hoặc nội dung câu hỏi" placeholder="Tìm tên, MST, câu hỏi" value={q} onChange={(e) => setQ(e.target.value)} />
+            <IconButton type="submit" variant="default" icon={Search} label="Tìm câu hỏi AI" />
+          </form>} filters={<><ChoiceSelect
+            aria-label="Lọc theo đánh giá"
+            value={rating}
+            onValueChange={(v) => { setRating(v as typeof rating); setPage(1); }}
+            options={[
+              { value: 'all', label: 'Mọi đánh giá' },
+              { value: 'unrated', label: 'Chưa đánh giá' },
+              { value: 'WRONG', label: 'Sai' },
+              { value: 'INCOMPLETE', label: 'Chưa đủ' },
+              { value: 'OK', label: 'Đúng' },
+            ]}
+            className="choice-select--w170"
+          />
+          <label className="qa-check">
+            <input type="checkbox" checked={escalated} onChange={(e) => { setEscalated(e.target.checked); setPage(1); }} />
+            Chỉ câu đã chuyển cán bộ
+          </label></>} count={<span className="detail__count">{d ? `${num(d.total)} câu hỏi` : ''}</span>} actions={<ExcelButton label="Xuất lịch sử hỏi đáp AI ra Excel" className="export-btn" disabled={!d?.total} onExport={exportCsv} />} activeCount={Number(rating !== 'all') + Number(escalated)} />
+
+        {res.isError ? (
+          <BlockError message="Không tải được lịch sử hỏi đáp." onRetry={() => res.refetch()} />
+        ) : !d ? (
+          <Skel w="100%" h={240} />
+        ) : d.total === 0 ? (
+          <BlockEmpty>Không có câu hỏi phù hợp với bộ lọc.</BlockEmpty>
+        ) : (
+          <>
+            {/* Danh sách và khung chi tiết: đọc và đánh giá đúng một câu đang chọn, không mở form giữa danh sách. */}
+            <div className="qa-split">
+              {/* Phân trang thuộc danh sách nên nằm cùng cột trái; cột phải chỉ để xem và đánh giá. */}
+              <div className="qa-side">
+                <ul className="qa-list" aria-label="Câu hỏi">
+                  {d.rows.map((x) => {
+                    const on = !mobile && current?.id === x.id;
+                    return (
+                      <li key={x.id}>
+                        <button type="button" className={`qa-row${on ? ' qa-row--on' : ''}`} aria-current={on || undefined} onClick={() => pick(x.id)}>
+                          <span className="qa-row__top">
+                            <span className="qa-row__name">{x.taxpayer.name}</span>
+                            <span className="qa-row__time num">{dmyhm(x.askedAt)}</span>
+                          </span>
+                          <span className="qa-row__q">{x.question}</span>
+                          <span className="qa-row__meta">
+                            <span className="qa-row__topic">{x.topic}</span>
+                            {x.escalated && <StatusPill tone="info">Đã chuyển cán bộ</StatusPill>}
+                            {x.rating && <StatusPill tone={RATING_TONE[x.rating]}>{RATING_LABEL[x.rating]}</StatusPill>}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="m-pager">
+                  <IconButton icon={ChevronLeft} label="Trang trước" disabled={page <= 1} onClick={() => (setPage(page - 1), setSel(null))} />
+                  <span className="num">Trang {num(page)} / {num(pages)}</span>
+                  <IconButton icon={ChevronRight} label="Trang sau" disabled={page >= pages} onClick={() => (setPage(page + 1), setSel(null))} />
+                </div>
+              </div>
+              {!mobile && current && (
+                <div className="qa-detail" aria-label={`Câu hỏi của ${current.taxpayer.name}`} role="region">
+                  <QaDetail item={current} pos={idx + 1} count={d.rows.length} onDone={next} />
+                </div>
+              )}
+            </div>
+            {mobile && current && (
+              <BottomSheet open={sheet} onClose={() => setSheet(false)} title={current.taxpayer.name}>
+                <QaDetail item={current} pos={idx + 1} count={d.rows.length} onDone={() => setSheet(false)} onCancel={() => setSheet(false)} />
+              </BottomSheet>
+            )}
+          </>
+        )}
+      </section>
+      {/* Ghi chú bản mẫu đặt cuối để danh sách câu hỏi lên sớm hơn, nhất là trên điện thoại. */}
+    </div>
+  );
+}
+
+/** Nội dung một câu hỏi + form đánh giá luôn mở bên dưới; tên NNT nhắc lại ở nút lưu để không nhầm câu. */
+function QaDetail({ item, pos, count, onDone, onCancel }: { item: QaRow; pos: number; count: number; onDone: () => void; onCancel?: () => void }) {
+  return (
+    <>
+      <div className="qa-detail__head">
+        <span className="cell-tp">
+          <span className="cell-tp__name">{item.taxpayer.name}</span>
+          <span className="cell-tp__mst">MST {item.taxpayer.mst} · {dmyhm(item.askedAt)} · {item.topic}</span>
+        </span>
+        <span className="qa-detail__pos num">Câu {pos}/{count} trên trang</span>
+      </div>
+      {(item.escalated || item.rating) && (
+        <p className="qa-detail__tags">
+          {item.escalated && <StatusPill tone="info">Đã chuyển cán bộ</StatusPill>}
+          {item.rating && <StatusPill tone={RATING_TONE[item.rating]}>{RATING_LABEL[item.rating]}{item.ratedBy ? ` · ${item.ratedBy}` : ''}</StatusPill>}
+        </p>
+      )}
+      <div className="qa-detail__qa">
+        {/* Hai khối nền khác màu: câu hỏi của NNT (trắng) và câu trả lời của Geo AI (tint thương hiệu), để không đọc lẫn. */}
+        <div className="qa-block qa-block--q">
+          <p className="qa-block__label">Câu hỏi của NNT</p>
+          <p className="qa-block__text">{item.question}</p>
+        </div>
+        <div className="qa-block qa-block--a">
+          <p className="qa-block__label">Geo AI trả lời</p>
+          <p className="qa-block__text">{item.answer}</p>
+        </div>
+      </div>
+      <RateForm key={item.id} item={item} onDone={onDone} onCancel={onCancel} />
+    </>
+  );
+}
+
+function RateForm({ item, onDone, onCancel }: { item: QaRow; onDone: () => void; onCancel?: () => void }) {
+  const qc = useQueryClient();
+  const user = useCurrentUser();
+  // Không chọn sẵn mức nào: người đánh giá phải tự chọn, tránh lưu nhầm mức mặc định.
+  const [rating, setRating] = useState<QaRating | null>(item.rating ?? null);
+  const [note, setNote] = useState(item.ratingNote ?? '');
+  const needNote = rating !== null && rating !== 'OK' && !note.trim();
+  const m = useMutation({
+    mutationFn: () => rateQa(item.id, rating!, note.trim(), user.name),
+    onSuccess: () => {
+      toast.success(`Đã lưu đánh giá câu hỏi của ${item.taxpayer.name}.`);
+      qc.invalidateQueries({ queryKey: ['ai-qa'] });
+      onDone();
+    },
+    onError: () => toast.error('Không lưu được đánh giá. Thử lại sau.'),
+  });
+  return (
+    <form className="qa-rate" onSubmit={(e) => { e.preventDefault(); if (rating && !needNote) m.mutate(); }}>
+      <fieldset>
+        <legend>{item.rating ? 'Sửa đánh giá câu trả lời' : 'Đánh giá câu trả lời'}</legend>
+        {(['OK', 'INCOMPLETE', 'WRONG'] as QaRating[]).map((r) => (
+          <label key={r} className="qa-check">
+            <input type="radio" name={`rate-${item.id}`} value={r} checked={rating === r} onChange={() => setRating(r)} />
+            {RATING_LABEL[r]}
+          </label>
+        ))}
+      </fieldset>
+      {rating && (
+        <label className="qa-rate__note">
+          <span>Ghi chú {rating === 'OK' ? '(không bắt buộc)' : '(bắt buộc: nêu chỗ sai hoặc còn thiếu)'}</span>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} aria-invalid={needNote || undefined} />
+        </label>
+      )}
+      <div className="qa-rate__actions">
+        <Button type="submit" disabled={!rating || needNote || m.isPending}>{m.isPending ? 'Đang lưu…' : 'Lưu đánh giá'}</Button>
+        {onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Đóng</Button>}
+        <ProtoBadge note="Đánh dấu Sai hoặc Chưa đủ phải kèm ghi chú để nhóm AI sửa câu trả lời mẫu. Lưu xong tự sang câu chưa đánh giá kế tiếp." />
+      </div>
+    </form>
+  );
+}

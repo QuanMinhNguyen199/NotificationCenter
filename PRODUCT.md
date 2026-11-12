@@ -57,7 +57,7 @@ Engagement (rà soát nghĩa vụ, tự lập đợt) là hệ thống nghiệp 
 
 ### Phần Quản lý HKD (thêm 06/11/2026, dữ liệu minh họa)
 
-Người dùng yêu cầu 4 nhóm chức năng và đồng ý làm bằng mock trước. Mock nằm ở `web/src/api/hkdApi.ts` (seed cố định); **mọi con số, định nghĩa nhóm và thời gian xử lý đều là giả định, chưa đối chiếu nghiệp vụ hay nguồn dữ liệu thật.**
+Người dùng yêu cầu 4 nhóm chức năng và đồng ý làm bằng mock trước. Mock nằm ở `web/src/features/hkd/hkdApi.ts` (seed cố định); **mọi con số, định nghĩa nhóm và thời gian xử lý đều là giả định, chưa đối chiếu nghiệp vụ hay nguồn dữ liệu thật.**
 
 - **Chỉ tiêu hằng ngày:** tờ khai tiếp nhận, tỷ lệ xử lý thành công, tỷ lệ nộp thuế theo hồ sơ, số hộ đăng ký app nhưng chưa nộp tờ khai; theo 30 ngày, 8 tuần và theo đơn vị. Giả định: "theo cơ quan thuế" = theo đơn vị quản lý (tổ hoặc cán bộ), vì cơ sở chỉ có một cơ quan thuế.
 - **Cơ cấu và tuân thủ:** theo địa bàn (5 phường minh họa), doanh thu năm, loại hình kinh doanh; 4 nhóm loại trừ nhau: đã tuân thủ đầy đủ / còn thiếu tờ khai / còn nợ thuế / thiếu tờ khai và nợ thuế. Thêm 3.600 HKD tuân thủ đầy đủ ngoài 6.200 NNT của mục 5 để có nhóm "đủ".
@@ -66,6 +66,7 @@ Người dùng yêu cầu 4 nhóm chức năng và đồng ý làm bằng mock t
 - **Nhắc việc (mục 5, thêm 06/11/2026):** thống kê 4 loại nhắc: sắp đến hạn (nghĩa vụ khai/nộp còn 0–7 ngày), quá hạn chưa làm, việc phải làm (nghĩa vụ đã phát sinh, còn trên 7 ngày tới hạn), sắp đạt ngưỡng doanh thu (doanh thu từ đầu năm đạt mức "gần ngưỡng" trong Thiết lập, mặc định 80%, của mốc 1 / 3 / 50 tỷ). Mỗi loại có HKD đã nhắc, thông báo đã gửi, tỷ lệ đã tiếp nhận, HKD hoàn thành sau nhắc, HKD còn phải nhắc; biểu đồ 30 ngày; bảng theo mốc doanh thu (nút sang Thiết lập) và theo đơn vị. Số HKD theo hạn lấy từ cùng dữ liệu NNT với Thống kê; số thông báo, tỷ lệ tiếp nhận và tỷ lệ hoàn thành là hệ số giả định. Giả định: "phải làm một việc" = nghĩa vụ trong hạn (chưa tới cửa sổ sắp hạn); "hoàn thành sau nhắc" không áp dụng cho ngưỡng doanh thu.
 - **Phạm vi:** giống Thống kê (lãnh đạo cơ sở so sánh tổ, lãnh đạo tổ so sánh cán bộ trong tổ, cán bộ cố định NNT mình phụ trách).
 - Chưa có: nguồn dữ liệu tờ khai, nợ, yêu cầu hỗ trợ thật; định nghĩa chính thức "xử lý thành công", "nộp thuế theo hồ sơ"; báo cáo định kỳ theo mẫu biểu của cơ quan thuế; lọc theo khoảng thời gian.
+- **Nhãn Đề xuất (12/11/2026, yêu cầu người dùng, thay quy tắc nhãn trước đó):** bỏ toàn bộ nhãn Giả lập vì mọi số liệu của bản mẫu đều là dữ liệu giả, ai dùng cũng biết. Không dùng khối ghi chú chiếm cả dòng; chỉ đặt badge "Đề xuất" nhỏ cạnh tiêu đề hoặc nhãn chỉ số của phần do nhóm thiết kế tự đặt (bộ KPI hỗ trợ, nhóm trạng thái/loại yêu cầu, công thức và kỳ thống kê, phân nhóm tuân thủ, nợ bình quân, mẫu báo cáo, định nghĩa nhắc việc, quy tắc ngày nghỉ, mức quá hạn, OTP, dấu hiệu bất thường). Giải thích nằm trong tooltip của badge (rê chuột, focus hoặc chạm). Ô KPI có badge thì badge thay cho icon ⓘ. Badge không có nghĩa là đã được duyệt.
 
 ## Brand Commitments
 
@@ -120,13 +121,13 @@ Theo yêu cầu gộp chức năng trùng của người dùng, điều hướng
   - Ngày nghỉ lễ không gửi tin theo khung giờ. Nhắc hạn và nhắc chữ ký số gửi vào ngày gần nhất trước kỳ nghỉ; quá hạn, doanh thu, dự báo đổi nhóm gửi vào ngày đầu tiên sau kỳ nghỉ. Khi tin bị dời, số ngày quá hạn và mức quá hạn được tính lại theo ngày gửi thực tế. Mỗi nghĩa vụ chỉ nhận một tin quá hạn trong một ngày.
   - Tin theo sự kiện (kết quả hồ sơ, nộp thuế, chuyển tuyến) vẫn gửi ngay. Cuối tuần vẫn gửi như ngày thường.
   - Hạn trả lời ca chuyển tuyến (1 ngày làm việc) cũng bỏ qua ngày lễ.
-- **Giả định:** danh sách ngày lễ 2026–2027 trong `web/src/lib/workdays.ts` là bản tạm, chưa theo thông báo nghỉ lễ chính thức. Cần một nơi quản lý ngày nghỉ theo năm (gồm nghỉ bù, làm bù) ở màn Cấu hình.
+- **Giả định:** danh sách ngày lễ 2026–2027 trong `web/src/shared/lib/workdays.ts` là bản tạm, chưa theo thông báo nghỉ lễ chính thức. Cần một nơi quản lý ngày nghỉ theo năm (gồm nghỉ bù, làm bù) ở màn Cấu hình.
 - **Hệ quả cần lưu ý:** dời tin sau kỳ nghỉ dài làm dồn khối lượng vào ngày đi làm lại. Trong dữ liệu giả lập, 11/02/2027 (ngày đi làm lại sau Tết) có 2.462 tin, cao nhất tháng; phần lớn ngày khác dưới 1.500 tin. Cần xác nhận khung giờ gửi và kênh iHanoi chịu được mức này, hoặc rải tin ra 2–3 ngày.
 - **Kiểm chứng:** đối chiếu với nghiệp vụ các hạn rơi vào ngày nghỉ (20/12/2026, 31/01/2027, 30/04/2027); với dữ liệu thật, đếm số hộ nộp vào ngày làm việc kế tiếp mà hệ thống cũ vẫn đánh dấu trễ.
 
 ### Tạm ẩn Chuyển tuyến và Hỏi đáp AI (12/11/2026)
 
-- Theo yêu cầu người dùng, hai tính năng chưa đưa vào sử dụng được ẩn bằng cờ trong `web/src/lib/features.ts`; code giữ nguyên, đổi cờ thành `true` để hiện lại.
+- Theo yêu cầu người dùng, hai tính năng chưa đưa vào sử dụng được ẩn bằng cờ trong `web/src/shared/lib/features.ts`; code giữ nguyên, đổi cờ thành `true` để hiện lại.
 - `routing: false`: bỏ mục Chuyển tuyến khỏi sidebar và thanh dưới, link `#/chuyen-tuyen` mở Thống kê, chuông chỉ còn hộ có dấu hiệu bất thường.
 - `aiQa: false`: bỏ tab Hỏi đáp AI trong Quản lý HKD và tab Hội thoại (với Geo AI) trong hồ sơ hộ.
 - Vẫn giữ: loại thông báo "Kết quả chuyển tuyến" (đang giả lập) trong danh mục loại và lịch thông báo, nhóm D3 trong Thiết lập.

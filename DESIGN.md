@@ -2,7 +2,7 @@
 name: Quản trị thông báo
 description: Bảng vận hành thông báo thuế cho quản trị trung tâm và cán bộ đơn vị; thời điểm và trạng thái đi trước, trang trí đi sau.
 colors:
-  # Đồng bộ từ :root trong web/src/styles.css ngày 11/11/2026 (sau critique/audit). Đây là nguồn đúng; các bảng màu cũ trong thân tài liệu đã bị thay.
+  # Đồng bộ từ :root trong web/src/styles/styles.css ngày 11/11/2026 (sau critique/audit). Đây là nguồn đúng; các bảng màu cũ trong thân tài liệu đã bị thay.
   brand: "#D50032"
   brand-fill: "#D50032"
   brand-fill-hover: "#B5002B"
@@ -156,7 +156,7 @@ components:
 
 # Design System: Quản trị thông báo
 
-> **Nguồn màu hiện hành (11/11/2026):** frontmatter ở đầu file, đồng bộ từ `:root` của `web/src/styles.css` và `web/src/theme.ts`. Các mục màu ghi ngày 02/11/2026 bên dưới (đỏ #B91C1C, vàng nhạt, nền kem #FFFBF2, biểu đồ xanh dương) là lịch sử quyết định, **không còn áp dụng**. Breakpoint chuẩn: 768 / 1024 / 1200px.
+> **Nguồn màu hiện hành (11/11/2026):** frontmatter ở đầu file, đồng bộ từ `:root` của `web/src/styles/styles.css` và `web/src/shared/theme.ts`. Các mục màu ghi ngày 02/11/2026 bên dưới (đỏ #B91C1C, vàng nhạt, nền kem #FFFBF2, biểu đồ xanh dương) là lịch sử quyết định, **không còn áp dụng**. Breakpoint chuẩn: 768 / 1024 / 1200px.
 
 
 > **Bộ màu thương hiệu (cập nhật 02/11/2026, theo yêu cầu người dùng, thay token xanh #1677FF của đặc tả):** Main red #B91C1C (nút chính, link, tab, switch, focus, đường dữ liệu chính, "Quá hạn"), Banner red #C8102E (logo), Yellow #FACC15 (khung gửi trên dải 24h, "Sắp hạn"), Pale yellow #FEF3C7 (trạng thái chọn: nav, KPI, chip), White #FFFFFF (thẻ, topbar, ô nhập), Cream #FFFBF2 (nền trang), Main text #2B1A12, Secondary text #6B4A3E, Borders #EBD9C6. KPI đang chọn: nền #FEF3C7, viền #A16207 (không dùng đỏ để tránh đọc nhầm là lỗi). Xanh lá #166534 và xanh dương #1E40AF/#E6EEFB chỉ còn trong pill trạng thái (Đã giao/Hoàn tất, Đã gửi/Đang gửi) theo quy ước đặc tả.
@@ -169,7 +169,7 @@ Giao diện đọc như một lịch trực ban của trung tâm vận hành th�
 
 Mật độ trung bình–cao, kiểu công cụ: chữ 14px, bảng có số căn cột (tabular), chỉ những con số cần ngữ cảnh mới có dòng giải thích ngắn. Thứ được nhấn là dữ liệu cốt lõi (hàng 6 KPI bấm để lọc, biểu đồ, dải 24h), không phải hiệu ứng. Hướng đã từ chối trong direction contract: icon tròn trên KPI, gradient area chart, sidebar tối.
 
-Hệ dựng trên Ant Design 5 (theme trong `web/src/theme.ts`) cộng một lớp CSS custom properties (`web/src/styles.css`) cho shell và các khối riêng. Hai nguồn cùng giá trị cho mọi token màu chính.
+Hệ dựng trên Ant Design 5 (theme trong `web/src/shared/theme.ts`) cộng một lớp CSS custom properties (`web/src/styles/styles.css`) cho shell và các khối riêng. Hai nguồn cùng giá trị cho mọi token màu chính.
 
 **Key Characteristics:**
 - Nền liền một mặt phẳng; thẻ trắng viền #EBD9C6, bo 8px, không bóng khi nghỉ.
@@ -384,7 +384,7 @@ Thay các bảng màu trước trong file này. **Bằng chứng:** người dù
 
 **Quyết định triển khai:** dùng shadcn/ui cho Button, Select, Switch, Tabs, ToggleGroup, Badge, Alert, Dialog, Sheet, Calendar, Input, Textarea, Table; Sonner cho phản hồi thao tác, Lucide cho icon. Đã bỏ Ant Design và icon Ant khỏi dependency. Màu giữ đúng bộ Bright Red đã chốt phía trên. Sidebar nền `#B5002B` (Pantone 199 C pha 15% đen; chữ trắng 7,0:1) để tách khỏi nội dung, mục thường chữ trắng 85% kèm icon 16px (5,3:1), mục đang mở là ô trắng đặc chữ và icon `#950023` (9,1:1); không dùng vàng trong chữ sidebar (người dùng thấy đỏ đậm + vàng khó nhìn, 04/11/2026); vàng Pantone 108 C chỉ có trong logo và viền 2px quanh logo; logo biểu trưng Thuế thành phố Hà Nội có viền trắng 2px (03/11/2026 theo yêu cầu người dùng; nền `#EF4444` đã thử và bị loại vì chữ trắng chỉ 3,8:1). Nút chính nền Pantone 199 C `#D50032` (chữ trắng 5,4:1). Theo token brand trong PRODUCT.md, không theo bảng màu cũ ở đầu file này. Canvas Slate 50.
 
-Các khối ghép dùng chung tại `web/src/components/Controls.tsx` và `DataTable.tsx`. Giờ chọn theo hệ 24h; giờ và phút có nhãn riêng cho trình đọc màn hình. Bảng giữ phân trang phía API, số liệu căn phải; thông báo rỗng/lỗi vẫn có hành động phục hồi. Mobile dùng Sheet cho bộ lọc/xác nhận và giữ bản nháp qua các tab; panel chi tiết dùng Sheet bên phải, đóng trở về vị trí danh sách cũ.
+Các khối ghép dùng chung tại `web/src/shared/components/Controls.tsx` và `DataTable.tsx`. Giờ chọn theo hệ 24h; giờ và phút có nhãn riêng cho trình đọc màn hình. Bảng giữ phân trang phía API, số liệu căn phải; thông báo rỗng/lỗi vẫn có hành động phục hồi. Mobile dùng Sheet cho bộ lọc/xác nhận và giữ bản nháp qua các tab; panel chi tiết dùng Sheet bên phải, đóng trở về vị trí danh sách cũ.
 
 **Chưa xác nhận:** chưa có thử nghiệm người dùng. Kiểm chứng tiếp bằng nhiệm vụ lọc thông báo, đổi giờ gửi rồi lưu, và tạm dừng/tiếp tục đợt gửi với đúng vai trò.
 
@@ -465,7 +465,7 @@ Mỗi sắc một nghĩa, dùng nhất quán ở pill, KPI, biểu đồ và d�
 
 Nguyên tắc: chuyển động chỉ để phản hồi thao tác, đổi trạng thái hoặc nối hai vùng; số liệu đọc được ngay, không chờ animation; không nảy, không lặp, không đếm số, không cho card xuất hiện tuần tự; không chạy lại hiệu ứng xuất hiện sau mỗi lần lọc. Chỉ transform, opacity và màu. Tắt khi người dùng chọn giảm chuyển động (motion/react `MotionConfig reducedMotion="user"`, `@media (prefers-reduced-motion: reduce)` và `animation: false` cho ECharts).
 
-**Token** (CSS `--dur-*` trong `styles.css`, JS trong `src/lib/motion.ts`; giá trị khởi đầu để thử, chưa kiểm chứng với người dùng): phản hồi nhỏ `--dur-fast` 120ms; chuyển trạng thái `--dur-state` 180ms; drawer/modal `--dur-overlay` 240ms; easing `--ease-out` cubic-bezier(0.22, 1, 0.36, 1).
+**Token** (CSS `--dur-*` trong `styles.css`, JS trong `src/shared/lib/motion.ts`; giá trị khởi đầu để thử, chưa kiểm chứng với người dùng): phản hồi nhỏ `--dur-fast` 120ms; chuyển trạng thái `--dur-state` 180ms; drawer/modal `--dur-overlay` 240ms; easing `--ease-out` cubic-bezier(0.22, 1, 0.36, 1).
 
 | Thao tác | Chuyển động | Token |
 |---|---|---|

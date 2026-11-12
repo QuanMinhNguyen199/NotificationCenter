@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Palette, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { C } from '../theme';
+import { Button } from '@/shared/ui/button';
+import { C } from '@/shared/theme';
 import {
   CHART_COLOR_GROUPS,
   PALETTE_TOOL,

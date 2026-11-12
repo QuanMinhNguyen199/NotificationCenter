@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { C } from '../theme';
+import { C } from '@/shared/theme';
 
 // Công cụ tạm: chỉnh màu biểu đồ trực tiếp trên web và áp dụng chung cho mọi người.
 // Màu chung lưu ở server (GET/PUT /api/chart-colors, file web/chart-colors.json).

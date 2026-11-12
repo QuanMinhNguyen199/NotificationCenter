@@ -63,22 +63,43 @@ React 19, TypeScript, Vite, shadcn/ui (Radix + Tailwind CSS 4), TanStack Query, 
 
 ## Cấu trúc
 
+Tổ chức theo tính năng (12/11/2026). Mỗi tính năng tự chứa màn, component, mock API và CSS riêng; phần dùng chung nằm trong `shared/`.
+
 ```text
 web/src/
-  pages/        StatsPage, SendPage (Gửi thông báo), TemplatesPage (Mẫu tin), ChannelsPage (Kênh gửi),
-                ConfigPage (Thiết lập), AccountsPage
-  stats/        bộ lọc, chỉ số, biểu đồ, danh sách và chi tiết của màn Thống kê
-  config/       form, dải "Một ngày vận hành", hộp thoại lưu, lịch sử, xem trước
-  shell/        khung app: sidebar, thanh trên, điều hướng mobile
-  demo/         tài khoản xem thử và quyền theo vai trò
-  api/mockApi   mock API Engagement: độ trễ, phân trang, phạm vi theo quyền, lưu thiết lập
-  api/notifyApi mock API Notification Center: kênh, mẫu tin, lần gửi chủ động (tiến độ mô phỏng theo thời gian thực)
-  data/         dữ liệu minh họa, cơ cấu tổ và cán bộ
-  theme.ts      màu dùng trong biểu đồ (khớp token trong styles.css)
+  main.tsx              điểm vào: font, CSS toàn cục, App
+  app/                  App (định tuyến hash, lazy load từng màn), shell/ (sidebar, thanh trên, điều hướng mobile, chặn rời màn)
+  features/
+    auth/               đăng nhập, xác thực 2 bước, chuyển cảnh vào app
+    stats/              màn Thống kê: bộ lọc, chỉ số, biểu đồ
+    records/            danh sách và sheet chi tiết thông báo, NNT, đợt gửi (dùng ở Thống kê, Quản lý HKD, Thông báo)
+    hkd/                Quản lý HKD (+ mock hkdApi), Hỏi đáp AI (đang ẩn)
+    leader/             số liệu lãnh đạo, so sánh 25 Thuế cơ sở
+    notify/             Thông báo: gửi chủ động, đợt tự động, lịch, loại, hiệu quả gửi, thư viện mẫu (+ mock notifyApi)
+    settings/           Thiết lập: quy tắc nhắc tự động, kênh gửi, lịch sử, xem trước
+    accounts/           Tài khoản và phân quyền
+    routing/            Chuyển tuyến và chuông thông báo (Chuyển tuyến đang ẩn)
+  shared/
+    ui/                 component shadcn/ui (sinh bằng CLI, ít sửa tay)
+    components/         component dùng chung: Blocks, Controls, Status, DataTable, ExcelButton, Chart…
+    lib/                tiện ích: router, format, xlsx, workdays, features (cờ bật/tắt tính năng), status (nhãn trạng thái)…
+    api/                mock API Engagement dùng chung (mockApi, profileApi)
+    data/               kiểu dữ liệu, dữ liệu minh họa, cơ cấu tổ và cán bộ, cấu hình
+    demo/               tài khoản xem thử, quyền theo vai trò (useDemo, usePermissions)
+    theme.ts            màu biểu đồ (khớp token trong styles.css)
+  styles/               styles.css (token và style toàn cục), mobile.css
+  dev/                  công cụ tạm chỉnh màu biểu đồ
 ```
+
+Quy ước:
+
+- Import khác thư mục dùng alias `@/` (= `web/src`), cùng thư mục dùng `./`. `features/` có thể dùng `shared/`; `shared/` không import từ `features/` hay `app/`.
+- File chứa component React chỉ export component (để Fast Refresh của Vite hoạt động); hằng số, hàm và hook để ở file `.ts` riêng.
+- Kiểm tra trước khi đẩy: `npm run check` (TypeScript + oxlint) và `npm run build`.
 
 ## Tài liệu thiết kế
 
+- [DE_XUAT_NGHIEP_VU_VA_MAU_EXCEL.md](DE_XUAT_NGHIEP_VU_VA_MAU_EXCEL.md): ý nghĩa các nội dung đề xuất, công thức hiện tại, dữ liệu cần xác nhận và cấu trúc Excel cho nghiệp vụ, lãnh đạo và đội data; phân biệt mẫu đang có với mẫu chưa triển khai.
 - [PRODUCT.md](PRODUCT.md): người dùng, phạm vi, ràng buộc, quyết định sản phẩm.
 - [DESIGN.md](DESIGN.md): màu, chữ, bố cục, chuyển động và lý do của từng quyết định.
 - [web_quan_tri_engagement_views_va_mockup_stitch.md](web_quan_tri_engagement_views_va_mockup_stitch.md): đặc tả gốc.
