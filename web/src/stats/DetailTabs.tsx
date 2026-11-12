@@ -16,7 +16,7 @@ import { BlockEmpty, BlockError, Skel } from '../components/Blocks';
 import { DELIVERY, GroupTags, Pill, PRIORITY, RUN, SEND } from '../components/Status';
 import { UNITS, OBLIGATION_CUTOFF } from '../data/mock';
 import { GROUPS } from '../data/config';
-import { dm, dmy, dmyhm, hm, num, pct } from '../lib/format';
+import { dmy, dmyhm, hm, num, pct } from '../lib/format';
 import { useBreakpoint } from '../lib/useMedia';
 import type { Priority, RunStatus, SendRun, Taxpayer } from '../data/types';
 import { filterOf, type StatsParams, type Tab } from './useStatsParams';
@@ -150,10 +150,10 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
     {
       title: 'Thời điểm tạo',
       dataIndex: 'createdAt',
-      width: 116,
+      width: 112,
       render: (v: string) => (
         <span className="cell-time">
-          {dm(v)}/2026
+          {dmy(v)}
           <small>{hm(v)}</small>
         </span>
       ),
@@ -169,7 +169,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
         </span>
       ),
     },
-    ...(bp === 'desktop' ? [{ title: 'Nhóm', key: 'g', width: 150, render: (_: unknown, r: NotificationRow) => <GroupTags groups={r.groups} /> }] : []),
+    ...(bp === 'desktop' ? [{ title: 'Nhóm', key: 'g', width: 120, render: (_: unknown, r: NotificationRow) => <GroupTags groups={r.groups} /> }] : []),
     {
       title: 'Tiêu đề',
       dataIndex: 'title',
@@ -182,8 +182,8 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
     },
     ...(bp === 'desktop'
       ? [
-          { title: 'Kết quả gửi', key: 's', width: 150, render: (_: unknown, r: NotificationRow) => <Pill map={SEND} value={r.send} /> },
-          { title: 'Kết quả giao', key: 'd', width: 176, render: (_: unknown, r: NotificationRow) => <Pill map={DELIVERY} value={r.delivery} /> },
+          { title: 'Kết quả gửi', key: 's', width: 120, render: (_: unknown, r: NotificationRow) => <Pill map={SEND} value={r.send} /> },
+          { title: 'Kết quả giao', key: 'd', width: 140, render: (_: unknown, r: NotificationRow) => <Pill map={DELIVERY} value={r.delivery} /> },
         ]
       : [
           {
@@ -261,7 +261,7 @@ function NotificationsPane({ p, set, open, reset }: { p: StatsParams; set: SetFn
           <Pager mobile page={p.page} size={p.size} total={q.data.total} onChange={(page) => set({ page })} />
         </>
       ) : (
-        <DataTable<NotificationRow> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(r) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`n:${r.id}`) })} pagination={pagination(p, q.data.total, set)} />
+        <DataTable<NotificationRow> fixed rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(r) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`n:${r.id}`) })} pagination={pagination(p, q.data.total, set)} />
       )}
       </div>
     </>
@@ -361,9 +361,11 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
     );
 
   const cols: DataColumns<Taxpayer> = [
+    { title: 'Cập nhật', key: 'u', width: 112, render: (_, t) => <span className="cell-time">{dmy(t.updatedAt)}<small>{hm(t.updatedAt)}</small></span> },
     {
       title: 'NNT / MST',
       key: 'tp',
+      width: 220,
       render: (_, t) => (
         <span className="cell-tp">
           <span className="cell-tp__name">{t.name}</span>
@@ -371,11 +373,10 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
         </span>
       ),
     },
-    { title: 'Trạng thái HKD', dataIndex: 'hkdStatus', width: 170 },
-    { title: 'Hồ sơ khai còn thiếu', key: 'f', width: 150, align: 'right', render: (_, t) => countLink(t.fileCount, 'hồ sơ khai còn thiếu', t) },
-    { title: 'Khoản còn phải nộp', key: 'p', width: 150, align: 'right', render: (_, t) => countLink(t.payCount, 'khoản còn phải nộp', t) },
-    { title: 'Ưu tiên hạn', key: 'pr', width: 150, render: (_, t) => (topPriority(t) ? <Pill map={PRIORITY} value={topPriority(t)!} /> : <span className="cell-faint">—</span>) },
-    ...(bp === 'desktop' ? [{ title: 'Cập nhật', key: 'u', width: 140, render: (_: unknown, t: Taxpayer) => <span className="num">{dmyhm(t.updatedAt)}</span> }] : []),
+    { title: 'Trạng thái HKD', dataIndex: 'hkdStatus' },
+    { title: 'Hồ sơ khai còn thiếu', key: 'f', width: 140, align: 'right', render: (_, t) => countLink(t.fileCount, 'hồ sơ khai còn thiếu', t) },
+    { title: 'Khoản còn phải nộp', key: 'p', width: 140, align: 'right', render: (_, t) => countLink(t.payCount, 'khoản còn phải nộp', t) },
+    { title: 'Ưu tiên hạn', key: 'pr', width: 120, render: (_, t) => (topPriority(t) ? <Pill map={PRIORITY} value={topPriority(t)!} /> : <span className="cell-faint">—</span>) },
     {
       title: <span className="sr-only">Thao tác</span>,
       key: 'a',
@@ -472,7 +473,7 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
           <Pager mobile page={p.page} size={p.size} total={q.data.total} onChange={(page) => set({ page })} />
         </>
       ) : (
-        <DataTable<Taxpayer> rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(t) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`t:${t.id}`) })} pagination={pagination(p, q.data.total, set)} />
+        <DataTable<Taxpayer> fixed rowKey="id" columns={cols} dataSource={q.data.rows} rowClassName="row-open" onRow={(t) => ({ onClick: (e) => !(e.target as HTMLElement).closest('button,a') && open(`t:${t.id}`) })} pagination={pagination(p, q.data.total, set)} />
       )}
       </div>
     </>

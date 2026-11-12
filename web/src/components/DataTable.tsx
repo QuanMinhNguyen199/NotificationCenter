@@ -15,11 +15,13 @@ export interface PaginationState {
   onChange: (page: number, size: number) => void;
 }
 
-export function DataTable<T>({ columns, dataSource, rowKey, rowClassName, onRow, pagination }: {
+export function DataTable<T>({ columns, dataSource, rowKey, rowClassName, onRow, pagination, fixed }: {
   columns: DataColumns<T>; dataSource: T[]; rowKey: keyof T; rowClassName?: string;
   onRow?: (row: T) => HTMLAttributes<HTMLTableRowElement>; pagination?: PaginationState;
+  /** Cố định độ rộng cột theo `width` (table-layout: fixed): tiêu đề cột không xê dịch khi đổi trang, bộ lọc hay dữ liệu. */
+  fixed?: boolean;
 }) {
-  return <div className="data-table">
+  return <div className={`data-table${fixed ? ' data-table--fixed' : ''}`}>
     <Table><TableHeader><TableRow>
       {columns.map((c, i) => <TableHead key={c.key ?? String(c.dataIndex ?? i)} style={{ width: c.width, textAlign: c.align }} className="h-11 font-medium text-muted-foreground">{c.title}</TableHead>)}
     </TableRow></TableHeader>{/* Đổi trang hoặc bộ lọc: dựng lại thân bảng để các dòng mới hiện dần (rows-in). */}

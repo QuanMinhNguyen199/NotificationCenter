@@ -146,3 +146,14 @@
 
 }
 .sheet .qa-detail__head .cell-tp__name { display: none; }
+
+/* Nhóm nút chọn (toggle-group) trên điện thoại: chia đều bề ngang, chữ được xuống dòng, không đẩy form rộng hơn màn hình (11/11/2026). */
+@media (max-width: 767px) {
+  .compose__form, .compose__form > * { min-width: 0; }
+  .compose__form [data-slot="toggle-group"] { width: 100%; }
+  .compose__form [data-slot="toggle-group-item"] { flex: 1 1 0; min-width: 0; padding-inline: 6px; white-space: normal; line-height: 1.25; text-align: center; }
+}
+/* Màn rất hẹp (< 360px): chữ bottom nav nhỏ lại một bậc để 5 mục một dòng không chạm nhau. */
+@media (max-width: 359px) {
+  .bottom-nav__item { font-size: 10px; letter-spacing: -0.02em; }
+}
