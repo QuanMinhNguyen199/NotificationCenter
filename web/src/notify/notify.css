@@ -124,4 +124,7 @@
 }
 
 @media (min-width: 1200px) { .nt-eff-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.nt-types { align-items: start; }
+/* Thẻ cùng hàng cao bằng nhau; bảng mức quá hạn chỉ mở khi người dùng bấm. */
+.nt-types { align-items: stretch; }
+.nt-type__rhythm { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.nt-sev__toggle { align-self: flex-start; margin-top: -2px; }

@@ -3,6 +3,8 @@ import { ProtoBadge, ProtoNote } from '@/components/Proto';
 import { StatusPill } from '@/components/Status';
 import { INITIAL_CONFIG } from '../data/config';
 import { SEVERITY, TYPES, severityRange, type SendMode, type TypeMeta } from './notifyPlanApi';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 import './notify.css';
 
 const MODES: { mode: SendMode; title: string; desc: string }[] = [
@@ -35,6 +37,7 @@ export function NotificationTypes() {
 }
 
 function TypeCard({ t }: { t: TypeMeta }) {
+  const [open, setOpen] = useState(false);
   return (
     <li className="nt-type">
       <div className="nt-type__head">
@@ -45,22 +48,31 @@ function TypeCard({ t }: { t: TypeMeta }) {
         <div><dt>Khi nào gửi</dt><dd>{t.trigger}</dd></div>
         <div><dt>Cách gửi</dt><dd>{t.mode === 'window' ? `Theo khung giờ ${INITIAL_CONFIG.sendStart}–${INITIAL_CONFIG.sendEnd}` : 'Gửi ngay theo sự kiện'}</dd></div>
         {t.groups && <div><dt>Nhóm quy tắc</dt><dd>{t.groups}</dd></div>}
+        {/* Nhịp nhắc là một dòng thông tin như các dòng khác, để các thẻ cùng cấu trúc và cao gần bằng nhau. */}
+        {t.id === 'overdue' && <div><dt>Nhịp nhắc</dt><dd className="nt-type__rhythm">Giãn dần theo {SEVERITY.length} mức, từ {SEVERITY[0].every} đến {SEVERITY[SEVERITY.length - 1].every} ngày/lần <ProtoBadge kind="proposal" note="ngưỡng ngày và nhịp nhắc cần nghiệp vụ chốt" /></dd></div>}
+        {t.id === 'signature' && <div><dt>Nhịp nhắc</dt><dd className="nt-type__rhythm">Hai lần: trước hạn 30 ngày và 7 ngày <ProtoBadge kind="proposal" note="số lần và mốc nhắc cần nghiệp vụ chốt" /></dd></div>}
       </dl>
       {t.id === 'overdue' && (
-        <div className="nt-sev">
-          <ProtoNote kind="proposal">Chia mức theo số ngày quá hạn và giãn nhịp nhắc khi quá hạn lâu, để hộ quá hạn dài không nhận tin mỗi ngày. Ngưỡng ngày cần nghiệp vụ chốt.</ProtoNote>
-          <table className="mini-table nt-sev__table">
-            <caption className="sr-only">Mức quá hạn đề xuất</caption>
-            <thead><tr><th scope="col">Mức</th><th scope="col">Số ngày quá hạn</th><th scope="col">Nhịp nhắc</th></tr></thead>
-            <tbody>
-              {SEVERITY.map((s) => (
-                <tr key={s.level}><th scope="row">{s.label}</th><td>{severityRange(s)}</td><td>{s.every} ngày/lần</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <button type="button" className="top-rows__toggle nt-sev__toggle" aria-expanded={open} aria-controls="nt-sev-table" onClick={() => setOpen((v) => !v)}>
+            {open ? <>Ẩn bảng mức <ChevronUp aria-hidden="true" /></> : <>Xem {SEVERITY.length} mức quá hạn <ChevronDown aria-hidden="true" /></>}
+          </button>
+          {open && (
+            <div className="nt-sev" id="nt-sev-table">
+              <ProtoNote kind="proposal">Chia mức theo số ngày quá hạn và giãn nhịp nhắc khi quá hạn lâu, để hộ quá hạn dài không nhận tin mỗi ngày. Ngưỡng ngày cần nghiệp vụ chốt.</ProtoNote>
+              <table className="mini-table nt-sev__table">
+                <caption className="sr-only">Mức quá hạn đề xuất</caption>
+                <thead><tr><th scope="col">Mức</th><th scope="col">Số ngày quá hạn</th><th scope="col">Nhịp nhắc</th></tr></thead>
+                <tbody>
+                  {SEVERITY.map((s) => (
+                    <tr key={s.level}><th scope="row">{s.label}</th><td>{severityRange(s)}</td><td>{s.every} ngày/lần</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
-      {t.id === 'signature' && <ProtoNote kind="proposal">Nhắc hai lần: trước hạn 30 ngày và 7 ngày.</ProtoNote>}
     </li>
   );
 }
