@@ -15,6 +15,7 @@ import { useOverlayOpen } from './overlay';
 import { readPinned, savePinned } from './sidebarPref';
 import { NotificationBell } from '../routing/NotificationBell';
 import { useOpenCaseCount } from '../routing/useRouting';
+import { FEATURES } from '../lib/features';
 import { watchTableLabels } from '../lib/tableLabels';
 
 const WIDTH = 272;
@@ -35,7 +36,7 @@ const ALL_NAV: { path: RoutePath; label: string; short: string; icon: ReactNode 
 /** Thư viện mẫu và Kênh gửi nằm trong các tab theo quyền; Tài khoản chỉ lãnh đạo thấy. */
 function useNavItems() {
   const { canViewAccounts } = usePermissions();
-  const allowed: Partial<Record<RoutePath, boolean>> = { '/tai-khoan': canViewAccounts };
+  const allowed: Partial<Record<RoutePath, boolean>> = { '/tai-khoan': canViewAccounts, '/chuyen-tuyen': FEATURES.routing };
   return ALL_NAV.filter((n) => allowed[n.path] ?? true);
 }
 
@@ -140,7 +141,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { path, go } = useNav();
   const nav = useNavItems();
   const { user } = usePermissions();
-  const openCases = useOpenCaseCount();
+  const openCases = useOpenCaseCount() * (FEATURES.routing ? 1 : 0);
   // Số ca Mới cạnh mục Chuyển tuyến.
   const count = (to: RoutePath) => (to === '/chuyen-tuyen' && openCases > 0 ? <span className="nav-count" aria-hidden="true">{openCases > 99 ? '99+' : openCases}</span> : null);
   // Số đọc cho trình đọc màn hình, đặt ngoài vùng aria-hidden.

@@ -123,3 +123,10 @@ Theo yêu cầu gộp chức năng trùng của người dùng, điều hướng
 - **Giả định:** danh sách ngày lễ 2026–2027 trong `web/src/lib/workdays.ts` là bản tạm, chưa theo thông báo nghỉ lễ chính thức. Cần một nơi quản lý ngày nghỉ theo năm (gồm nghỉ bù, làm bù) ở màn Cấu hình.
 - **Hệ quả cần lưu ý:** dời tin sau kỳ nghỉ dài làm dồn khối lượng vào ngày đi làm lại. Trong dữ liệu giả lập, 11/02/2027 (ngày đi làm lại sau Tết) có 2.462 tin, cao nhất tháng; phần lớn ngày khác dưới 1.500 tin. Cần xác nhận khung giờ gửi và kênh iHanoi chịu được mức này, hoặc rải tin ra 2–3 ngày.
 - **Kiểm chứng:** đối chiếu với nghiệp vụ các hạn rơi vào ngày nghỉ (20/12/2026, 31/01/2027, 30/04/2027); với dữ liệu thật, đếm số hộ nộp vào ngày làm việc kế tiếp mà hệ thống cũ vẫn đánh dấu trễ.
+
+### Tạm ẩn Chuyển tuyến và Hỏi đáp AI (12/11/2026)
+
+- Theo yêu cầu người dùng, hai tính năng chưa đưa vào sử dụng được ẩn bằng cờ trong `web/src/lib/features.ts`; code giữ nguyên, đổi cờ thành `true` để hiện lại.
+- `routing: false`: bỏ mục Chuyển tuyến khỏi sidebar và thanh dưới, link `#/chuyen-tuyen` mở Thống kê, chuông chỉ còn hộ có dấu hiệu bất thường.
+- `aiQa: false`: bỏ tab Hỏi đáp AI trong Quản lý HKD và tab Hội thoại (với Geo AI) trong hồ sơ hộ.
+- Vẫn giữ: loại thông báo "Kết quả chuyển tuyến" (đang giả lập) trong danh mục loại và lịch thông báo, nhóm D3 trong Thiết lập.

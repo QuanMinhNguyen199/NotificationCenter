@@ -11,6 +11,7 @@ import { useRoute, type RoutePath } from '../lib/router';
 import { fetchBell, isRead, markRead, readSnapshot, subscribeRead, type BellItem } from './routingApi';
 import { ago, useRoutingScope } from './useRouting';
 import './routing.css';
+import { FEATURES } from '../lib/features';
 
 const ICON = { ESCALATION: MessagesSquare, OVERDUE: AlarmClock, THRESHOLD: ReceiptText } as const;
 
@@ -23,9 +24,10 @@ export function NotificationBell() {
   const q = useQuery({ queryKey: ['routing', 'bell', scope], queryFn: () => fetchBell(scope) });
   useSyncExternalStore(subscribeRead, readSnapshot);
 
-  const items = q.data ?? [];
+  // Chuyển tuyến tạm ẩn: chuông chỉ còn hộ có dấu hiệu bất thường.
+  const items = (q.data ?? []).filter((i) => FEATURES.routing || i.kind !== 'ESCALATION');
   const unread = items.filter((i) => !isRead(user.id, i.id)).length;
-  const escalations = items.filter((i) => i.kind === 'ESCALATION');
+  const escalations = FEATURES.routing ? items.filter((i) => i.kind === 'ESCALATION') : [];
   const abnormal = items.filter((i) => i.kind !== 'ESCALATION');
 
   const go = (i: BellItem) => {
@@ -105,7 +107,7 @@ export function NotificationBell() {
               <Skel w="80%" h={14} />
             </div>
           ) : items.length === 0 ? (
-            <p className="rt-pop__state">Không có ca chuyển tuyến mới hay hộ có dấu hiệu bất thường trong 24 giờ qua.</p>
+            <p className="rt-pop__state">{FEATURES.routing ? 'Không có ca chuyển tuyến mới hay hộ có dấu hiệu bất thường trong 24 giờ qua.' : 'Không có hộ có dấu hiệu bất thường trong 24 giờ qua.'}</p>
           ) : (
             <>
               {group([...escalations, ...abnormal].sort((a, b) => b.at.localeCompare(a.at)))}

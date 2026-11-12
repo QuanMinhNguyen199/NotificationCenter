@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { FEATURES } from './features';
 
 // Các route nghiệp vụ, trạng thái lọc/tab/trang nằm trong query của hash để tải lại hoặc chia sẻ vẫn giữ ngữ cảnh.
 export type RoutePath = '/thong-ke' | '/quan-ly-hkd' | '/gui-thong-bao' | '/mau-tin' | '/kenh-gui' | '/thiet-lap' | '/tai-khoan' | '/chuyen-tuyen';
@@ -14,7 +15,8 @@ function parse(): Route {
   // Link của mục Lãnh đạo bị thêm nhầm mở lại Thống kê theo quyền tài khoản.
   if (p === '/lanh-dao') return { path: '/thong-ke', params: new URLSearchParams(q) };
   // '/cau-hinh' là đường dẫn cũ của màn Thiết lập (đổi tên 04/11/2026), giữ để link cũ vẫn mở đúng màn.
-  const known: RoutePath[] = ['/quan-ly-hkd', '/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan', '/chuyen-tuyen'];
+  // Chuyển tuyến đang tạm ẩn (lib/features.ts): link cũ mở về Thống kê.
+  const known: RoutePath[] = ['/quan-ly-hkd', '/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan', ...(FEATURES.routing ? ['/chuyen-tuyen' as const] : [])];
   const path: RoutePath = p === '/cau-hinh' ? '/thiet-lap' : known.includes(p as RoutePath) ? (p as RoutePath) : '/thong-ke';
   const params = new URLSearchParams(q);
   // Giữ link cũ, đưa về nơi quản lý nghiệp vụ duy nhất.

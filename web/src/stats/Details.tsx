@@ -20,6 +20,7 @@ import { useBreakpoint } from '../lib/useMedia';
 import { useHideNavWhile } from '../shell/overlay';
 import type { Notification, SendRun } from '../data/types';
 import { RunProgress } from './DetailTabs';
+import { FEATURES } from '../lib/features';
 
 const unitName = (id: string) => UNITS.find((u) => u.id === id)?.name ?? id;
 
@@ -259,7 +260,7 @@ function TaxpayerDetail({ id }: { id: number }) {
               </>
             ),
           },
-          {
+          ...(!FEATURES.aiQa ? [] : [{
             key: 'ht',
             label: 'Hội thoại',
             children: prof.isError ? (
@@ -283,7 +284,7 @@ function TaxpayerDetail({ id }: { id: number }) {
                 )}
               </>
             ),
-          },
+          }]),
           {
             key: 'nt',
             label: 'Thông báo đã nhận',

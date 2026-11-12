@@ -24,6 +24,7 @@ import { C } from '../theme';
 import { downloadXlsx } from '../lib/xlsx';
 import { ExcelButton } from '../components/ExcelButton';
 import { AiQaTab } from '../hkd/AiQaTab';
+import { FEATURES } from '../lib/features';
 import { TopRows } from '../components/TopRows';
 
 const FONT = 'Inter Variable, Inter, sans-serif';
@@ -447,7 +448,7 @@ const TABS = [
   { key: 'ho-tro', label: 'Hỗ trợ HKD' },
   { key: 'nhac-viec', label: 'Hiệu quả nhắc việc' },
   { key: 'danh-sach', label: 'Danh sách nghĩa vụ' },
-  { key: 'hoi-dap-ai', label: 'Hỏi đáp AI' },
+  ...(FEATURES.aiQa ? [{ key: 'hoi-dap-ai', label: 'Hỏi đáp AI' }] : []),
 ];
 
 export default function HkdPage() {
