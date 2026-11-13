@@ -1,3 +1,4 @@
+import { PRIORITY } from '@/shared/lib/status';
 // Mock API khu vực "Quản lý HKD": cơ cấu và tuân thủ, nợ thuế, hỗ trợ HKD, chỉ tiêu hằng ngày.
 // TOÀN BỘ là dữ liệu minh họa (06/11/2026), sinh ổn định từ hạt giống cố định; thay bằng API quản lý thuế khi có.
 // 6.200 HKD đầu lấy từ danh sách NNT còn nghĩa vụ (mock.ts); thêm 3.600 HKD đã tuân thủ đầy đủ để có tổng thể.
@@ -297,18 +298,14 @@ export async function fetchDaily(scope: string) {
 
 export type ReminderKind = 'DUE_SOON' | 'OVERDUE' | 'TODO' | 'THRESHOLD';
 export const REMINDER_ORDER: ReminderKind[] = ['DUE_SOON', 'OVERDUE', 'TODO', 'THRESHOLD'];
+// Tên loại nhắc dùng đúng tên mức ưu tiên của Danh sách nghĩa vụ (shared/lib/status.ts PRIORITY), để bấm từ bảng
+// nhắc sang danh sách thấy cùng một tên.
 export const REMINDER_LABEL: Record<ReminderKind, string> = {
-  DUE_SOON: 'Sắp đến hạn',
-  OVERDUE: 'Quá hạn chưa làm',
-  TODO: 'Việc phải làm',
+  DUE_SOON: PRIORITY.DUE_SOON.label,
+  OVERDUE: PRIORITY.OVERDUE.label,
+  TODO: PRIORITY.IN_TERM.label,
   THRESHOLD: 'Sắp đạt ngưỡng doanh thu',
-};
-export const REMINDER_HINT: Record<ReminderKind, string> = {
-  DUE_SOON: 'Nhắc HKD sắp đến hạn nộp tờ khai, nộp thuế',
-  OVERDUE: 'Nhắc HKD chưa nộp tờ khai, chưa nộp thuế đúng hạn',
-  TODO: 'Nhắc HKD lập tờ khai, nộp thuế khi phát sinh nghĩa vụ',
-  THRESHOLD: 'Báo HKD có doanh thu sắp vượt mốc',
-};
+}
 
 // Giả định minh họa: số thông báo trung bình mỗi HKD trong 30 ngày, tỷ lệ HKD hoàn thành việc sau khi được nhắc, tỷ lệ kênh đã tiếp nhận.
 const REM_RATE: Record<ReminderKind, { perHkd: number; done: number | null; accepted: number }> = {

@@ -1707,3 +1707,14 @@ html[data-bp="mobile"] ::-webkit-scrollbar { display: none; width: 0; height: 0;
 /* Menu chọn có nhãn dài (vd. trạng thái HKD): không vượt khung màn hình, nhãn tự xuống dòng. */
 :root [data-slot="select-content"] { max-width: calc(100vw - 24px); }
 :root [data-slot="select-item"], :root [data-slot="select-item"] > span { white-space: normal; }
+/* Hiệu quả nhắc (13/11/2026): phễu Đã nhắc → Đã hoàn thành → Chưa hoàn thành; số chưa hoàn thành mở danh sách hộ. */
+.rem-rate { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.rem-rate__bar { width: 64px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.rem-rate__bar > span { display: block; width: 100%; height: 100%; background: var(--success); transform-origin: left center; }
+.rem-row > * { cursor: pointer; transition: background-color 0.12s; }
+.rem-row:hover > * { background: var(--tint-50); }
+:root .rem-open { display: inline-flex; align-items: center; gap: 2px; padding: 0; background: none; color: var(--brand-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rem-row:hover .rem-open { text-decoration: underline; }
+.rem-open svg { width: 16px; height: 16px; }
+@media (max-width: 767px) { .rem-rate { justify-content: flex-start; } .rem-open { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .rem-row > * { transition: none; } }
