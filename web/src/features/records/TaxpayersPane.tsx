@@ -1,3 +1,4 @@
+import { HKD_STATUS, hkdStatusLabel, type HkdStatusCode } from '@/shared/data/hkdStatus';
 import { ListToolbar } from '@/shared/components/ListToolbar';
 import { ChoiceSelect } from '@/shared/components/Controls';
 import { Button } from '@/shared/ui/button';
@@ -26,15 +27,15 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
   const q = useQuery({
     // Đổi bộ lọc hoặc trang: giữ dòng cũ làm mờ tại chỗ, không về skeleton.
     placeholderData: keepPreviousData,
-    queryKey: ['taxpayers', filterOf(p), p.tq, p.notified, p.kind, p.prio, p.app, p.page, p.size],
-    queryFn: () => fetchTaxpayers({ ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, app: p.app, page: p.page, size: p.size }),
+    queryKey: ['taxpayers', filterOf(p), p.tq, p.notified, p.kind, p.prio, p.hst, p.page, p.size],
+    queryFn: () => fetchTaxpayers({ ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, hst: p.hst, page: p.page, size: p.size }),
   });
-  const tpQuery: TaxpayerQuery = { ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, app: p.app, page: 1, size: 1e6 };
+  const tpQuery: TaxpayerQuery = { ...filterOf(p), q: p.tq, notified: p.notified, kind: p.kind, priority: p.prio, hst: p.hst, page: 1, size: 1e6 };
   const exportTaxpayers = async () => {
     const all = await fetchTaxpayers(tpQuery);
     downloadXlsx(`ho-kinh-doanh_${p.unit}`, [
       ['NNT', 'MST', 'Trạng thái HKD', 'Hồ sơ khai còn thiếu', 'Ưu tiên khai', 'Khoản còn phải nộp', 'Ưu tiên nộp', 'Đăng ký iHanoi (giả lập)', 'Cập nhật'],
-      ...all.rows.map((t) => [t.name, t.mst, t.hkdStatus, t.fileCount, t.filePriority ? PRIORITY[t.filePriority].label : '', t.payCount, t.payPriority ? PRIORITY[t.payPriority].label : '', appRegistered(t.id) ? 'Có' : 'Chưa', dmyhm(t.updatedAt)]),
+      ...all.rows.map((t) => [t.name, t.mst, hkdStatusLabel(t.hkdStatus), t.fileCount, t.filePriority ? PRIORITY[t.filePriority].label : '', t.payCount, t.payPriority ? PRIORITY[t.payPriority].label : '', appRegistered(t.id) ? 'Có' : 'Chưa', dmyhm(t.updatedAt)]),
     ]);
   };
   const empty = useEmpty(p, reset);
@@ -61,7 +62,7 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
         </span>
       ),
     },
-    { title: 'Trạng thái HKD', dataIndex: 'hkdStatus' },
+    { title: 'Trạng thái HKD', dataIndex: 'hkdStatus', render: (v: HkdStatusCode) => hkdStatusLabel(v) },
     { title: 'Hồ sơ khai còn thiếu', key: 'f', width: 140, align: 'right', render: (_, t) => countLink(t.fileCount, 'hồ sơ khai còn thiếu', t) },
     { title: 'Khoản còn phải nộp', key: 'p', width: 140, align: 'right', render: (_, t) => countLink(t.payCount, 'khoản còn phải nộp', t) },
     { title: 'Ưu tiên hạn', key: 'pr', width: 120, render: (_, t) => (topPriority(t) ? <Pill map={PRIORITY} value={topPriority(t)!} /> : <span className="cell-faint">—</span>) },
@@ -106,25 +107,17 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
           className="choice-select--w170"
         />
         <ChoiceSelect
-          aria-label="Lọc theo đăng ký ứng dụng"
-          value={p.app ? 'missing' : 'all'}
-          onValueChange={(v) => set({ app: v === 'missing', page: 1 })}
-          options={[
-            { value: 'all', label: 'Mọi trạng thái app' },
-            { value: 'missing', label: 'Đăng ký app, chưa nộp' },
-          ]}
+          aria-label="Lọc theo trạng thái HKD"
+          value={p.hst ?? 'all'}
+          onValueChange={(v) => set({ hst: v === 'all' ? null : v, page: 1 })}
+          options={[{ value: 'all', label: 'Mọi trạng thái HKD' }, ...HKD_STATUS.map((s) => ({ value: s.code, label: s.label }))]}
           className="choice-select--w200"
         />
-        <ListReset show={!!(p.tq || p.kind || p.prio || p.notified || p.app)} onReset={() => set({ tq: null, kind: null, prio: null, notified: null, app: null, page: 1 })} /></>}
+        <ListReset show={!!(p.tq || p.kind || p.prio || p.notified || p.hst)} onReset={() => set({ tq: null, kind: null, prio: null, notified: null, hst: null, page: 1 })} /></>}
         count={<span className="detail__count">{q.data ? `${num(q.data.total)} NNT` : ''}</span>}
-        activeCount={[!!p.kind, !!p.prio, !!p.notified, !!p.app].filter(Boolean).length}
+        activeCount={[!!p.kind, !!p.prio, !!p.notified, !!p.hst].filter(Boolean).length}
         actions={<ExcelButton className="export-btn" disabled={!q.data?.total} label="Xuất danh sách hộ ra Excel" onExport={exportTaxpayers} />}
       />
-      {p.app && (
-        <p className="caption-line proto-inline">
-          Hộ đã đăng ký ứng dụng iHanoi nhưng còn hồ sơ khai chưa nộp.
-        </p>
-      )}
       <p className="caption-line caption-line--tight">
         Nghĩa vụ chốt {dmyhm(OBLIGATION_CUTOFF)}.
       </p>
@@ -146,7 +139,7 @@ export function TaxpayersPane({ p, set, open, reset }: { p: StatsParams; set: Se
                   <span className="cell-tp">
                     <button type="button" className="m-card__link cell-tp__name" onClick={() => open(`t:${t.id}`)}>{t.name}</button>
                     {/* Đa số HKD đang hoạt động: chỉ gắn nhãn hộ tạm ngừng. */}
-                    <span className="cell-tp__mst">MST {t.mst}{t.hkdStatus !== 'Đang hoạt động' && ` · ${t.hkdStatus}`}</span>
+                    <span className="cell-tp__mst">MST {t.mst}{t.hkdStatus !== '00' && ` · ${hkdStatusLabel(t.hkdStatus)}`}</span>
                   </span>
                   <ChevronRight className="m-card__chev" aria-hidden="true" />
                 </div>

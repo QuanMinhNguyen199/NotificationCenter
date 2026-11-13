@@ -41,5 +41,11 @@ export const C = {
   dueSoonInk: '#0F172A',
   inTerm: '#5D9C59',
   inTermInk: '#0F172A',
+  /** Chữ trên nền màu đậm (đoạn đỏ quá hạn). */
+  onFill: '#FFFFFF',
+  /** Nhắc ngưỡng doanh thu (xanh dương thông tin, khớp --color-info). */
+  info: '#2563EB',
+  /** Nhóm "Đã tuân thủ đầy đủ": xanh lá đậm hơn inTerm để mang chữ trắng (5,0:1). */
+  compliant: '#15803D',
 };
 

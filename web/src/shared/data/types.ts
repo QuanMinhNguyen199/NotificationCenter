@@ -1,3 +1,4 @@
+import type { HkdStatusCode } from './hkdStatus';
 export type GroupCode = 'D1a' | 'D1b' | 'D1c' | 'D3' | 'D4' | 'D5' | 'D6';
 export type SendStatus = 'SENT' | 'PENDING' | 'FAILED' | 'UNKNOWN' | 'EXPIRED' | 'SKIPPED';
 export type DeliveryStatus = 'DELIVERED' | 'ACCEPTED' | 'DELIVERY_FAILED' | 'NO_FINAL' | 'NA';
@@ -11,7 +12,8 @@ export interface Taxpayer {
   id: number;
   name: string;
   mst: string;
-  hkdStatus: 'Đang hoạt động' | 'Tạm ngừng kinh doanh';
+  /** Mã trạng thái NNT (shared/data/hkdStatus.ts). */
+  hkdStatus: HkdStatusCode;
   /** Số hồ sơ khai còn thiếu (0 nếu không có nghĩa vụ khai). */
   fileCount: number;
   filePriority?: Priority;

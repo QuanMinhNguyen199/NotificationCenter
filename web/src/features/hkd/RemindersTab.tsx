@@ -20,7 +20,7 @@ const KIND_NOTE: Partial<Record<string, string>> = {
 /* ---------- Tab 5: Nhắc việc ---------- */
 
 // Màu theo mức khẩn, dùng lại thang của biểu đồ nghĩa vụ ở màn Thống kê; ngưỡng doanh thu là thông tin, dùng xanh dương.
-const REMINDER_COLOR: Record<ReminderKind, string> = { DUE_SOON: C.dueSoon, OVERDUE: C.overdue, TODO: C.inTerm, THRESHOLD: '#2563EB' };
+const REMINDER_COLOR: Record<ReminderKind, string> = { DUE_SOON: C.dueSoon, OVERDUE: C.overdue, TODO: C.inTerm, THRESHOLD: C.info };
 
 export function RemindersTab({ scope }: { scope: string }) {
   const { navigate } = useRoute();

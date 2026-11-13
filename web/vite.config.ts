@@ -12,4 +12,20 @@ export default defineConfig({
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
   // Listen on every interface and allow VS Code / Dev Tunnels forwarded hosts
   server: { host: true, allowedHosts: ['.devtunnels.ms'] },
+  // Tách thư viện nền thành chunk riêng: chunk chính nhỏ hơn và trình duyệt giữ cache khi code ứng dụng đổi.
+  // ECharts đã tách riêng qua dynamic import (shared/components/Chart.tsx).
+  build: {
+    rolldownOptions: {
+      output: {
+        advancedChunks: {
+          groups: [
+            { name: 'react', test: /node_modules[\/](react|react-dom|scheduler)[\/]/ },
+            { name: 'ui', test: /node_modules[\/](radix-ui|@radix-ui|@floating-ui|lucide-react|sonner|cmdk|react-day-picker|date-fns)[\/]/ },
+            { name: 'motion', test: /node_modules[\/](motion|framer-motion|motion-dom|motion-utils)[\/]/ },
+            { name: 'query', test: /node_modules[\/]@tanstack[\/]/ },
+          ],
+        },
+      },
+    },
+  },
 })

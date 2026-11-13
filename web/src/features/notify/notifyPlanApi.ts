@@ -2,6 +2,7 @@
 // Toàn bộ là dữ liệu giả lập, tính tất định từ danh sách NNT trong data/mock.ts; "hôm nay" = 28/10/2026.
 import { INITIAL_CONFIG } from '@/shared/data/config';
 import { FEATURES } from '@/shared/lib/features';
+import { isHkdActive } from '@/shared/data/hkdStatus';
 import { taxpayers } from '@/shared/data/mock';
 import { holidayName, isWeekend, nonHolidayFrom, workdayFrom } from '@/shared/lib/workdays';
 
@@ -150,7 +151,7 @@ type Push = (e: Omit<PlanEntry, 'id' | 'name' | 'mst' | 'date' | 'movedFrom'> & 
 
 function planOf(tpId: number, from: number, to: number, rawPush: Push) {
   const t = taxpayers[tpId];
-  const active = t.hkdStatus === 'Đang hoạt động';
+  const active = isHkdActive(t.hkdStatus);
   const monthly = h(tpId, 'freq') < 0.3;
   const within = (d: number) => d >= from && d <= to;
   // Tin theo khung giờ không gửi vào ngày nghỉ lễ: nhắc trước hạn (nhắc hạn, chữ ký số) gửi sớm hơn, loại khác gửi sau.

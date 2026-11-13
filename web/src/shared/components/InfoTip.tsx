@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip } from 'radix-ui';
 
@@ -20,9 +20,22 @@ export function HoverTip({ label, className, trigger, children }: {
 }) {
   const [open, setOpen] = useState(false);
   const touch = useRef(false);
+  // Chạm mở: Radix phát yêu cầu đóng ngay khi ngón tay nhấc lên (pointerleave). Bỏ qua yêu cầu đóng trong 500ms đầu.
+  const touchOpenedAt = useRef(0);
+  // Điện thoại: lướt màn hình thì đóng tooltip (bắt cả cuộn trong vùng con, vd. danh sách, bảng).
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener('scroll', close, { capture: true, passive: true });
+    window.addEventListener('touchmove', close, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', close, { capture: true });
+      window.removeEventListener('touchmove', close);
+    };
+  }, [open]);
   return (
     <Tooltip.Provider delayDuration={120} skipDelayDuration={0}>
-      <Tooltip.Root open={open} onOpenChange={setOpen} disableHoverableContent>
+      <Tooltip.Root open={open} onOpenChange={(v) => { if (!v && Date.now() - touchOpenedAt.current < 500) return; setOpen(v); }} disableHoverableContent>
         <Tooltip.Trigger asChild>
           <button
             type="button"
@@ -31,7 +44,10 @@ export function HoverTip({ label, className, trigger, children }: {
             onPointerDown={(e) => {
               touch.current = e.pointerType === 'touch';
               // Chạm: tự bật/tắt, bỏ qua xử lý mặc định của Radix (vốn đóng tooltip khi bấm).
-              if (touch.current) { e.preventDefault(); setOpen((o) => !o); }
+              if (touch.current) {
+                e.preventDefault();
+                setOpen((o) => { if (!o) touchOpenedAt.current = Date.now(); return !o; });
+              }
             }}
             onClick={(e) => { if (touch.current) e.preventDefault(); }}
             // preventDefault để Radix bỏ qua việc mở theo focus này.

@@ -31,6 +31,21 @@ colors:
   success-bg: "#ECFDF5"
   info-ink: "#1D4ED8"
   info-bg: "#EFF6FF"
+  info-border: "#DBEAFE"
+  info-border-strong: "#BFDBFE"
+  on-brand: "#FFFFFF"
+  on-dark-muted: "#C9CED6"
+  excel: "#107C41"
+  excel-hover: "#0C5E31"
+  excel-active: "#094A26"
+  skeleton: "#E9EEF4"
+  proposal-bg: "#FEF3C7"
+  preview-bg: "#FAF5EA"
+  unknown-fill: "#D97706"
+  chart-other: "#B8C2D0"
+  navy: "#1E3A5F"
+  data-info: "#2563EB"
+  data-compliant: "#15803D"
   data-bar: "#FAE0E6"
   data-bar-dim: "#F0F0F0"
   data-bar-hover: "#F5BFCC"
@@ -156,14 +171,17 @@ components:
 
 # Design System: Quản trị thông báo
 
-### Card chỉ số thông báo ngang hàng (13/11/2026)
+### Dải chỉ số (13/11/2026, thay mọi quyết định KPI trước đó)
 
-- **Quyết định mới theo yêu cầu người dùng, thay thế bố cục chính/phụ:** sáu card ngang hàng: Tổng thông báo / Đã gửi / Chờ gửi / Gửi thất bại / NNT duy nhất / Thời gian phản hồi trung bình. Đã tiếp nhận nằm trong card Đã gửi, là nút riêng để lọc danh sách; không cộng tiếp nhận vào các trạng thái gửi.
-- Mọi card có cùng chiều rộng, padding và số 26px; không phóng lớn tổng hoặc tách NNT/thời gian thành dải phụ. Card thất bại dùng màu cảnh báo, card đang lọc giữ trạng thái chọn. Màn lãnh đạo giữ bốn chỉ số theo quyền và cùng cách trình bày.
-- Số cột đi theo chiều rộng vùng nội dung: từ 1080px là sáu cột, từ 640px là ba cột (bốn với màn lãnh đạo), nhỏ hơn là hai. Desktop/tablet card bằng chiều cao; mobile card cùng hàng bằng nhau, chiều cao từng hàng theo nội dung để tránh khoảng trắng dư. Mobile dùng số 24px.
-- Nút cao ít nhất 44px, focus nhìn thấy, số thiếu hiển thị “—”, số 0 giữ nguyên. Đang tải/đổi phạm vi khóa thao tác để tránh lọc bằng số cũ. Giữ thao tác chuyển danh sách NNT và mở chi tiết thời gian.
-- **Bằng chứng kỹ thuật:** ảnh ở `.taste-skill/kpi-equal`; kiểm tra kích thước, font, tràn ngang, vùng chạm và thao tác ở `.taste-skill/kpi-equal-check.mjs` trên bản production 1440/1024/375px. Đây không phải thử nghiệm người dùng.
-- **Chưa xác nhận:** mức ưu tiên nghiệp vụ của các chỉ số; kiểm chứng qua nhiệm vụ tìm lỗi gửi và số đã tiếp nhận, đo thời gian hoàn thành và số lần chọn sai giữa các bố cục.
+- **Bố cục:** một thẻ, các ô ngang hàng cùng cỡ, ngăn nhau bằng đường 1px; không còn ô chính/phụ hay lưới bento (người dùng yêu cầu rollback vì thừa khoảng trắng). Ô trong một hàng cao bằng nhau; nhãn ô nào dài thì chỉ ô đó dài hơn, số không bị đẩy xuống ở các ô khác.
+- **Chữ:** nhãn 14/600 màu text; số 24/700 (mobile nhãn 13, số 22); dòng phụ 12/400 màu muted. Số "Gửi thất bại" và nhóm cần xử lý gấp màu brand.
+- **Dòng phụ chỉ giữ khi khó tự suy ra:** tỷ lệ tiếp nhận, tỷ lệ tuân thủ. Phần trăm tự tính được từ ô bên cạnh thì bỏ; định nghĩa và cách tính đưa vào icon ⓘ cạnh nhãn (icon đi liền chữ cuối, vùng chạm 36px trên màn cảm ứng).
+- **Thống kê thông báo:** cả ô là vùng bấm để lọc (nút trong suốt phủ cả ô, focus viền quanh ô); ⓘ nằm trên lớp phủ. Code: `web/src/features/stats/Kpis.tsx`, `kpis.css`. Các tab Quản lý HKD và Kết quả cơ sở dùng `shared/components/Kpi.tsx`.
+- **Chưa xác nhận với người dùng:** chọn chỉ số nào giữ dòng phụ; kiểm chứng bằng nhiệm vụ đọc nhanh tỷ lệ và tìm lỗi gửi.
+
+### Thang chữ (13/11/2026)
+
+11 (chỉ số trên huy hiệu) · 12 (caption, dòng phụ) · 13 (meta, tiêu đề cột) · 14 (nội dung, nhãn chỉ số) · 16 (tiêu đề thẻ, line-height 1.4) · 18 (tiêu đề khu vực) · 22–24 (số chỉ số) · 30–44 (chỉ màn đăng nhập). Không dùng cỡ lẻ (15, 13,5, 12,5…). Tiêu đề cột bảng 13/600 màu text.
 
 > **Nguồn màu hiện hành (11/11/2026):** frontmatter ở đầu file, đồng bộ từ `:root` của `web/src/styles/styles.css` và `web/src/shared/theme.ts`. Các mục màu ghi ngày 02/11/2026 bên dưới (đỏ #B91C1C, vàng nhạt, nền kem #FFFBF2, biểu đồ xanh dương) là lịch sử quyết định, **không còn áp dụng**. Breakpoint chuẩn: 768 / 1024 / 1200px.
 
@@ -224,11 +242,11 @@ Một sắc xanh thương hiệu chia thành bậc theo vai trò (đặc / đậ
 
 ### Hierarchy
 - **Headline** (650, 24px, 1.25, −0.015em): tiêu đề trang; 20px trên mobile.
-- **KPI value** (600, 28px, 1.1, −0.02em, tabular): con số KPI; 24px trên mobile.
+- **KPI value** (700, 24px, 1.1, −0.02em, tabular): con số KPI; 22px trên mobile. Xem "Dải chỉ số (13/11/2026)".
 - **Title** (600, 16px): tiêu đề thẻ/panel, tiêu đề Card của AntD; tiêu đề Modal 18px, tab 15px.
 - **Body** (400, 14px, 1.5): nội dung, bảng, form; input lên 16px trên mobile để tránh zoom.
-- **Label** (500, 13px): nhãn bộ lọc, nhãn KPI, nhãn trường (14px trong form cấu hình).
-- **Caption** (400, 12.5–13px, faint): dòng phụ, chú thích biểu đồ, mã số thuế, mốc giờ. Mô tả dài giới hạn 70ch.
+- **Label** (500, 13px): nhãn bộ lọc, nhãn trường (14px trong form cấu hình). Nhãn KPI 14/600.
+- **Caption** (400, 12–13px, faint): dòng phụ, chú thích biểu đồ, mã số thuế, mốc giờ. Mô tả dài giới hạn 70ch.
 
 ### Named Rules
 **The Số Đứng Thẳng Rule.** Mọi giá trị số (KPI, bảng, mốc giờ, timeline, dải 24h) dùng `tabular-nums` để cột số thẳng hàng.

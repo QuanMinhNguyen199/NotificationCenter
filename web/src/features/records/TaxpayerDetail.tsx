@@ -1,3 +1,4 @@
+import { hkdStatusLabel } from '@/shared/data/hkdStatus';
 import { ViewTabs } from '@/shared/components/Controls';
 import { useQuery } from '@tanstack/react-query';
 import { appRegistered, fetchTaxpayerNotifications } from '@/shared/api/mockApi';
@@ -28,7 +29,7 @@ export function TaxpayerDetail({ id }: { id: number }) {
           <dt>MST</dt>
           <dd>{t.mst}</dd>
           <dt>Trạng thái HKD</dt>
-          <dd>{t.hkdStatus}</dd>
+          <dd>{hkdStatusLabel(t.hkdStatus)}</dd>
           <dt>Đơn vị quản lý</dt>
           <dd>{unitName('A')}</dd>
           <dt>Cán bộ phụ trách</dt>

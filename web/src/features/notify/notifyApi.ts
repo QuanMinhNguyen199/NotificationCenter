@@ -156,7 +156,7 @@ export type AudienceKind = 'pick' | 'team' | 'group';
 export const GROUPS = [
   { id: 'file-overdue', name: 'Quá hạn khai thuế', match: (id: number) => taxpayers[id].filePriority === 'OVERDUE' },
   { id: 'pay-soon', name: 'Sắp hạn nộp thuế (0–7 ngày)', match: (id: number) => taxpayers[id].payPriority === 'DUE_SOON' },
-  { id: 'paused', name: 'Tạm ngừng kinh doanh', match: (id: number) => taxpayers[id].hkdStatus === 'Tạm ngừng kinh doanh' },
+  { id: 'paused', name: 'Tạm ngừng kinh doanh', match: (id: number) => taxpayers[id].hkdStatus === '05' },
 ];
 
 /** NNT trong phạm vi người gửi: lãnh đạo cơ sở cả cơ sở, lãnh đạo tổ chỉ tổ mình. */

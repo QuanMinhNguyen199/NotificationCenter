@@ -97,7 +97,7 @@ function RankChart({ data, metric, tableToggle }: { data: CityData; metric: Metr
       <span className="rank__pos">{all.indexOf(u) + 1}</span>
       <span className="rank__name">{u.name}{u.own && <span className="sr-only"> (đang xem)</span>}</span>
       <span className="rank__track" aria-hidden="true">
-        <span className="rank__bar" style={{ width: at(m.value(u)) }} />
+        <span className="rank__bar" style={{ transform: `scaleX(${m.value(u) / max})` }} />
         <span className="rank__avg" style={{ left: at(avg) }} />
       </span>
       <span className="rank__val">{m.fmt(m.value(u))}</span>

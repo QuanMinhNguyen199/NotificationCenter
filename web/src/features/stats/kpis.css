@@ -18,15 +18,16 @@
 .stats-kpis__metric--selected, .stats-kpis__metric--selected:hover:not(:disabled) { background: var(--tint-50); box-shadow: inset 0 0 0 2px var(--brand); }
 .stats-kpis__metric:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
 .stats-kpis__metric:disabled { cursor: default; }
-.stats-kpis__label { font-size: 14px; line-height: 1.4; color: var(--text-secondary); }
-.stats-kpis__value { font-size: 24px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.stats-kpis__label { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text); }
+.stats-kpis__value { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: var(--text); }
 .stats-kpis__value .kpi__unit { font-size: 14px; font-weight: 400; color: var(--text-secondary); }
 .stats-kpis__value--danger { color: var(--brand); }
-.stats-kpis__value--missing { color: var(--faint); font-weight: 400; }
-.stats-kpis__note { font-size: 13px; line-height: 1.4; color: var(--text-secondary); }
+.stats-kpis__value--missing { color: var(--faint); font-weight: 500; }
+.stats-kpis__note { font-size: 12px; line-height: 1.45; color: var(--text-muted); }
 @media (max-width: 767px) {
   .stats-kpis { margin-top: 12px; padding: 8px; }
-  .stats-kpis__value { font-size: 20px; }
+  .stats-kpis__label { font-size: 13px; }
+  .stats-kpis__value { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) { .stats-kpis__metric { transition: none; } }
 /* Đường ngăn 1px giữa các ô (nền thẻ = màu viền, ô nền trắng). Hàng cuối thiếu ô thì ô cuối kéo rộng để không lộ ô trống. */
@@ -55,3 +56,7 @@
 .stats-kpis__label .info-tip { position: relative; z-index: 1; width: 18px; height: 18px; margin: -2px 0 0 2px; vertical-align: -4px; }
 .stats-kpis__tail { white-space: nowrap; }
 
+/* Màn cảm ứng: icon ⓘ vẫn 18px để không đẩy chữ, vùng chạm mở rộng thành 36px bằng lớp giả. */
+@media (pointer: coarse) {
+  .stats-kpis__label .info-tip::before { content: ''; position: absolute; inset: -9px; }
+}

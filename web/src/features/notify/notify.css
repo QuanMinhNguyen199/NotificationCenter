@@ -30,16 +30,16 @@
   transition: border-color var(--dur-fast, 0.12s) ease-out, background-color var(--dur-fast, 0.12s) ease-out;
 }
 .nt-cell--blank { border-color: transparent; background: transparent; cursor: default; }
-.nt-cell:hover:not(.nt-cell--blank) { border-color: var(--control, #cbd5e1); }
+.nt-cell:hover:not(.nt-cell--blank) { border-color: var(--control, var(--control)); }
 .nt-cell:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .nt-heat-1 { background: var(--tint-50); }
 .nt-heat-2 { background: var(--tint-100); }
 .nt-heat-3 { background: var(--tint-200); }
 .nt-cell.is-selected { border: 2px solid var(--brand-ink); padding: 5px 6px; }
-.nt-cell__day { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 13px; font-weight: 500; color: #475569; }
+.nt-cell__day { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 .nt-cell.is-selected .nt-cell__day { color: var(--text); font-weight: 600; }
 .nt-cell__count { font-size: 18px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
-.nt-today { display: inline-block; padding: 0 5px; border-radius: 4px; background: var(--brand-ink); color: #fff; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; }
+.nt-today { display: inline-block; padding: 0 5px; border-radius: 4px; background: var(--brand-ink); color: var(--on-brand); font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; }
 /* Ngày nghỉ: cuối tuần chỉ nhạt số ngày; ngày lễ có nhãn chữ và nền gạch chéo (không dùng màu làm tín hiệu duy nhất). */
 .nt-week .is-weekend { color: var(--text-muted); font-weight: 400; }
 .nt-cell--weekend .nt-cell__day { color: var(--text-muted); font-weight: 400; }
@@ -125,7 +125,7 @@
 .nt-eff-head { display: flex; flex-direction: column; gap: 2px; }
 .nt-eff-charts { margin-top: 0; }
 .nt-kpi__target { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--text-muted); }
-.nt-dash { background: repeating-linear-gradient(90deg, #64748B 0 4px, transparent 4px 7px); }
+.nt-dash { background: repeating-linear-gradient(90deg, var(--text-muted) 0 4px, transparent 4px 7px); }
 .nt-chart-summary { margin: 8px 0 12px; font-size: 13px; color: var(--text-muted); }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,4 @@
+import type { HkdStatusCode } from '@/shared/data/hkdStatus';
 // Mock API trong bộ nhớ: mô phỏng độ trễ, phân trang phía server, lỗi và xung đột. Thay bằng API quản trị thật khi backend sẵn sàng.
 import { DAYS, OBLIGATION_CUTOFF, UPDATED_AT, UNITS, notifications, runs, taxpayers } from '@/shared/data/mock';
 import { STAFF, TEAMS, officerOf } from '@/shared/data/org';
@@ -201,8 +202,8 @@ export interface TaxpayerQuery extends StatsFilter {
   notified: boolean;
   kind: 'file' | 'pay' | null;
   priority: Priority | null;
-  /** Đã đăng ký app iHanoi nhưng còn hồ sơ khai chưa nộp (giả lập). */
-  app?: boolean;
+  /** Mã trạng thái HKD. */
+  hst?: HkdStatusCode | null;
   page: number;
   size: number;
 }
@@ -222,7 +223,7 @@ export async function fetchTaxpayers(qy: TaxpayerQuery): Promise<Page<Taxpayer>>
       if (qy.kind === 'file' && (!t.fileCount || (qy.priority && t.filePriority !== qy.priority))) return false;
       if (qy.kind === 'pay' && (!t.payCount || (qy.priority && t.payPriority !== qy.priority))) return false;
       if (!qy.kind && qy.priority && t.filePriority !== qy.priority && t.payPriority !== qy.priority) return false;
-      if (qy.app && !(appRegistered(t.id) && t.fileCount > 0)) return false;
+      if (qy.hst && t.hkdStatus !== qy.hst) return false;
       return matchQ(t, qy.q);
     })
     .sort((a, b) => top(a) - top(b) || a.id - b.id);

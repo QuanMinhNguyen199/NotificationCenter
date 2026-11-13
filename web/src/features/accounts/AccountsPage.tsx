@@ -209,7 +209,7 @@ export default function AccountsPage() {
   const [editing, setEditing] = useState<AccountRow | null>(null);
 
   if (!canViewAccounts) {
-    return <BlockEmpty>Màn Tài khoản chỉ dành cho lãnh đạo cơ sở và lãnh đạo tổ.</BlockEmpty>;
+    return <><h1 className="sr-only">Tài khoản</h1><BlockEmpty>Màn Tài khoản chỉ dành cho lãnh đạo cơ sở và lãnh đạo tổ.</BlockEmpty></>;
   }
 
   const rows = (q.data ?? []).filter((a) => !query || norm(a.name).includes(norm(query)) || a.username.includes(norm(query)));

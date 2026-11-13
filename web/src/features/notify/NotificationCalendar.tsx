@@ -95,9 +95,9 @@ export function NotificationCalendar() {
         ) : (
           <div className="nt-cal-layout">
             <MonthGrid days={d.days} filter={filter} max={stats.max} selected={selected} onSelect={setPicked} />
-            <aside className="nt-detail" aria-label="Lịch gửi của ngày đang chọn">
+            <section className="nt-detail" aria-label="Lịch gửi của ngày đang chọn">
               {selected ? <DayDetail key={`${selected}-${filter}`} date={selected} off={d.days.find((x) => x.date === selected)?.off} entries={d.entries[selected] ?? []} filter={filter} /> : <BlockEmpty>Chọn một ngày để xem danh sách hộ được nhắc.</BlockEmpty>}
-            </aside>
+            </section>
           </div>
         )}
       </div>

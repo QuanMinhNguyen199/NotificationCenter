@@ -15,3 +15,16 @@
 .sort-btn.is-on { color: var(--text); font-weight: 600; }
 .sort-btn.is-on svg { opacity: 1; }
 .sort-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Mobile: thanh "Sắp xếp" thay cho tiêu đề cột (bị ẩn khi bảng xếp thành thẻ). */
+.sort-mobile { display: none; }
+@media (max-width: 767px) {
+  .sort-mobile { display: flex; gap: 8px; margin-bottom: 4px; }
+  .sort-mobile__select { flex: 1; min-width: 0; min-height: 44px; }
+  .sort-mobile__dir {
+    display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer;
+  }
+  .sort-mobile__dir svg { width: 18px; height: 18px; }
+  .sort-mobile__dir:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+}

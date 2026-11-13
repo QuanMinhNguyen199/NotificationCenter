@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { TopRows } from './TopRows';
+import { ChoiceSelect } from './Controls';
 import './sort-table.css';
 
 /* ---------- Bảng sắp xếp được (thay thế cho biểu đồ với trình đọc màn hình) ---------- */
@@ -45,7 +46,28 @@ export function SortTable<T>({ rows, cols, rowKey, rowHead, rowClass, label, ini
       </th>
     );
   };
+  // Mobile: bảng hiển thị dạng thẻ nên tiêu đề cột bị ẩn; thanh này thay cho việc bấm tiêu đề cột.
+  const all = [rowHead, ...cols];
+  const asc = sort.dir === 'asc';
+  const mobileBar = (
+    <div className="sort-mobile">
+      <ChoiceSelect
+        aria-label="Sắp xếp theo"
+        prefix="Sắp xếp:"
+        value={sort.key}
+        onValueChange={(k) => { const c = all.find((x) => x.key === k)!; setSort({ key: k, dir: c.desc ? 'desc' : 'asc' }); }}
+        options={all.map((c) => ({ value: c.key, label: c.label }))}
+        className="sort-mobile__select"
+      />
+      <button type="button" className="sort-mobile__dir" aria-label={asc ? 'Đang xếp tăng dần, bấm để xếp giảm dần' : 'Đang xếp giảm dần, bấm để xếp tăng dần'}
+        onClick={() => setSort((x) => ({ key: x.key, dir: x.dir === 'asc' ? 'desc' : 'asc' }))}>
+        {asc ? <ArrowUp aria-hidden="true" /> : <ArrowDown aria-hidden="true" />}
+      </button>
+    </div>
+  );
   return (
+    <>
+    {mobileBar}
     <TopRows total={sorted.length} noun="dòng">
     <div className="sort-scroll" role="region" aria-label={label} tabIndex={0}>
       <table className={`mini-table sort-table${className ? ` ${className}` : ''}`}>
@@ -62,5 +84,6 @@ export function SortTable<T>({ rows, cols, rowKey, rowHead, rowClass, label, ini
       </table>
     </div>
     </TopRows>
+    </>
   );
 }

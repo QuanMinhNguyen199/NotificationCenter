@@ -11,7 +11,7 @@ import type { Priority } from '@/shared/data/types';
 
 const ORDER: { key: Priority; label: string; color: string; ink: string }[] = [
   // Getter: đọc màu lúc vẽ để bảng chỉnh màu (tạm thời) áp dụng ngay.
-  { key: 'OVERDUE', label: 'Quá hạn', get color() { return C.overdue; }, ink: '#FFFFFF' },
+  { key: 'OVERDUE', label: 'Quá hạn', get color() { return C.overdue; }, ink: C.onFill },
   { key: 'DUE_SOON', label: 'Sắp hạn (0–7 ngày)', get color() { return C.dueSoon; }, get ink() { return C.dueSoonInk; } },
   { key: 'IN_TERM', label: 'Còn trong hạn', get color() { return C.inTerm; }, get ink() { return C.inTermInk; } },
 ];

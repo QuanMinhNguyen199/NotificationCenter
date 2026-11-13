@@ -1,3 +1,4 @@
+import { hkdStatusLabel } from '@/shared/data/hkdStatus';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useId, useState } from 'react';
 import { Button } from '@/shared/ui/button';
@@ -232,7 +233,7 @@ function Body({ c, flash, setFlash }: { c: RoutingCase; flash: Flash; setFlash: 
                     <dt>MST</dt>
                     <dd>{tp.mst}</dd>
                     <dt>Trạng thái HKD</dt>
-                    <dd>{tp.hkdStatus}</dd>
+                    <dd>{hkdStatusLabel(tp.hkdStatus)}</dd>
                     <dt>Cán bộ phụ trách</dt>
                     <dd>{name(officerOf[tp.id]) || '—'}</dd>
                     <dt>Hồ sơ khai còn thiếu</dt>

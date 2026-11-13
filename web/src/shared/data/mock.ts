@@ -1,5 +1,6 @@
 // Dữ liệu minh họa theo mục 5 của đặc tả. Mọi tổng hiển thị được tính lại từ các dòng ở đây.
 import type { DeliveryStatus, GroupCode, Notification, Priority, SendRun, SendStatus, Taxpayer, Unit } from './types';
+import type { HkdStatusCode } from './hkdStatus';
 
 function rng(seed: number) {
   return () => {
@@ -47,11 +48,15 @@ const HO_KD = ['Hộ kinh doanh Phúc Lộc', 'Hộ kinh doanh Minh Khai', 'Hộ
 const TAXPAYER_COUNT = 6200;
 const NAMED = ['Hộ kinh doanh An Bình', 'Nguyễn Minh Phương', 'Trần Văn Hòa', 'Phạm Thị Lan', 'Lê Quốc Hưng'];
 
+// Phân bố minh họa: 94% đang hoạt động (giữ như bản trước), 6% còn lại chia cho các trạng thái khác.
+const STATUS_CUTS: [number, HkdStatusCode][] = [[0.02, '05'], [0.03, '04'], [0.038, '03'], [0.045, '06'], [0.051, '09'], [0.056, '02'], [0.06, '01']];
+const statusOf = (r: number): HkdStatusCode => STATUS_CUTS.find(([cut]) => r < cut)?.[1] ?? '00';
+
 export const taxpayers: Taxpayer[] = Array.from({ length: TAXPAYER_COUNT }, (_, i) => ({
   id: i,
   name: NAMED[i] ?? (rand() < 0.22 ? `${pick(HO_KD)} ${i % 97 + 1}` : `${pick(HO)} ${pick(DEM)} ${pick(TEN)}`),
   mst: `999${String(i + 1).padStart(7, '0')}`,
-  hkdStatus: rand() < 0.06 ? 'Tạm ngừng kinh doanh' : 'Đang hoạt động',
+  hkdStatus: statusOf(rand()),
   fileCount: 0,
   payCount: 0,
   updatedAt: OBLIGATION_CUTOFF,

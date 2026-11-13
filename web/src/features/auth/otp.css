@@ -12,7 +12,7 @@
 
 .otp__demo {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 20px; padding: 10px 12px;
-  border: 1px dashed #94A3B8; border-radius: 8px; background: var(--rule); font-size: 14px; color: var(--text);
+  border: 1px dashed var(--border-hover); border-radius: 8px; background: var(--rule); font-size: 14px; color: var(--text);
 }
 .otp__demo-code { font-variant-numeric: tabular-nums; letter-spacing: 0.12em; font-size: 14px; }
 

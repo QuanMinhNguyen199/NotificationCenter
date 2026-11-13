@@ -1,5 +1,4 @@
 /* Chỉ thích ứng bố cục điện thoại. Token thương hiệu và màn desktop giữ nguyên. */
-.kpis__more { display: none; }
 
 @media (max-width: 767px) {
   .shell--mobile .canvas { width: 100%; max-width: 640px; padding: 20px 16px calc(112px + var(--safe-bottom)); }
@@ -40,22 +39,7 @@
   .mobile-run__text { display: block; font-size: 14px; line-height: 1.5; }
   .mobile-run__icon { flex: none; width: 20px; height: 20px; color: var(--brand-ink); }
   .finding__scope { color: var(--brand-ink); }
-
-  :root .shell--mobile .kpis { margin: 12px 0; border-radius: 12px; overflow: hidden; gap: 1px; }
-  :root .shell--mobile .kpi { padding: 12px; min-height: 82px; gap: 4px; border-radius: 0; text-align: left; }
-  .shell--mobile .kpi__label { font-size: 12px; line-height: 1.5; }
-  .shell--mobile .kpi__value { font-size: 20px; line-height: 1.2; }
-  .shell--mobile .kpi__note { font-size: 11px; line-height: 1.5; }
-  .shell--mobile .kpis:not(.kpis--expanded) .kpi__note { display: none; }
-  .shell--mobile .kpis--expanded .kpi[aria-haspopup="dialog"] { grid-column: 1 / -1; }
-  .shell--mobile .kpis:not(.kpis--expanded) .kpi--secondary { display: none; }
-  .shell--mobile .kpis > .kpi:last-of-type { grid-column: auto; }
-  .shell--mobile .kpis--expanded > .kpi--secondary:last-of-type { grid-column: 1 / -1; }
-  .shell--mobile .kpis__more { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 12px; font-size: 13px; color: var(--brand-ink); background: var(--surface); border: 0; cursor: pointer; }
-  .kpis__more svg { width: 16px; height: 16px; }
-  .shell--mobile .kpis:not(.kpis--expanded) .kpi { min-height: 76px; }
-  .kpis__more[aria-expanded="true"] svg { transform: rotate(180deg); }
-  .kpis__more:focus-visible, .mobile-disclosure > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
+  .mobile-disclosure > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
   :root .shell--mobile .hkd-kpis { overflow: hidden; border-radius: 12px; }
   :root .shell--mobile .hkd-kpi { padding: 12px; gap: 4px; min-height: 90px; }
   .hkd-filter { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }

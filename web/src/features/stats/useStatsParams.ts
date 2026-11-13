@@ -1,3 +1,4 @@
+import { isHkdStatus, type HkdStatusCode } from '@/shared/data/hkdStatus';
 import { useCallback, useMemo, useRef } from 'react';
 import { useRoute } from '@/shared/lib/router';
 import { PERIOD } from '@/shared/data/mock';
@@ -20,8 +21,8 @@ export interface StatsParams extends StatsFilter {
   notified: boolean;
   kind: 'file' | 'pay' | null;
   prio: Priority | null;
-  /** Đăng ký app nhưng chưa nộp tờ khai. */
-  app: boolean;
+  /** Lọc theo mã trạng thái HKD. */
+  hst: HkdStatusCode | null;
   rs: 'all' | RunStatus;
   rq: string;
   detail: string | null;
@@ -55,7 +56,7 @@ export function useStatsParams() {
       notified: params.get('notified') === '1',
       kind: (params.get('kind') as 'file' | 'pay') ?? null,
       prio: (params.get('prio') as Priority) ?? null,
-      app: params.get('app') === '1',
+      hst: isHkdStatus(params.get('hst')) ? (params.get('hst') as HkdStatusCode) : null,
       rs: (params.get('rs') as RunStatus) ?? 'all',
       rq: params.get('rq') ?? '',
       detail: params.get('detail'),

@@ -114,8 +114,8 @@ export function ViewTabs({ value, onValueChange, items, className, extra, label 
       // Lần đặt đầu không trượt từ vị trí 0.
       if (!placed.current) bar.style.transition = 'none';
       bar.style.opacity = '1';
-      bar.style.width = `${tab.offsetWidth}px`;
-      bar.style.transform = `translateX(${tab.offsetLeft}px)`;
+      // Thanh rộng gốc 100px; vị trí và độ rộng đều qua transform để chuyển động chạy trên compositor.
+      bar.style.transform = `translateX(${tab.offsetLeft}px) scaleX(${tab.offsetWidth / 100})`;
       if (!placed.current) {
         placed.current = true;
         requestAnimationFrame(() => (bar.style.transition = ''));

@@ -11,7 +11,7 @@ import { axisLabel, useChartBase } from './hkdChart';
 import { Kpi, KpiStrip } from '@/shared/components/Kpi';
 import { ProtoBadge } from '@/shared/components/Proto';
 
-const COMPLIANCE_COLOR: Record<Compliance, string> = { COMPLIANT: '#15803D', MISSING_FILE: C.dueSoon, IN_DEBT: C.overdue, BOTH: '#7F1D1D' };
+const COMPLIANCE_COLOR: Record<Compliance, string> = { COMPLIANT: C.compliant, MISSING_FILE: C.dueSoon, IN_DEBT: C.overdue, BOTH: C.danger };
 const COMPLIANCE_INK: Record<Compliance, string> = { COMPLIANT: '#fff', MISSING_FILE: C.dueSoonInk, IN_DEBT: '#fff', BOTH: '#fff' };
 
 /* ---------- Tab 2: Cơ cấu và tuân thủ ---------- */

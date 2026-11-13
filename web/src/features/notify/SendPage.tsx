@@ -65,7 +65,7 @@ export default function SendPage() {
                   )}
                 </span>
                 <span className="tpl-row__meta">
-                  {s.status === 'SENDING' && bp !== 'mobile' && <span className="mini-prog" aria-hidden="true"><span style={{ width: `${progress(s) * 100}%` }} /></span>}
+                  {s.status === 'SENDING' && bp !== 'mobile' && <span className="mini-prog" aria-hidden="true"><span style={{ transform: `scaleX(${progress(s)})` }} /></span>}
                   <StatusPill tone={SEND_STATUS[s.status].tone}>{SEND_STATUS[s.status].label}</StatusPill>
                 </span>
               </button>
