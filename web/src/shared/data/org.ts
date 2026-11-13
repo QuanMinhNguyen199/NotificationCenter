@@ -1,4 +1,4 @@
-// Cơ cấu minh họa của Thuế cơ sở A: 3 tổ, mỗi tổ một lãnh đạo tổ và các cán bộ quản lý HKD.
+// Cơ cấu minh họa của Thuế cơ sở 1: 3 tổ, mỗi tổ một lãnh đạo tổ và các cán bộ quản lý HKD.
 // Không có trong mục 5 đặc tả; dùng để thể hiện phạm vi xem theo 3 cấp tài khoản.
 import { taxpayers } from './mock';
 import type { Staff, Team } from './types';

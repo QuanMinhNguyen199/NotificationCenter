@@ -10,22 +10,6 @@
 .leader-title .proto { font-weight: 500; }
 
 /* Bảng cuộn trong khung của nó, trang không cuộn ngang ở 375px. */
-.leader-scroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border-radius: 4px; }
-.leader-scroll:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.leader-table { min-width: 560px; }
-.leader-table--narrow { min-width: 280px; }
-.leader-table tbody th { white-space: nowrap; }
-.leader-table td { white-space: nowrap; }
-
-.leader-sort {
-  display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; margin: 0; border: 0; background: none;
-  font: inherit; color: inherit; cursor: pointer; border-radius: 4px; text-align: inherit; white-space: nowrap;
-}
-.leader-sort svg { width: 14px; height: 14px; flex: none; opacity: 0.55; }
-.leader-sort:hover { color: var(--text); }
-.leader-sort.is-on { color: var(--text); font-weight: 600; }
-.leader-sort.is-on svg { opacity: 1; }
-.leader-sort:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 .leader-row--own th, .leader-row--own td { background: var(--tint-50); }
 .leader-row--own th { font-weight: 600; }
@@ -40,11 +24,6 @@
 }
 
 /* Xếp hạng 25 Thuế cơ sở: danh sách HTML thay biểu đồ, để chữ, số và đường trung bình thẳng hàng. */
-.rank__summary { margin: 0 0 12px; font-size: 15px; line-height: 1.5; color: var(--text-muted); max-width: 75ch; text-wrap: pretty; }
-.rank__summary b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
-.rank__delta { font-weight: 600; }
-.rank__delta.is-good { color: var(--text); }
-.rank__delta.is-bad { color: var(--brand-ink); }
 
 .rank { --rank-cols: 28px minmax(96px, 168px) minmax(0, 1fr) 64px; --rank-other: #B8C2D0; }
 .rank__head, .rank__row, .rank__gap { display: grid; grid-template-columns: var(--rank-cols); column-gap: 12px; align-items: center; }
@@ -86,3 +65,7 @@
 .choice-select.leader-scope-select { width: 240px; max-width: 100%; }
 .choice-select.leader-metric-select { min-width: 240px; }
 .choice-select.leader-metric-select--block { min-width: 100%; }
+
+/* Chiều xếp hạng: mũi tên ở đầu cột giá trị thay cho dòng chữ "Xếp từ … tới …" (góp ý v2, 13/11/2026). */
+.rank__dir { grid-column: 4; display: flex; justify-content: flex-end; color: var(--text-muted); }
+.rank__dir svg { width: 16px; height: 16px; }

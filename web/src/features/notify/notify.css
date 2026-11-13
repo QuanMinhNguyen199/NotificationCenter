@@ -55,7 +55,7 @@
 @container (max-width: 560px) {
   .nt-cell { min-height: 60px; padding: 4px 5px; }
   .nt-cell.is-selected { padding: 3px 4px; }
-  .nt-cell__count { font-size: 15px; }
+  .nt-cell__count { font-size: 14px; }
   .nt-off__long { display: none; }
   .nt-off__short { display: inline; }
   .nt-off { padding: 0 3px; }
@@ -67,7 +67,7 @@
 @media (min-width: 1200px) { .nt-detail { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; } }
 .nt-day { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .nt-day__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.nt-day__head h3 { font-size: 15px; font-weight: 600; }
+.nt-day__head h3 { font-size: 14px; font-weight: 600; }
 .nt-day__total { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
 .nt-group { min-width: 0; }
@@ -106,12 +106,12 @@
 
 /* ---------- Danh mục loại ---------- */
 .nt-mode + .nt-mode { margin-top: 20px; }
-.nt-mode__title { font-size: 15px; font-weight: 600; }
+.nt-mode__title { font-size: 14px; font-weight: 600; }
 .nt-mode__desc { margin: 2px 0 10px; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
 .nt-types { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px; }
 .nt-type { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .nt-type__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.nt-type__name { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.nt-type__name { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; line-height: 1.4; }
 .nt-type__facts { margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; }
 .nt-type__facts div { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 8px; }
 .nt-type__facts dt { color: var(--text-muted); }

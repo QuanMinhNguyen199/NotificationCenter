@@ -156,6 +156,15 @@ components:
 
 # Design System: Quản trị thông báo
 
+### Card chỉ số thông báo ngang hàng (13/11/2026)
+
+- **Quyết định mới theo yêu cầu người dùng, thay thế bố cục chính/phụ:** sáu card ngang hàng: Tổng thông báo / Đã gửi / Chờ gửi / Gửi thất bại / NNT duy nhất / Thời gian phản hồi trung bình. Đã tiếp nhận nằm trong card Đã gửi, là nút riêng để lọc danh sách; không cộng tiếp nhận vào các trạng thái gửi.
+- Mọi card có cùng chiều rộng, padding và số 26px; không phóng lớn tổng hoặc tách NNT/thời gian thành dải phụ. Card thất bại dùng màu cảnh báo, card đang lọc giữ trạng thái chọn. Màn lãnh đạo giữ bốn chỉ số theo quyền và cùng cách trình bày.
+- Số cột đi theo chiều rộng vùng nội dung: từ 1080px là sáu cột, từ 640px là ba cột (bốn với màn lãnh đạo), nhỏ hơn là hai. Desktop/tablet card bằng chiều cao; mobile card cùng hàng bằng nhau, chiều cao từng hàng theo nội dung để tránh khoảng trắng dư. Mobile dùng số 24px.
+- Nút cao ít nhất 44px, focus nhìn thấy, số thiếu hiển thị “—”, số 0 giữ nguyên. Đang tải/đổi phạm vi khóa thao tác để tránh lọc bằng số cũ. Giữ thao tác chuyển danh sách NNT và mở chi tiết thời gian.
+- **Bằng chứng kỹ thuật:** ảnh ở `.taste-skill/kpi-equal`; kiểm tra kích thước, font, tràn ngang, vùng chạm và thao tác ở `.taste-skill/kpi-equal-check.mjs` trên bản production 1440/1024/375px. Đây không phải thử nghiệm người dùng.
+- **Chưa xác nhận:** mức ưu tiên nghiệp vụ của các chỉ số; kiểm chứng qua nhiệm vụ tìm lỗi gửi và số đã tiếp nhận, đo thời gian hoàn thành và số lần chọn sai giữa các bố cục.
+
 > **Nguồn màu hiện hành (11/11/2026):** frontmatter ở đầu file, đồng bộ từ `:root` của `web/src/styles/styles.css` và `web/src/shared/theme.ts`. Các mục màu ghi ngày 02/11/2026 bên dưới (đỏ #B91C1C, vàng nhạt, nền kem #FFFBF2, biểu đồ xanh dương) là lịch sử quyết định, **không còn áp dụng**. Breakpoint chuẩn: 768 / 1024 / 1200px.
 
 

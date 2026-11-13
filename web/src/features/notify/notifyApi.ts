@@ -94,7 +94,7 @@ let templates: Template[] = [
     id: 'tpl-lich-tiep',
     name: 'Thông báo lịch tiếp NNT',
     purpose: 'Báo lịch tiếp và hỗ trợ NNT tại cơ quan thuế.',
-    versions: [{ version: 1, status: 'PUBLISHED', title: 'Lịch tiếp người nộp thuế', body: 'Thuế cơ sở A tiếp và hướng dẫn NNT vào {thoi_gian} tại {dia_diem}. Kính mời {ten_nnt} sắp xếp tham dự.', by: 'Nguyễn Minh An', at: '2026-10-15T14:05', reason: 'Tạo mẫu' }],
+    versions: [{ version: 1, status: 'PUBLISHED', title: 'Lịch tiếp người nộp thuế', body: 'Thuế cơ sở 1 tiếp và hướng dẫn NNT vào {thoi_gian} tại {dia_diem}. Kính mời {ten_nnt} sắp xếp tham dự.', by: 'Nguyễn Minh An', at: '2026-10-15T14:05', reason: 'Tạo mẫu' }],
   },
   {
     id: 'tpl-bao-tri',
@@ -266,7 +266,7 @@ const seedIds = (n: number, from: number) => Array.from({ length: n }, (_, k) =>
 let sends: SendRequest[] = [
   { id: 'GC-20261027-02', createdBy: 'Trần Thu Hà', createdAt: '2026-10-27T15:20', team: 'T1', audienceLabel: 'Nhóm: Sắp hạn nộp thuế (0–7 ngày) · Tổ 1', channels: ['IN_APP', 'IHANOI'], contentLabel: 'Nhắc hạn nộp hồ sơ khai thuế · v2', freeText: false, title: 'Nhắc nộp hồ sơ khai thuế', body: 'Kính gửi {ten_nnt} (MST {mst}), hồ sơ khai thuế quý III/2026 cần nộp trước ngày 30/10/2026. Mở iHanoi để nộp hồ sơ.', startedMs: null, recipients: plan(seedIds(186, 11), ['IN_APP', 'IHANOI']) },
   { id: 'GC-20261027-01', createdBy: 'Nguyễn Minh An', createdAt: '2026-10-27T09:05', team: null, audienceLabel: 'Nhóm: Quá hạn khai thuế', channels: ['IHANOI'], contentLabel: 'Tự soạn', freeText: true, title: 'Hồ sơ khai thuế đã quá hạn', body: 'Kính gửi {ten_nnt}, hồ sơ khai thuế của bạn đã quá hạn. Vui lòng nộp sớm để tránh bị phạt chậm nộp.', startedMs: null, recipients: plan(seedIds(420, 5), ['IHANOI']) },
-  { id: 'GC-20261025-01', createdBy: 'Nguyễn Minh An', createdAt: '2026-10-25T08:30', team: null, audienceLabel: '12 NNT được chọn', channels: ['IN_APP', 'IHANOI'], contentLabel: 'Thông báo lịch tiếp NNT · v1', freeText: false, title: 'Lịch tiếp người nộp thuế', body: 'Thuế cơ sở A tiếp và hướng dẫn NNT vào 8:00 ngày 30/10/2026 tại 12 Lê Lợi. Kính mời {ten_nnt} sắp xếp tham dự.', startedMs: null, recipients: plan(seedIds(12, 3), ['IN_APP', 'IHANOI']) },
+  { id: 'GC-20261025-01', createdBy: 'Nguyễn Minh An', createdAt: '2026-10-25T08:30', team: null, audienceLabel: '12 NNT được chọn', channels: ['IN_APP', 'IHANOI'], contentLabel: 'Thông báo lịch tiếp NNT · v1', freeText: false, title: 'Lịch tiếp người nộp thuế', body: 'Thuế cơ sở 1 tiếp và hướng dẫn NNT vào 8:00 ngày 30/10/2026 tại 12 Lê Lợi. Kính mời {ten_nnt} sắp xếp tham dự.', startedMs: null, recipients: plan(seedIds(12, 3), ['IN_APP', 'IHANOI']) },
 ];
 
 export interface DeliveryView {

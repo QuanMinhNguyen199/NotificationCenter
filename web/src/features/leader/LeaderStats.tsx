@@ -1,8 +1,8 @@
 import { MobileDisclosure } from '@/shared/components/MobileDisclosure';
 import { ChoiceSelect } from '@/shared/components/Controls';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
+import { SortTable, type Col } from '@/shared/components/SortTable';
 import { BlockEmpty, BlockError, Panel, Skel } from '@/shared/components/Blocks';
 import { ProtoBadge } from '@/shared/components/Proto';
 import { usePermissions } from '@/shared/demo/useDemo';
@@ -10,14 +10,16 @@ import { downloadXlsx } from '@/shared/lib/xlsx';
 import { ExcelButton } from '@/shared/components/ExcelButton';
 import { dmy, num, pct } from '@/shared/lib/format';
 import { useBreakpoint } from '@/shared/lib/useMedia';
-import { CITY_UNITS, OWN_UNIT, fetchCityComparison, fetchOfficerPerf, type OfficerPerf, type UnitRow } from './leaderApi';
+import { CITY_UNITS, OWN_UNIT, unitName, fetchCityComparison, fetchOfficerPerf, type OfficerPerf, type UnitRow } from './leaderApi';
 import './leader.css';
-import { TopRows, TOP_N } from '@/shared/components/TopRows';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { TOP_N } from '@/shared/components/TopRows';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, ChevronDown, ChevronUp } from 'lucide-react';
 import { DEMO_TODAY } from '@/shared/lib/demoClock';
 import { Kpi, KpiStrip } from '@/shared/components/Kpi';
 
 const AS_OF = DEMO_TODAY;
+/** Ngày đầu kỳ 30 ngày (tính cả ngày cuối). */
+const PERIOD_FROM = (() => { const d = new Date(`${AS_OF}T00:00:00`); d.setDate(d.getDate() - 29); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
 
 const rate = (v: number) => pct(v * 100, 100);
 const hours = (h: number | null) => (h == null ? '—' : `${h.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} giờ`);
@@ -53,66 +55,6 @@ function ranked(units: UnitRow[], key: MetricKey) {
 }
 const rankOf = (units: UnitRow[], key: MetricKey) => ranked(units, key).findIndex((u) => u.own) + 1;
 
-/* ---------- Bảng sắp xếp được (thay thế cho biểu đồ với trình đọc màn hình) ---------- */
-
-interface Col<T> {
-  key: string;
-  label: string;
-  sort: (r: T) => number | string;
-  render: (r: T) => ReactNode;
-  /** Mặc định sắp giảm dần khi bấm lần đầu (số càng lớn càng đáng chú ý). */
-  desc?: boolean;
-}
-
-function SortTable<T>({ rows, cols, rowKey, rowHead, rowClass, label, initial }: {
-  rows: T[]; cols: Col<T>[]; rowKey: (r: T) => string; rowHead: Col<T>; rowClass?: (r: T) => string | undefined; label: string;
-  initial: { key: string; dir: 'asc' | 'desc' };
-}) {
-  const [sort, setSort] = useState(initial);
-  const active = [rowHead, ...cols].find((c) => c.key === sort.key) ?? rowHead;
-  const sorted = useMemo(() => {
-    const out = [...rows].sort((a, b) => {
-      const x = active.sort(a);
-      const y = active.sort(b);
-      const c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'vi', { numeric: true });
-      return sort.dir === 'asc' ? c : -c;
-    });
-    return out;
-  }, [rows, active, sort.dir]);
-  const click = (c: Col<T>) =>
-    setSort((s) => (s.key === c.key ? { key: c.key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key: c.key, dir: c.desc ? 'desc' : 'asc' }));
-  const head = (c: Col<T>) => {
-    const on = c.key === sort.key;
-    const Icon = !on ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown;
-    return (
-      <th scope="col" key={c.key} aria-sort={on ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-        <button type="button" className={`leader-sort${on ? ' is-on' : ''}`} onClick={() => click(c)}>
-          {c.label}
-          <Icon aria-hidden="true" />
-        </button>
-      </th>
-    );
-  };
-  return (
-    <TopRows total={sorted.length} noun="dòng">
-    <div className="leader-scroll" role="region" aria-label={label} tabIndex={0}>
-      <table className="mini-table leader-table">
-        <caption className="sr-only">{label}. Bấm tiêu đề cột để sắp xếp.</caption>
-        <thead><tr>{[rowHead, ...cols].map(head)}</tr></thead>
-        <tbody>
-          {sorted.map((r) => (
-            <tr key={rowKey(r)} className={rowClass?.(r)}>
-              <th scope="row">{rowHead.render(r)}</th>
-              {cols.map((c) => <td key={c.key}>{c.render(r)}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    </TopRows>
-  );
-}
-
 /* ---------- 1. Chỉ số chính ---------- */
 
 type CityData = Awaited<ReturnType<typeof fetchCityComparison>>;
@@ -123,9 +65,9 @@ function KpiRow({ data, error, onRetry }: { data?: CityData; error: boolean; onR
   const sk = <Skel w={80} h={28} />;
   const rank = (k: MetricKey) => (data ? `Hạng ${rankOf(data.units, k)}/${data.units.length}` : '');
   return (
-    <KpiStrip lead busy={!data} label="Chỉ số chính của đơn vị">
-      <Kpi primary label="Tỷ lệ nộp tờ khai" value={own ? rate(own.fileRate) : sk} note={own && data && `${rank('fileRate')}; trung bình thành phố ${rate(data.avg.fileRate)}`} />
-      <Kpi label="Tổng tờ khai tiếp nhận" value={own ? num(own.received) : sk} note={own && `30 ngày; ${num(own.accepted)} xử lý thành công`} />
+    <KpiStrip busy={!data} label="Chỉ số chính của đơn vị">
+      <Kpi label="Tỷ lệ nộp tờ khai" value={own ? rate(own.fileRate) : sk} note={own && data && `${rank('fileRate')}; trung bình thành phố ${rate(data.avg.fileRate)}`} />
+      <Kpi label="Tổng tờ khai tiếp nhận" value={own ? num(own.received) : sk} note={own && `${num(own.accepted)} xử lý thành công`} />
       {/* Thất bại = 100% − thành công: gộp vào một ô để không lặp số. */}
       <Kpi label="Xử lý thành công" value={own ? rate(own.okRate) : sk} note={own && data && `Thất bại ${rate(own.failRate)} · ${rank('okRate')}; trung bình thành phố ${rate(data.avg.okRate)}`} />
       <Kpi label="Thời gian phản hồi trung bình của cán bộ" value={own ? hours(own.avgHours) : sk} note={own && data && `${rank('avgHours')}; trung bình thành phố ${hours(data.avg.avgHours)}`} />
@@ -147,7 +89,6 @@ function RankChart({ data, metric, tableToggle }: { data: CityData; metric: Metr
   const collapsed = !open && ownRank > TOP_N;
   const rows = open ? all : collapsed ? [...all.slice(0, TOP_N), own] : all.slice(0, TOP_N);
   const hidden = collapsed ? ownRank - TOP_N - 1 : 0;
-  const better = m.lowerBetter ? m.value(own) <= avg : m.value(own) >= avg;
   // Trục bắt đầu từ 0 để độ dài thanh phản ánh đúng tỷ lệ giữa các đơn vị.
   const max = Math.max(avg, ...all.map(m.value)) || 1;
   const at = (v: number) => `${(v / max) * 100}%`;
@@ -164,14 +105,13 @@ function RankChart({ data, metric, tableToggle }: { data: CityData; metric: Metr
   );
   return (
     <>
-      <p className="rank__summary">
-        <b>{own.name}</b> đứng thứ <b>{ownRank}/{all.length}</b> với {m.fmt(m.value(own))},{' '}
-        <span className={better ? 'rank__delta is-good' : 'rank__delta is-bad'}>{better ? 'tốt hơn hoặc bằng' : 'kém hơn'}</span> trung bình thành phố.
-      </p>
       <div className="rank">
         <div className="rank__head" aria-hidden="true">
           <span className="rank__track">
             <span className="rank__avg-label" style={{ left: at(avg) }}>Trung bình {m.fmt(avg)}</span>
+          </span>
+          <span className="rank__dir" title={m.lowerBetter ? 'Xếp từ nhanh nhất tới chậm nhất' : 'Xếp từ cao nhất tới thấp nhất'}>
+            {m.lowerBetter ? <ArrowUpNarrowWide /> : <ArrowDownWideNarrow />}
           </span>
         </div>
         <ol className="rank__list" aria-label={`Xếp hạng ${all.length} Thuế cơ sở theo ${m.label.toLowerCase()}; trung bình thành phố ${m.fmt(avg)}`}>
@@ -202,7 +142,7 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
   const exportCsv = () => {
     if (!data) return;
     downloadXlsx(`so-sanh-25-thue-co-so-${AS_OF}`, [
-      [`So sánh 25 Thuế cơ sở, 30 ngày đến ${dmy(AS_OF)}`, 'Dữ liệu giả lập'],
+      [`So sánh 25 Thuế cơ sở, ${dmy(PERIOD_FROM)} – ${dmy(AS_OF)}`, 'Dữ liệu giả lập'],
       [],
       ['Đơn vị', 'Tờ khai tiếp nhận', 'Tiếp nhận thành công', 'Tỷ lệ xử lý thành công (%)', 'Tỷ lệ nộp tờ khai (%)', 'Phản hồi TB (giờ)', 'Người dùng ứng dụng', 'Tổng HKD'],
       ...ranked(data.units, 'fileRate').map((u) => [u.name, u.received, u.accepted, +(u.okRate * 100).toFixed(1), +(u.fileRate * 100).toFixed(1), +u.avgHours.toFixed(1), u.users, u.hkd]),
@@ -230,7 +170,6 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
       {error ? <BlockError message="Không tải được số liệu so sánh giữa các Thuế cơ sở." onRetry={onRetry} /> : (
         <Panel
           title={METRICS[metric].label}
-          sub={METRICS[metric].lowerBetter ? 'Xếp từ nhanh nhất tới chậm nhất' : 'Xếp từ cao nhất tới thấp nhất'}
           className="dashboard-card--static leader-rank"
           extra={<div className="leader-rank__tools">
             <ChoiceSelect aria-label="Chỉ số so sánh" value={metric} onValueChange={setMetric} options={METRIC_KEYS.map((k) => ({ value: k, label: METRICS[k].label }))} className={mobile ? 'leader-metric-select leader-metric-select--block' : 'leader-metric-select'} />
@@ -272,11 +211,11 @@ function OfficerSection({ unit }: { unit: string }) {
     <section className="leader-section" aria-labelledby="leader-officers">
       <div className="leader-section__head">
         <h3 id="leader-officers" className="leader-section__title">
-          <SectionTitle badges={<ProtoBadge note="Trước khi dùng để đánh giá cán bộ, lãnh đạo cần thống nhất cách tính, ngưỡng đúng hạn (tạm 48 giờ), ai được xem và cách tính khác biệt do địa bàn. Tỷ lệ đúng hạn là số giả lập." />}>Hiệu quả cán bộ trong Thuế cơ sở {unit}</SectionTitle>
+          <SectionTitle badges={<ProtoBadge note="Trước khi dùng để đánh giá cán bộ, lãnh đạo cần thống nhất cách tính, ngưỡng đúng hạn (tạm 48 giờ), ai được xem và cách tính khác biệt do địa bàn. Tỷ lệ đúng hạn là số giả lập." />}>Hiệu quả cán bộ trong {unitName(unit)}</SectionTitle>
         </h3>
       </div>
       <Panel className="dashboard-card--static">
-        {unit !== OWN_UNIT ? <BlockEmpty>Chưa có dữ liệu cán bộ của Thuế cơ sở {unit} trong bản mẫu.</BlockEmpty>
+        {unit !== OWN_UNIT ? <BlockEmpty>Chưa có dữ liệu cán bộ của {unitName(unit)} trong bản mẫu.</BlockEmpty>
           : q.isError ? <BlockError message="Không tải được số liệu cán bộ." onRetry={() => q.refetch()} />
           : !q.data ? <Skel w="100%" h={240} />
             : q.data.length === 0 ? <BlockEmpty>Chưa có cán bộ quản lý HKD đang hoạt động.</BlockEmpty>
@@ -307,7 +246,7 @@ export default function LeaderStats() {
       <div className="leader-section__head">
         <h2 className="leader-section__title">Kết quả cơ sở</h2>
         <ChoiceSelect aria-label="Phạm vi kết quả cơ sở" prefix="Phạm vi:" value={unit} onValueChange={setUnit} options={CITY_UNITS} className="leader-scope-select" />
-        <span className="scope-text"><span className="scope-text__label">Kỳ:</span>30 ngày đến {dmy(AS_OF)}</span>
+        <span className="scope-text"><span className="scope-text__label">Kỳ:</span>{dmy(PERIOD_FROM)} – {dmy(AS_OF)} (30 ngày)</span>
       </div>
       <KpiRow data={data} error={city.isError} onRetry={() => city.refetch()} />
       <MobileDisclosure label="So sánh 25 Thuế cơ sở"><CityCompare data={data} error={city.isError} onRetry={() => city.refetch()} /></MobileDisclosure>

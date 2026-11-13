@@ -28,11 +28,13 @@ export function StructureTab({ scope, dim, setDim }: { scope: string; dim: Dimen
   const d = q.data;
   return (
     <div className={`hkd-tab${q.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={q.isPlaceholderData}>
-      <KpiStrip lead label="Chỉ số tuân thủ">
-        <Kpi primary label={COMPLIANCE_LABEL.COMPLIANT} value={d ? num(d.counts.COMPLIANT) : <Skel w={80} h={28} />} note={d && `${pct(d.counts.COMPLIANT, d.total)} trên ${num(d.total)} HKD`} />
+      <KpiStrip label="Chỉ số tuân thủ">
+        {/* Tổng trước, rồi từng nhóm. Chỉ giữ % ở nhóm tuân thủ (tỷ lệ tuân thủ so được giữa phạm vi và kỳ);
+            tỷ lệ các nhóm còn lại đã thấy trên biểu đồ bên dưới, ô chỉ cần số hộ phải xử lý. */}
         <Kpi label="Tổng HKD" value={d ? num(d.total) : <Skel w={80} h={28} />} />
+        <Kpi label={COMPLIANCE_LABEL.COMPLIANT} value={d ? num(d.counts.COMPLIANT) : <Skel w={80} h={28} />} note={d && pct(d.counts.COMPLIANT, d.total)} />
         {COMPLIANCE_ORDER.filter((c) => c !== 'COMPLIANT').map((c) => (
-          <Kpi key={c} label={COMPLIANCE_LABEL[c]} value={d ? num(d.counts[c]) : <Skel w={80} h={28} />} note={d && pct(d.counts[c], d.total)} tone={c === 'BOTH' ? 'danger' : undefined} />
+          <Kpi key={c} label={COMPLIANCE_LABEL[c]} value={d ? num(d.counts[c]) : <Skel w={80} h={28} />} tone={c === 'BOTH' ? 'danger' : undefined} />
         ))}
       </KpiStrip>
       <Panel

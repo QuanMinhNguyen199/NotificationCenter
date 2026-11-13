@@ -1,5 +1,5 @@
 // Mock API cho phần thống kê của lãnh đạo trong màn Thống kê (view.docx).
-// Số của Thuế cơ sở A lấy từ cùng nguồn với màn Quản lý HKD (fetchDaily/fetchStructure/fetchSupport) để hai màn khớp nhau.
+// Số của Thuế cơ sở 1 lấy từ cùng nguồn với màn Quản lý HKD (fetchDaily/fetchStructure/fetchSupport) để hai màn khớp nhau.
 // 24 đơn vị còn lại là dữ liệu giả lập, sinh ổn định từ hạt giống cố định; cần API cấp thành phố khi có.
 import { fetchDaily, fetchStructure, fetchSupport } from '@/features/hkd/hkdApi';
 import { orgSnapshot } from '@/shared/api/mockApi';
@@ -16,12 +16,13 @@ function rng(seed: number) {
 }
 
 export const OWN_UNIT = 'A';
-/** 25 Thuế cơ sở trên địa bàn thành phố: A … Y. */
+/** 25 Thuế cơ sở trên địa bàn thành phố. Mã nội bộ A … Y, tên hiển thị đánh số 1 … 25. */
 export const CITY_UNITS = Array.from({ length: 25 }, (_, i) => {
   const value = String.fromCharCode(65 + i);
-  return { value, label: `Thuế cơ sở ${value}` };
+  return { value, label: `Thuế cơ sở ${i + 1}` };
 });
 const UNIT_IDS = CITY_UNITS.map((u) => u.value);
+export const unitName = (id: string) => CITY_UNITS.find((u) => u.value === id)?.label ?? `Thuế cơ sở ${id}`;
 
 export interface UnitRow {
   id: string;
@@ -64,7 +65,7 @@ export async function fetchCityComparison(): Promise<{ units: UnitRow[]; avg: Om
   const ownFile = 0.86;
   const own: UnitRow = {
     id: OWN_UNIT,
-    name: 'Thuế cơ sở A',
+    name: unitName(OWN_UNIT),
     own: true,
     received,
     accepted,
@@ -83,7 +84,7 @@ export async function fetchCityComparison(): Promise<{ units: UnitRow[]; avg: Om
     const hkd = Math.round(structure.total * s.size);
     return {
       id: s.id,
-      name: `Thuế cơ sở ${s.id}`,
+      name: unitName(s.id),
       own: false,
       received: r,
       accepted: a,
@@ -127,7 +128,7 @@ export interface OfficerPerf {
   onTime: number | null;
 }
 
-/** Hiệu quả từng cán bộ trong Thuế cơ sở A, 30 ngày. */
+/** Hiệu quả từng cán bộ trong Thuế cơ sở 1, 30 ngày. */
 export async function fetchOfficerPerf(): Promise<OfficerPerf[]> {
   const officers = orgSnapshot().filter((s) => s.role === 'officer' && s.active);
   const [support, ...dailies] = await Promise.all([fetchSupport('ALL'), ...officers.map((o) => fetchDaily(o.id))]);

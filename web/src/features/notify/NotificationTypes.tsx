@@ -12,14 +12,12 @@ const MODES: { mode: SendMode; title: string; desc: string }[] = [
   { mode: 'event', title: 'Gửi ngay theo sự kiện', desc: 'Gửi khi hệ thống nguồn trả kết quả, không chờ khung giờ.' },
 ];
 
-/** Danh mục 8 loại thông báo: điều kiện gửi, cách gửi, trạng thái trong hệ thống. */
+/** Danh mục loại thông báo: điều kiện gửi, cách gửi, trạng thái trong hệ thống. */
 export function NotificationTypes() {
-  const live = TYPES.filter((t) => t.live).length;
   return (
     <Panel
       id="nt-types-title"
       title="Các loại thông báo"
-      sub={`${live}/${TYPES.length} loại đang chạy`}
       className="nt-panel"
     >
       {MODES.map((m) => {

@@ -1,0 +1,17 @@
+/* Bảng sắp xếp được: bấm tiêu đề cột để đổi chiều tăng/giảm. */
+.sort-scroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border-radius: 4px; }
+.sort-scroll:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.sort-table { min-width: 560px; }
+.sort-table--narrow { min-width: 280px; }
+.sort-table tbody th { white-space: nowrap; }
+.sort-table td { white-space: nowrap; }
+
+.sort-btn {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; margin: 0; border: 0; background: none;
+  font: inherit; color: inherit; cursor: pointer; border-radius: 4px; text-align: inherit; white-space: nowrap;
+}
+.sort-btn svg { width: 14px; height: 14px; flex: none; opacity: 0.55; }
+.sort-btn:hover { color: var(--text); }
+.sort-btn.is-on { color: var(--text); font-weight: 600; }
+.sort-btn.is-on svg { opacity: 1; }
+.sort-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }

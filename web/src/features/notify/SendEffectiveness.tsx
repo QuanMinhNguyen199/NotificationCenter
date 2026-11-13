@@ -109,7 +109,7 @@ function TrendPanel({ m, d }: { m: Metric; d?: Effectiveness }) {
   const low = d ? d.days.reduce((a, b) => (m.value(b) < m.value(a) ? b : a)) : null;
   const yMin = Math.min(m.yMin, Math.floor(Math.min(...(values.length ? values : [m.yMin])) - 1));
   return (
-    <Panel title={<span className="title-with-tip">{m.title}<InfoTip><Definition m={m} /></InfoTip></span>} sub="Theo ngày" className="dashboard-card--static">
+    <Panel title={<span className="title-with-tip">{m.title}<InfoTip><Definition m={m} /></InfoTip></span>} className="dashboard-card--static">
       {!d ? <Skel w="100%" h={220} /> : (
         <>
           <ReactECharts

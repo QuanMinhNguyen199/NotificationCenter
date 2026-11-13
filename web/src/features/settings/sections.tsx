@@ -35,7 +35,7 @@ function scheduleSections(ctx: Ctx): Section[] {
     {
       key: 'send',
       title: 'Khung giờ gửi',
-      desc: 'Chỉ áp dụng cho nhắc việc. Thông báo theo sự kiện gửi ngay, không chờ khung giờ.',
+      desc: 'Chỉ áp dụng cho nhắc việc; thông báo theo sự kiện gửi ngay.',
       summary: `${v.sendStart}–${v.sendEnd}`,
       fields: ['sendStart', 'sendEnd'],
       content: (
@@ -132,7 +132,6 @@ function revenueSections(ctx: Ctx): Section[] {
     {
       key: 'policy',
       title: 'Ngưỡng chính sách',
-      desc: 'Chỉ đọc.',
       summary: POLICY_THRESHOLDS.map((t) => `${num(t.amount / 1e9)} tỷ`).join(', '),
       fields: [],
       dependsOn: 'revenueEnabled',

@@ -21,7 +21,7 @@ function shuffle<T>(arr: T[]) {
 }
 const repeat = <T,>(value: T, n: number) => Array.from({ length: n }, () => value);
 
-export const UNITS: Unit[] = [{ id: 'A', name: 'Thuế cơ sở A' }];
+export const UNITS: Unit[] = [{ id: 'A', name: 'Thuế cơ sở 1' }];
 
 export const PERIOD = { from: '2026-10-22', to: '2026-10-28' };
 export const UPDATED_AT = '2026-10-28T09:15';

@@ -22,7 +22,7 @@ const SAMPLE: Record<'D1a' | 'D1b' | 'D4', { push: { title: string; body: string
     full: (v) => [
       'Kính gửi Hộ kinh doanh An Bình (MST 9990000001),',
       `Hồ sơ khai thuế quý III/2026 chưa được nộp. Hạn nộp 30/10/2026 — còn ${v.daysBefore} ngày trở xuống nên được nhắc từ hôm nay.`,
-      'Vui lòng hoàn thành trên Cổng dịch vụ công hoặc liên hệ Thuế cơ sở A.',
+      'Vui lòng hoàn thành trên Cổng dịch vụ công hoặc liên hệ Thuế cơ sở 1.',
     ],
   },
   D1b: {

@@ -31,10 +31,10 @@ export function RemindersTab({ scope }: { scope: string }) {
   const off = d?.kinds.filter((k) => !k.enabled) ?? [];
   return (
     <div className={`hkd-tab hkd-reminders${q.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={q.isPlaceholderData}>
-      <KpiStrip lead label="Chỉ số nhắc việc">
+      <KpiStrip label="Chỉ số nhắc việc">
         {REMINDER_ORDER.map((k, i) => {
           const r = d?.kinds[i];
-          return <Kpi key={k} primary={i === 0} proposal={!!KIND_NOTE[k]} info={KIND_NOTE[k]} label={`HKD ${REMINDER_LABEL[k].toLowerCase()}`} value={r ? num(r.hkd) : <Skel w={80} h={28} />} tone={k === 'OVERDUE' ? 'danger' : undefined} />;
+          return <Kpi key={k} proposal={!!KIND_NOTE[k]} info={KIND_NOTE[k]} label={`HKD ${REMINDER_LABEL[k].toLowerCase()}`} value={r ? num(r.hkd) : <Skel w={80} h={28} />} tone={k === 'OVERDUE' ? 'danger' : undefined} />;
         })}
       </KpiStrip>
       {off.length > 0 && (
@@ -42,7 +42,7 @@ export function RemindersTab({ scope }: { scope: string }) {
           {off.map((k) => REMINDER_LABEL[k.kind]).join(', ')}: đang tắt trong Thiết lập, số liệu là của thời gian còn bật.
         </p>
       )}
-      <Panel title={<span className="title-with-tip">Hiệu quả theo loại nhắc<ProtoBadge note="Cách đo “hoàn thành sau nhắc” là diễn giải của nhóm thiết kế." /></span>} sub="30 ngày" className="dashboard-card--static hkd-table"
+      <Panel title={<span className="title-with-tip">Hiệu quả nhắc 30 ngày<ProtoBadge note="Cách đo “hoàn thành sau nhắc” là diễn giải của nhóm thiết kế." /></span>} className="dashboard-card--static hkd-table"
         extra={<Button variant="outline" onClick={() => navigate('/thong-ke')}>Xem thống kê gửi thông báo</Button>}>
         {!d ? <Skel w="100%" h={160} /> : (
           <table className="mini-table rem-table">
@@ -65,16 +65,15 @@ export function RemindersTab({ scope }: { scope: string }) {
       </Panel>
       <Panel
           title={<span className="title-with-tip">Ngưỡng doanh thu<ProtoBadge note="Ngưỡng gần mốc mặc định 80% là giá trị đề xuất trong bản mẫu." /></span>}
-          sub={d && `Báo khi doanh thu từ đầu năm đạt ${d.rule.nearPct}% mốc`}
           className="dashboard-card--static hkd-table"
           extra={<Button variant="outline" onClick={() => navigate('/thiet-lap', { muc: 'canh-bao-doanh-thu' })}>{canEditConfig ? 'Sửa ngưỡng' : 'Xem thiết lập'}</Button>}
         >
           {!d ? <Skel w="100%" h={120} /> : (
             <table className="mini-table">
-              <thead><tr><th scope="col">Mốc</th><th scope="col">Sắp đạt</th><th scope="col">Đã báo</th><th scope="col">Đã vượt trong năm</th></tr></thead>
+              <thead><tr><th scope="col">Mốc</th><th scope="col">{d ? `Sắp đạt (≥ ${d.rule.nearPct}%)` : 'Sắp đạt'}</th><th scope="col">Đã báo</th><th scope="col">Đã vượt trong năm</th></tr></thead>
               <tbody>
                 {d.milestones.map((m) => (
-                  <tr key={m.code}><th scope="row">{money(m.amount)}<span className="rem-sub">{m.meaning}</span></th><td data-label="Sắp đạt">{num(m.near)}</td><td data-label="Đã báo">{num(m.notified)}</td><td data-label="Đã vượt trong năm">{num(m.passed)}</td></tr>
+                  <tr key={m.code}><th scope="row">{money(m.amount)}<span className="rem-sub">{m.meaning}</span></th><td data-label={`Sắp đạt (≥ ${d.rule.nearPct}%)`}>{num(m.near)}</td><td data-label="Đã báo">{num(m.notified)}</td><td data-label="Đã vượt trong năm">{num(m.passed)}</td></tr>
                 ))}
               </tbody>
             </table>

@@ -44,7 +44,7 @@
   :root .shell--mobile .kpis { margin: 12px 0; border-radius: 12px; overflow: hidden; gap: 1px; }
   :root .shell--mobile .kpi { padding: 12px; min-height: 82px; gap: 4px; border-radius: 0; text-align: left; }
   .shell--mobile .kpi__label { font-size: 12px; line-height: 1.5; }
-  .shell--mobile .kpi__value { font-size: 24px; line-height: 1.2; }
+  .shell--mobile .kpi__value { font-size: 20px; line-height: 1.2; }
   .shell--mobile .kpi__note { font-size: 11px; line-height: 1.5; }
   .shell--mobile .kpis:not(.kpis--expanded) .kpi__note { display: none; }
   .shell--mobile .kpis--expanded .kpi[aria-haspopup="dialog"] { grid-column: 1 / -1; }

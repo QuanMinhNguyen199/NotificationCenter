@@ -1,0 +1,57 @@
+/* Chỉ số thông báo (13/11/2026): một thẻ, các chỉ số ngang hàng, không đường kẻ giữa ô.
+   Mỗi ô: nhãn / số / ghi chú. Bấm ô để lọc danh sách hoặc mở chi tiết. */
+.stats-kpis {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px;
+  margin-top: 16px; padding: 12px; container-type: inline-size;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-card);
+}
+@media (min-width: 768px) { .stats-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .stats-kpis { grid-template-columns: repeat(var(--kpi-n, 7), minmax(0, 1fr)); } }
+.stats-kpis.is-stale { opacity: 0.6; }
+.stats-kpis__metric {
+  display: grid; grid-template-rows: auto auto 1fr; align-content: start; gap: 6px;
+  min-width: 0; min-height: 44px; padding: 8px 10px;
+  border: 0; border-radius: 6px; background: transparent; color: var(--text);
+  font: inherit; text-align: left; cursor: pointer; transition: background-color 120ms ease;
+}
+.stats-kpis__metric:hover:not(:disabled) { background: var(--ground); }
+.stats-kpis__metric--selected, .stats-kpis__metric--selected:hover:not(:disabled) { background: var(--tint-50); box-shadow: inset 0 0 0 2px var(--brand); }
+.stats-kpis__metric:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+.stats-kpis__metric:disabled { cursor: default; }
+.stats-kpis__label { font-size: 14px; line-height: 1.4; color: var(--text-secondary); }
+.stats-kpis__value { font-size: 24px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.stats-kpis__value .kpi__unit { font-size: 14px; font-weight: 400; color: var(--text-secondary); }
+.stats-kpis__value--danger { color: var(--brand); }
+.stats-kpis__value--missing { color: var(--faint); font-weight: 400; }
+.stats-kpis__note { font-size: 13px; line-height: 1.4; color: var(--text-secondary); }
+@media (max-width: 767px) {
+  .stats-kpis { margin-top: 12px; padding: 8px; }
+  .stats-kpis__value { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .stats-kpis__metric { transition: none; } }
+/* Đường ngăn 1px giữa các ô (nền thẻ = màu viền, ô nền trắng). Hàng cuối thiếu ô thì ô cuối kéo rộng để không lộ ô trống. */
+.stats-kpis { gap: 1px; padding: 0; overflow: hidden; background: var(--border); }
+.stats-kpis__metric { padding: 16px; border-radius: 0; background: var(--surface); }
+.stats-kpis__metric:hover:not(:disabled) { background: var(--ground); }
+@media (max-width: 767px) {
+  .stats-kpis { padding: 0; }
+  .stats-kpis__metric { padding: 12px; }
+  .stats-kpis__metric:last-child:nth-child(odd) { grid-column: span 2; }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .stats-kpis__metric:last-child:nth-child(4n+3) { grid-column: span 2; }
+  .stats-kpis__metric:last-child:nth-child(4n+2) { grid-column: span 3; }
+  .stats-kpis__metric:last-child:nth-child(4n+1) { grid-column: span 4; }
+}
+/* Ô là khung; nút nằm ở nhãn và phủ cả ô bằng ::after. */
+.stats-kpis__metric { position: relative; cursor: pointer; text-align: left; }
+.stats-kpis__metric:has(.stats-kpis__hit:disabled) { cursor: default; }
+.stats-kpis__metric:has(.stats-kpis__hit:disabled):hover { background: var(--surface); }
+.stats-kpis__metric:has(.stats-kpis__hit:focus-visible) { outline: 2px solid var(--brand); outline-offset: -2px; }
+.stats-kpis__label { display: block; position: relative; pointer-events: none; }
+.stats-kpis__label .info-tip { pointer-events: auto; }
+.stats-kpis__hit { position: absolute; inset: 0; z-index: 0; padding: 0; border: 0; background: none; cursor: inherit; }
+.stats-kpis__hit:focus-visible { outline: none; }
+.stats-kpis__label .info-tip { position: relative; z-index: 1; width: 18px; height: 18px; margin: -2px 0 0 2px; vertical-align: -4px; }
+.stats-kpis__tail { white-space: nowrap; }
+

@@ -11,6 +11,7 @@ import { useBreakpoint } from '@/shared/lib/useMedia';
 import { useHideNavWhile } from '@/shared/lib/overlay';
 import type { GroupCode } from '@/shared/data/types';
 import { GROUP_LABEL } from '@/shared/lib/status';
+import { FEATURES } from '@/shared/lib/features';
 import { TODAY, type StatsParams } from './useStatsParams';
 
 type Preset = 'today' | '7' | '30' | 'custom';
@@ -37,7 +38,7 @@ const PRESETS: { value: Preset; label: string }[] = [
 const GROUP_TREE: { label: string; items: { value: string; label: string; child?: boolean }[] }[] = [
   { label: 'Nhắc nghĩa vụ', items: [{ value: 'D1', label: GROUP_LABEL.D1 }, { value: 'D1a', label: GROUP_LABEL.D1a, child: true }, { value: 'D1b', label: GROUP_LABEL.D1b, child: true }] },
   { label: 'Cảnh báo', items: [{ value: 'D4', label: GROUP_LABEL.D4 }] },
-  { label: 'Khác', items: (['D1c', 'D3', 'D5', 'D6'] as GroupCode[]).map((g) => ({ value: g, label: GROUP_LABEL[g] })) },
+  { label: 'Khác', items: ((FEATURES.routing ? ['D1c', 'D3', 'D5', 'D6'] : ['D1c', 'D5', 'D6']) as GroupCode[]).map((g) => ({ value: g, label: GROUP_LABEL[g] })) },
 ];
 const groupLabel = (v: string) => (v === 'all' ? 'Tất cả nhóm' : GROUP_LABEL[v] ?? v);
 

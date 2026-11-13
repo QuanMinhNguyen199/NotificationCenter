@@ -18,7 +18,7 @@ export function SupportTab({ scope }: { scope: string }) {
   const d = q.data;
   const statuses = Object.keys(REQUEST_STATUS_LABEL) as RequestStatus[];
   const table = (title: string, rows: NonNullable<typeof d>['officers'], first: string) => (
-    <Panel title={<span className="title-with-tip">{title}<ProtoBadge note="Các trạng thái yêu cầu là cách phân loại tạm của bản mẫu, cần đối chiếu quy trình hỗ trợ thực tế." /></span>} sub="30 ngày" className="dashboard-card--static hkd-table">
+    <Panel title={<span className="title-with-tip">{title}<ProtoBadge note="Các trạng thái yêu cầu là cách phân loại tạm của bản mẫu, cần đối chiếu quy trình hỗ trợ thực tế." /></span>} className="dashboard-card--static hkd-table">
       {!d ? <Skel w="100%" h={140} /> : (
         <TopRows total={rows.length} noun="dòng"><table className="mini-table">
           <thead><tr><th scope="col">{first}</th><th scope="col">Tổng</th>{statuses.map((s) => <th scope="col" key={s}>{REQUEST_STATUS_LABEL[s]}</th>)}<th scope="col">Xử lý trung bình</th></tr></thead>
@@ -29,8 +29,8 @@ export function SupportTab({ scope }: { scope: string }) {
   );
   return (
     <div className={`hkd-tab${q.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={q.isPlaceholderData}>
-      <KpiStrip lead label="Chỉ số hỗ trợ HKD">
-        <Kpi primary proposal label="Đã giải quyết" info="đếm yêu cầu đã giải quyết trong tập yêu cầu tiếp nhận 30 ngày; tỷ lệ tính trên tổng yêu cầu trong phạm vi đang xem, không cộng yêu cầu từ chối." value={d ? num(d.resolved) : <Skel w={80} h={28} />} note={d && `${pct(d.resolved, d.total)} trên ${num(d.total)} yêu cầu, ngoài ra ${num(d.rejected)} từ chối`} />
+      <KpiStrip label="Chỉ số hỗ trợ HKD">
+        <Kpi proposal label="Đã giải quyết" info="đếm yêu cầu đã giải quyết trong tập yêu cầu tiếp nhận 30 ngày; tỷ lệ tính trên tổng yêu cầu trong phạm vi đang xem, không cộng yêu cầu từ chối." value={d ? num(d.resolved) : <Skel w={80} h={28} />} note={d && `${pct(d.resolved, d.total)} trên ${num(d.total)} yêu cầu, ngoài ra ${num(d.rejected)} từ chối`} />
         <Kpi proposal label="Yêu cầu tiếp nhận" info="tổng yêu cầu tiếp nhận trong 30 ngày, thuộc phạm vi đang chọn; bao gồm tất cả trạng thái." value={d ? num(d.total) : <Skel w={80} h={28} />} note="30 ngày" />
         <Kpi proposal label="Đang xử lý" info="cộng yêu cầu mới tiếp nhận và yêu cầu đang xử lý. Chưa bao gồm yêu cầu chờ HKD bổ sung; cách gộp này chưa được nghiệp vụ xác nhận." value={d ? num(d.open) : <Skel w={80} h={28} />} note="Gồm mới tiếp nhận và đang xử lý" />
         <Kpi proposal label="Chờ HKD bổ sung" info="đếm yêu cầu có trạng thái chờ bổ sung trong tập yêu cầu tiếp nhận 30 ngày, thuộc phạm vi đang chọn." value={d ? num(d.needMore) : <Skel w={80} h={28} />} tone="danger" />

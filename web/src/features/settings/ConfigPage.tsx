@@ -12,6 +12,7 @@ import { CompareModal, HistoryOverlay, PreviewOverlay, SaveDialog, type SaveInpu
 import { SectionToggle, UnusedGroups, type Ctx } from './Forms';
 import { sectionsFor } from './sections';
 import { useConfigDraft } from './useConfigDraft';
+import { FEATURES } from '@/shared/lib/features';
 import { AREAS, areaOfField, type AreaId, type FieldKey } from '@/shared/data/config';
 import { usePermissions } from '@/shared/demo/useDemo';
 import { dmyhm } from '@/shared/lib/format';
@@ -200,7 +201,7 @@ export default function ConfigPage() {
               </div>
               <div>
                 <dt>Theo sự kiện, gửi ngay</dt>
-                <dd>Kết quả hồ sơ, kết quả nộp thuế, kết quả chuyển tuyến. Gửi khi có sự kiện, không chờ khung giờ. Chưa có nguồn dữ liệu nên chưa có tham số thiết lập.</dd>
+                <dd>Kết quả hồ sơ, kết quả nộp thuế{FEATURES.routing ? ', kết quả chuyển tuyến' : ''}. Gửi khi có sự kiện, không chờ khung giờ. Chưa có nguồn dữ liệu nên chưa có tham số thiết lập.</dd>
               </div>
             </dl>
           </section>

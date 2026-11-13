@@ -1,9 +1,10 @@
-import { useState, type ReactNode, type CSSProperties } from 'react';
-import { ChevronDown } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { Summary } from '@/shared/api/mockApi';
 import { Skel } from '@/shared/components/Blocks';
+import { InfoTip } from '@/shared/components/InfoTip';
 import { duration, durationParts, num, pct } from '@/shared/lib/format';
 import type { StatsParams } from './useStatsParams';
+import './kpis.css';
 
 export type KpiKey = 'total' | 'sent' | 'delivered' | 'pending' | 'failed' | 'unique' | 'response';
 
@@ -14,6 +15,8 @@ interface Def {
   /** Mặc định hiển thị số đếm; thời gian phản hồi hiển thị giờ/phút. */
   render?: (v: number) => ReactNode;
   note: (s: Summary) => string;
+  /** Giải thích cách tính, hiện trong tooltip ⓘ cạnh nhãn. */
+  info?: (s: Summary) => string;
   selected: (p: StatsParams) => boolean;
 }
 
@@ -35,11 +38,12 @@ const DEFS: Def[] = [
     key: 'total',
     label: 'Tổng thông báo',
     value: (s) => s.total,
-    // Đã gửi + Chờ gửi + Gửi thất bại chưa bằng Tổng: nêu phần còn lại để các ô cộng khớp.
-    note: (s) => (s.other ? `Gồm ${num(s.other)} chưa rõ, hết hạn hoặc bỏ qua` : ''),
+    note: () => '',
+    // Đã gửi + Chờ gửi + Gửi thất bại chưa bằng Tổng: nêu phần còn lại để người xem không nghĩ số liệu sai.
+    info: (s) => (s.other ? `Gồm ${num(s.other)} thông báo chưa rõ, hết hạn hoặc bỏ qua, nên Đã gửi + Chờ gửi + Gửi thất bại nhỏ hơn Tổng.` : ''),
     selected: () => false,
   },
-  { key: 'sent', label: 'Đã gửi', value: (s) => s.sent, note: (s) => (s.total ? `${pct(s.sent, s.total)} tổng số` : ''), selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
+  { key: 'sent', label: 'Đã gửi', value: (s) => s.sent, note: () => '', selected: (p) => p.tab === 'notifications' && p.ns === 'SENT' },
   {
     key: 'delivered',
     label: 'Đã tiếp nhận',
@@ -55,7 +59,8 @@ const DEFS: Def[] = [
     label: 'Thời gian phản hồi trung bình',
     value: (s) => s.avgResponse,
     render: (v) => <Duration min={v} />,
-    note: (s) => (s.avgResponse == null ? 'Chưa có mốc tiếp nhận' : 'Tạo → tiếp nhận'),
+    note: (s) => (s.avgResponse == null ? 'Chưa có mốc tiếp nhận' : ''),
+    info: () => 'Tính từ lúc tạo thông báo tới lúc NNT tiếp nhận, trung bình trên các thông báo đã tiếp nhận.',
     selected: (p) => p.detail === 'x:response',
   },
 ];
@@ -76,50 +81,46 @@ export function Kpis({ s, p, onPick, unused, stale, keys, labels }: {
   labels?: Partial<Record<KpiKey, string>>;
 }) {
   const defs = keys ? DEFS.filter((d) => keys.includes(d.key)) : DEFS;
-  // Ô "Tổng thông báo" là ô chính; ô phụ xếp 2 hàng (CSS dùng --kpi-cols).
-  const lead = defs.some((d) => d.key === 'total');
-  // Mobile: ô phụ ẩn sau nút "Xem thêm"; chỉ áp dụng khi màn đang hiện đủ 7 ô.
-  const secondary: KpiKey[] = defs.length === DEFS.length ? ['delivered', 'unique', 'response'] : [];
-  const [expanded, setExpanded] = useState(false);
   return (
-    <div className={`kpis${expanded ? ' kpis--expanded' : ''}${defs.length !== DEFS.length ? ` kpis--${defs.length}` : ''}${lead ? ` kpis--lead${(defs.length - 1) % 2 === 1 && defs.length > 2 ? ' kpis--odd' : ''}` : ''}${stale ? ' is-stale' : ''}`} aria-busy={stale} style={lead ? ({ '--kpi-cols': Math.max(1, Math.ceil((defs.length - 1) / 2)) } as CSSProperties) : undefined} role="group" aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết">
-      {defs.map((d, i) => {
+    <div
+      className={`stats-kpis${stale ? ' is-stale' : ''}`}
+      style={{ '--kpi-n': defs.length } as CSSProperties}
+      aria-busy={s === undefined || !!stale}
+      role="group"
+      aria-label="Chỉ số thông báo, bấm để lọc danh sách hoặc xem chi tiết"
+    >
+      {defs.map((d) => {
         const v = s ? d.value(s) : undefined;
-        const sel = d.selected(p);
+        const missing = v === null || !!unused;
+        const note = unused ? '' : s ? d.note(s) : '';
+        const info = s && d.info ? d.info(s) : '';
+        const label = labels?.[d.key] ?? d.label;
+        const cut = label.lastIndexOf(' ');
+        const head = cut < 0 ? '' : label.slice(0, cut + 1); // giữ dấu cách cuối
+        const tail = cut < 0 ? label : label.slice(cut + 1);
         return (
-          <button
-            key={d.key}
-            type="button"
-            className={`kpi${sel ? ' kpi--selected' : ''}${d.key === 'total' ? ' kpi--lead' : ''}${secondary.includes(d.key) ? ' kpi--secondary' : ''}${i === defs.length - 1 ? ' kpi--last' : ''}`}
-            aria-pressed={d.key === 'response' ? undefined : sel}
-            aria-haspopup={d.key === 'response' ? 'dialog' : undefined}
-            onClick={() => onPick(d.key, NS[d.key])}
-          >
-            <span className="kpi__label">{labels?.[d.key] ?? d.label}</span>
-            {s === undefined ? (
-              <>
-                <Skel w={96} h={30} />
-                <Skel w={120} h={12} />
-              </>
-            ) : v === null || unused ? (
-              <>
-                <span className="kpi__value kpi__value--missing" aria-label="Không có dữ liệu">—</span>
-                <span className="kpi__note">{unused ? '' : d.note(s)}</span>
-              </>
-            ) : (
-              <>
-                <span className={`kpi__value kpi__value--${d.key}`}>{d.render ? d.render(v!) : num(v!)}</span>
-                <span className="kpi__note">{d.note(s)}</span>
-              </>
-            )}
-          </button>
+          <div key={d.key} className={`stats-kpis__metric${d.selected(p) ? ' stats-kpis__metric--selected' : ''}`} data-kpi={d.key}>
+            {/* Nút trong suốt phủ cả ô: bấm chỗ nào trên ô cũng lọc; icon ⓘ nằm trên lớp phủ. */}
+            <button
+              type="button"
+              className="stats-kpis__hit"
+              disabled={!!stale || s === undefined}
+              aria-label={label}
+              aria-pressed={d.key === 'response' ? undefined : d.selected(p)}
+              aria-haspopup={d.key === 'response' ? 'dialog' : undefined}
+              onClick={() => onPick(d.key, NS[d.key])}
+            />
+            <span className="stats-kpis__label" aria-hidden={!info || undefined}>
+              {/* Chữ cuối đi liền icon ⓘ để icon không rơi xuống dòng riêng. */}
+              {info ? <>{head}<span className="stats-kpis__tail">{tail}<InfoTip>{info}</InfoTip></span></> : label}
+            </span>
+            <span className={`stats-kpis__value${missing ? ' stats-kpis__value--missing' : ''}${d.key === 'failed' && !missing && v ? ' stats-kpis__value--danger' : ''}`}>
+              {s === undefined ? <Skel w={80} h={28} /> : missing ? <span aria-label="Không có dữ liệu">—</span> : d.render ? d.render(v!) : num(v!)}
+            </span>
+            {note && <span className="stats-kpis__note">{note}</span>}
+          </div>
         );
       })}
-      {secondary.length > 0 && (
-        <button type="button" className="kpis__more" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-          {expanded ? 'Thu gọn chỉ số' : `Xem thêm ${secondary.length} chỉ số`}<ChevronDown aria-hidden="true" />
-        </button>
-      )}
     </div>
   );
 }

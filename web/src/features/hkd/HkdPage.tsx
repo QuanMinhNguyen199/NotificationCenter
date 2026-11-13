@@ -34,7 +34,7 @@ const TABS = [
   { key: 'chi-tieu', label: 'Chỉ tiêu hằng ngày' },
   { key: 'co-cau', label: 'Cơ cấu và tuân thủ' },
   { key: 'no-thue', label: 'Nợ thuế' },
-  { key: 'ho-tro', label: 'Hỗ trợ HKD' },
+  ...(FEATURES.hkdSupport ? [{ key: 'ho-tro', label: 'Hỗ trợ HKD' }] : []),
   { key: 'nhac-viec', label: 'Hiệu quả nhắc việc' },
   { key: 'danh-sach', label: 'Danh sách nghĩa vụ' },
   ...(FEATURES.aiQa ? [{ key: 'hoi-dap-ai', label: 'Hỏi đáp AI' }] : []),

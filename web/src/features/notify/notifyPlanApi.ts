@@ -1,6 +1,7 @@
 // Lịch thông báo, danh mục loại và hiệu quả gửi (view.docx mục 4, các ý [Thêm]).
 // Toàn bộ là dữ liệu giả lập, tính tất định từ danh sách NNT trong data/mock.ts; "hôm nay" = 28/10/2026.
 import { INITIAL_CONFIG } from '@/shared/data/config';
+import { FEATURES } from '@/shared/lib/features';
 import { taxpayers } from '@/shared/data/mock';
 import { holidayName, isWeekend, nonHolidayFrom, workdayFrom } from '@/shared/lib/workdays';
 
@@ -27,7 +28,7 @@ export interface TypeMeta {
   color: string;
 }
 
-export const TYPES: TypeMeta[] = [
+const ALL_TYPES: TypeMeta[] = [
   { id: 'due', label: 'Nhắc hạn', short: 'Nhắc hạn', mode: 'window', live: true, groups: 'D1a, D1b', color: '#2563EB',
     trigger: `Hồ sơ khai hoặc khoản thuế còn ${INITIAL_CONFIG.daysBefore} ngày đến hạn mà chưa hoàn thành.` },
   { id: 'overdue', label: 'Quá hạn theo mức độ', short: 'Quá hạn', mode: 'window', live: true, groups: 'D1a, D1b', color: '#DC2626',
@@ -45,8 +46,10 @@ export const TYPES: TypeMeta[] = [
   { id: 'signature', label: 'Nhắc gia hạn chữ ký số', short: 'Chữ ký số', mode: 'window', live: false, color: '#BE185D',
     trigger: 'Chứng thư chữ ký số của hộ còn 30 ngày và 7 ngày đến ngày hết hạn.' },
 ];
+// Chuyển tuyến đang tạm ẩn (shared/lib/features.ts): bỏ khỏi danh mục, bộ lọc và lịch.
+export const TYPES: TypeMeta[] = ALL_TYPES.filter((t) => t.id !== 'transfer' || FEATURES.routing);
 
-export const TYPE: Record<NotiType, TypeMeta> = Object.fromEntries(TYPES.map((t) => [t.id, t])) as Record<NotiType, TypeMeta>;
+export const TYPE: Record<NotiType, TypeMeta> = Object.fromEntries(ALL_TYPES.map((t) => [t.id, t])) as Record<NotiType, TypeMeta>;
 
 /** Mức quá hạn và nhịp nhắc — đề xuất của nhóm thiết kế, chưa được nghiệp vụ chốt. */
 export const SEVERITY = [
@@ -217,7 +220,7 @@ function planOf(tpId: number, from: number, to: number, rawPush: Push) {
   for (const { y, m } of months) {
     if (h(tpId, 'tr', y, m) < 0.012) {
       const d = idx(y, m, 1 + Math.floor(h(tpId, 'trd', y, m) * 27));
-      if (within(d)) push({ day: d, type: 'transfer', taxpayerId: tpId, time: null, reason: 'Hồ sơ chuyển tuyến đã có kết quả xử lý' });
+      if (FEATURES.routing && within(d)) push({ day: d, type: 'transfer', taxpayerId: tpId, time: null, reason: 'Hồ sơ chuyển tuyến đã có kết quả xử lý' });
     }
   }
   // Chữ ký số: 35% hộ có chứng thư, hạn rải trong 2 năm từ 01/07/2026.

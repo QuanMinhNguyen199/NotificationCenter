@@ -33,7 +33,7 @@ function FullContent({ n }: { n: Notification }) {
       <p>Kính gửi {tp.name} (MST {tp.mst}),</p>
       {n.groups.includes('D1a') && <p>Hồ sơ khai thuế quý III/2026 chưa được nộp. Hạn nộp: 30/10/2026.</p>}
       {n.groups.includes('D1b') && <p>Số tiền thuế còn phải nộp: 1.250.000 đồng. Hạn nộp: 30/10/2026.</p>}
-      <p>Vui lòng hoàn thành trên Cổng dịch vụ công hoặc liên hệ Thuế cơ sở A để được hỗ trợ.</p>
+      <p>Vui lòng hoàn thành trên Cổng dịch vụ công hoặc liên hệ Thuế cơ sở 1 để được hỗ trợ.</p>
     </div>
   );
 }

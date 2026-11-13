@@ -1,3 +1,4 @@
+import { FEATURES } from '@/shared/lib/features';
 // Cấu hình Engagement — giá trị ban đầu theo mục 3.3 của đặc tả (bối cảnh mock: nhắc nghĩa vụ và doanh thu đang bật).
 
 export interface ConfigValues {
@@ -60,7 +61,7 @@ export interface ConfigGroup {
   description: string;
 }
 
-export const GROUPS: ConfigGroup[] = [
+const ALL_GROUPS: ConfigGroup[] = [
   { id: 'D2', code: 'D2', name: 'Thiết lập chung', flag: 'autoScan', description: 'Quét tự động, lịch quét và quét bù, khung gửi, nhịp điều phối và duyệt đợt bất thường.' },
   { id: 'D1a', code: 'D1a', name: 'Nhắc khai thuế', flag: 'reminderEnabled', description: 'Nhắc hồ sơ khai thuế trước hạn và quá hạn, gộp theo NNT mỗi ngày.' },
   { id: 'D1b', code: 'D1b', name: 'Nhắc nộp thuế', flag: 'reminderEnabled', description: 'Nhắc phần tiền thuế còn phải nộp trước hạn và quá hạn, gộp theo NNT mỗi ngày.' },
@@ -70,6 +71,8 @@ export const GROUPS: ConfigGroup[] = [
   { id: 'D5', code: 'D5', name: 'Thông báo chung', flag: null, unused: true, description: 'Nội dung thông báo theo sự kiện do cơ quan thuế phát hành.' },
   { id: 'D6', code: 'D6', name: 'Tiện ích ngân hàng', flag: null, unused: true, description: 'Thông tin tiện ích nộp thuế qua ngân hàng và nguồn nội dung liên quan.' },
 ];
+/** D3 thuộc Chuyển tuyến, đang tạm ẩn (shared/lib/features.ts). */
+export const GROUPS: ConfigGroup[] = ALL_GROUPS.filter((g) => g.id !== 'D3' || FEATURES.routing);
 
 /** Bốn mục hiển thị ở màn Cấu hình. Nhắc khai và nhắc nộp gộp một mục vì dùng chung một cờ và một cửa sổ nhắc. */
 export type AreaId = 'schedule' | 'reminder' | 'revenue' | 'unused';
@@ -78,7 +81,7 @@ export const AREAS: { id: AreaId; slug: string; name: string; flag: FieldKey | n
   { id: 'schedule', slug: 'lich-chay', name: 'Lịch chạy', flag: 'autoScan', groups: ['D2'] },
   { id: 'reminder', slug: 'nhac-nghia-vu', name: 'Nhắc nghĩa vụ thuế', flag: 'reminderEnabled', groups: ['D1a', 'D1b'] },
   { id: 'revenue', slug: 'canh-bao-doanh-thu', name: 'Cảnh báo doanh thu', flag: 'revenueEnabled', groups: ['D4'] },
-  { id: 'unused', slug: 'chua-su-dung', name: 'Chưa sử dụng', flag: null, groups: ['D1c', 'D3', 'D5', 'D6'] },
+  { id: 'unused', slug: 'chua-su-dung', name: 'Chưa sử dụng', flag: null, groups: FEATURES.routing ? ['D1c', 'D3', 'D5', 'D6'] : ['D1c', 'D5', 'D6'] },
 ];
 
 export function areaOfField(k: FieldKey) {

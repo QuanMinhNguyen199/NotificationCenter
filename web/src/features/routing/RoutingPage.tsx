@@ -121,9 +121,8 @@ export default function RoutingPage() {
 function Kpis({ s }: { s?: RoutingSummary }) {
   const loading = <Skel w={80} h={28} />;
   return (
-    <KpiStrip lead className="rt-kpis" label="Chỉ số chuyển tuyến">
+    <KpiStrip className="rt-kpis" label="Chỉ số chuyển tuyến">
       <Kpi
-        primary
         label="Ca chờ xử lý"
         value={s ? num(s.waiting) : loading}
         note={s ? (s.overdue ? <span className="rt-kpi-alert">{num(s.overdue)} ca quá hạn</span> : 'Không có ca quá hạn') : undefined}

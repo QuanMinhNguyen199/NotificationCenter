@@ -6,9 +6,9 @@ import ReactECharts from '@/shared/components/Chart';
 import { dm, num, pct } from '@/shared/lib/format';
 import { useBreakpoint } from '@/shared/lib/useMedia';
 import { C } from '@/shared/theme';
-import { TopRows } from '@/shared/components/TopRows';
 import { axisLabel, useChartBase } from './hkdChart';
 import { SrTable } from './HkdParts';
+import { SortTable } from '@/shared/components/SortTable';
 import { Kpi, KpiStrip } from '@/shared/components/Kpi';
 
 /* ---------- Tab 1: Chỉ tiêu hằng ngày ---------- */
@@ -23,13 +23,13 @@ export function DailyTab({ scope }: { scope: string }) {
   const d = q.data;
   return (
     <div className={`hkd-tab${q.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={q.isPlaceholderData}>
-      <KpiStrip lead label="Chỉ số trong ngày">
-        <Kpi primary proposal info="So sánh với trung bình 7 ngày trước là cách đọc do nhóm thiết kế chọn." label="Tờ khai tiếp nhận hôm nay" value={d ? num(d.today.received) : <Skel w={80} h={28} />} note={d && `Trung bình 7 ngày trước: ${num(Math.round(d.avg7))}`} />
+      <KpiStrip label="Chỉ số trong ngày">
+        <Kpi proposal info="So sánh với trung bình 7 ngày trước là cách đọc do nhóm thiết kế chọn." label="Tờ khai tiếp nhận hôm nay" value={d ? num(d.today.received) : <Skel w={80} h={28} />} note={d && `Trung bình 7 ngày trước: ${num(Math.round(d.avg7))}`} />
         <Kpi proposal info="Kỳ 30 ngày và công thức tỷ lệ xử lý thành công là diễn giải của nhóm thiết kế." label="Tỷ lệ xử lý thành công" value={d ? pct(d.okRate * 100, 100) : <Skel w={80} h={28} />} note="30 ngày" />
-        <Kpi proposal info="Công thức: hồ sơ phải nộp đã nộp trên hồ sơ phải nộp, kỳ 30 ngày. Là diễn giải của nhóm thiết kế." label="Tỷ lệ nộp thuế theo hồ sơ" value={d ? pct(d.paidRate * 100, 100) : <Skel w={80} h={28} />} note="Hồ sơ phải nộp đã nộp, 30 ngày" />
-        <Kpi label="Đăng ký app, chưa nộp tờ khai" value={d ? num(d.appMissing) : <Skel w={80} h={28} />} note={d && `Trên ${num(d.registered)} hộ đã đăng ký`} tone="danger" />
+        <Kpi proposal info="Công thức: hồ sơ phải nộp đã nộp trên hồ sơ phải nộp, kỳ 30 ngày. Là diễn giải của nhóm thiết kế." label="Tỷ lệ nộp thuế theo hồ sơ" value={d ? pct(d.paidRate * 100, 100) : <Skel w={80} h={28} />} note="Hồ sơ đã nộp, 30 ngày gần nhất" />
+        <Kpi label="Số HKD sử dụng app, chưa nộp tờ khai" value={d ? num(d.appMissing) : <Skel w={80} h={28} />} note={d && `Trên ${num(d.registered)} hộ sử dụng app`} tone="danger" />
       </KpiStrip>
-      <div className="charts">
+      <div className="charts charts--even">
         <Panel title="Tờ khai theo ngày" className="dashboard-card--static">
           {!d ? <Skel w="100%" h={220} /> : (
             <ReactECharts
@@ -54,7 +54,7 @@ export function DailyTab({ scope }: { scope: string }) {
             <span><i className="swatch" style={{ background: C.sent }} /> Xử lý thành công</span>
           </div>
         </Panel>
-        <Panel title="Đăng ký app nhưng chưa nộp tờ khai" sub="Theo tuần, 8 tuần gần nhất" className="dashboard-card--static hkd-weekly">
+        <Panel title="Số HKD sử dụng app, chưa nộp tờ khai" className="dashboard-card--static hkd-weekly">
           {!d ? <Skel w="100%" h={220} /> : (
             <ReactECharts
               aria-hidden="true"
@@ -75,19 +75,25 @@ export function DailyTab({ scope }: { scope: string }) {
               }}
             />
           )}
-          {d && <SrTable caption="Hộ đăng ký app nhưng chưa nộp tờ khai, theo tuần" head={['Tuần', 'Số hộ']} rows={d.weeks.map((w) => [w.label, num(w.value)])} />}
+          {d && <SrTable caption="Số HKD sử dụng app, chưa nộp tờ khai, theo tuần" head={['Tuần', 'Số hộ']} rows={d.weeks.map((w) => [w.label, num(w.value)])} />}
         </Panel>
       </div>
-      {role !== 'officer' && <Panel title="Theo đơn vị" sub="30 ngày" className="dashboard-card--static hkd-table">
+      {role !== 'officer' && <Panel title="Theo đơn vị" className="dashboard-card--static hkd-table">
         {!d ? <Skel w="100%" h={120} /> : (
-          <TopRows total={d.byUnit.length} noun="đơn vị"><table className="mini-table">
-            <thead><tr><th scope="col">Đơn vị</th><th scope="col">Tờ khai tiếp nhận</th><th scope="col">Xử lý thành công</th><th scope="col">Nộp thuế theo hồ sơ</th><th scope="col">Đăng ký app, chưa nộp</th></tr></thead>
-            <tbody>
-              {d.byUnit.map((u) => (
-                <tr key={u.name}><th scope="row">{u.name}</th><td>{num(u.received)}</td><td>{pct(u.okRate * 100, 100)}</td><td>{pct(u.paidRate * 100, 100)}</td><td>{num(u.appMissing)}</td></tr>
-              ))}
-            </tbody>
-          </table></TopRows>
+          <SortTable
+            label="Chỉ tiêu theo đơn vị"
+            rows={d.byUnit}
+            rowKey={(u) => u.name}
+            rowHead={{ key: 'name', label: 'Đơn vị', sort: (u) => u.name, render: (u) => u.name }}
+            cols={[
+              { key: 'received', label: 'Tờ khai tiếp nhận', sort: (u) => u.received, render: (u) => num(u.received), desc: true },
+              { key: 'ok', label: 'Xử lý thành công', sort: (u) => u.okRate, render: (u) => pct(u.okRate * 100, 100), desc: true },
+              { key: 'paid', label: 'Nộp thuế theo hồ sơ', sort: (u) => u.paidRate, render: (u) => pct(u.paidRate * 100, 100), desc: true },
+              { key: 'app', label: 'Sử dụng app, chưa nộp', sort: (u) => u.appMissing, render: (u) => num(u.appMissing), desc: true },
+            ]}
+            initial={{ key: 'name', dir: 'asc' }}
+            className="sort-table--fluid"
+          />
         )}
       </Panel>}
     </div>

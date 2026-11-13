@@ -3,7 +3,7 @@ import { REPORT_MONTHS, fetchDebt } from './hkdApi';
 import { BlockError, Panel, Skel } from '@/shared/components/Blocks';
 import { usePermissions } from '@/shared/demo/useDemo';
 import ReactECharts from '@/shared/components/Chart';
-import { num, pct } from '@/shared/lib/format';
+import { num } from '@/shared/lib/format';
 import { C } from '@/shared/theme';
 import { downloadXlsx } from '@/shared/lib/xlsx';
 import { ExcelButton } from '@/shared/components/ExcelButton';
@@ -29,23 +29,23 @@ export function DebtTab({ scope, scopeName }: { scope: string; scopeName: string
     downloadXlsx(`bao-cao-no-thue-${month.replace('/', '-')}`, [
       [`Báo cáo nợ thuế HKD tháng ${month}`, scopeName, 'Dữ liệu minh họa'],
       [],
-      ['Đơn vị', 'Số HKD nợ', 'Tổng nợ (đồng)', 'Nợ quá hạn (đồng)'],
+      ['Đơn vị', 'Số HKD nợ', 'Tổng nợ thuế (đồng)', 'Nợ quá hạn (đồng)'],
       ...d.byUnit.map((u) => [u.name, Math.round(u.hkd * (t.hkd / Math.max(d.hkd, 1))), Math.round(u.amount * k), Math.round(u.overdue * k)]),
       [],
-      ['Địa bàn', 'Số HKD nợ', 'Tổng nợ (đồng)', 'Nợ quá hạn (đồng)'],
+      ['Địa bàn', 'Số HKD nợ', 'Tổng nợ thuế (đồng)', 'Nợ quá hạn (đồng)'],
       ...d.byWard.map((u) => [u.name, Math.round(u.hkd * (t.hkd / Math.max(d.hkd, 1))), Math.round(u.amount * k), Math.round(u.overdue * k)]),
     ]);
   };
   return (
     <div className={`hkd-tab${q.isPlaceholderData ? ' is-stale' : ''}`} aria-busy={q.isPlaceholderData}>
-      <KpiStrip lead label="Chỉ số nợ thuế">
-        <Kpi primary label="Tổng nợ" value={d ? money(d.total) : <Skel w={80} h={28} />} />
+      <KpiStrip label="Chỉ số nợ thuế">
+        <Kpi label="Tổng nợ thuế" value={d ? money(d.total) : <Skel w={80} h={28} />} />
         <Kpi label="Số HKD nợ thuế" value={d ? num(d.hkd) : <Skel w={80} h={28} />} />
-        <Kpi label="Nợ quá hạn" value={d ? money(d.overdue) : <Skel w={80} h={28} />} note={d && pct(d.overdue, d.total)} tone="danger" />
+        <Kpi label="Nợ quá hạn" value={d ? money(d.overdue) : <Skel w={80} h={28} />} tone="danger" />
         <Kpi proposal label="Nợ bình quân mỗi HKD" info="tổng nợ chia cho số HKD đang nợ thuế trong phạm vi được chọn." value={d ? money(d.avg) : <Skel w={80} h={28} />} />
       </KpiStrip>
       <div className="charts">
-        <Panel title={<span className="title-with-tip">Nợ thuế theo tháng<ProtoBadge note="Cách trình bày xu hướng 12 tháng do nhóm thiết kế chọn." /></span>} sub="12 tháng" className="dashboard-card--static">
+        <Panel title={<span className="title-with-tip">Nợ thuế theo tháng<ProtoBadge note="Cách trình bày xu hướng 12 tháng do nhóm thiết kế chọn." /></span>} className="dashboard-card--static">
           {!d ? <Skel w="100%" h={240} /> : (
             <ReactECharts
               aria-hidden="true"
@@ -60,15 +60,15 @@ export function DebtTab({ scope, scopeName }: { scope: string; scopeName: string
                   { type: 'value', name: 'HKD', nameTextStyle: { color: C.faint, fontSize: 11 }, axisLabel, splitLine: { show: false } },
                 ],
                 series: [
-                  { name: 'Tổng nợ (tỷ đồng)', type: 'bar', data: d.trend.map((t) => +(t.amount / 1e9).toFixed(2)), itemStyle: { color: C.bar }, barMaxWidth: 22 },
+                  { name: 'Tổng nợ thuế (tỷ đồng)', type: 'bar', data: d.trend.map((t) => +(t.amount / 1e9).toFixed(2)), itemStyle: { color: C.bar }, barMaxWidth: 22 },
                   { name: 'Số HKD nợ', type: 'line', yAxisIndex: 1, data: d.trend.map((t) => t.hkd), itemStyle: { color: C.sent }, lineStyle: { width: 2 }, symbol: 'none' },
                 ],
               }}
             />
           )}
-          {d && <SrTable caption="Nợ thuế theo tháng" head={['Tháng', 'Tổng nợ', 'Số HKD nợ']} rows={d.trend.map((t) => [t.month.slice(0, 2) + '/' + t.month.slice(5), money(t.amount), num(t.hkd)])} />}
+          {d && <SrTable caption="Nợ thuế theo tháng" head={['Tháng', 'Tổng nợ thuế', 'Số HKD nợ']} rows={d.trend.map((t) => [t.month.slice(0, 2) + '/' + t.month.slice(5), money(t.amount), num(t.hkd)])} />}
           <div className="chart-legend" aria-hidden="true">
-            <span><i className="swatch" style={{ background: C.bar }} /> Tổng nợ (tỷ đồng, trục trái)</span>
+            <span><i className="swatch" style={{ background: C.bar }} /> Tổng nợ thuế (tỷ đồng, trục trái)</span>
             <span><i className="swatch" style={{ background: C.sent }} /> Số HKD nợ (trục phải)</span>
           </div>
         </Panel>
@@ -88,7 +88,7 @@ export function DebtTab({ scope, scopeName }: { scope: string; scopeName: string
           <Panel key={k} title={k === 'byUnit' ? 'Theo đơn vị' : 'Theo địa bàn'} className="dashboard-card--static hkd-table">
             {!d ? <Skel w="100%" h={120} /> : (
               <TopRows total={d[k].length} noun="dòng"><table className="mini-table">
-                <thead><tr><th scope="col">{k === 'byUnit' ? 'Đơn vị' : 'Địa bàn'}</th><th scope="col">HKD nợ</th><th scope="col">Tổng nợ</th><th scope="col">Quá hạn</th></tr></thead>
+                <thead><tr><th scope="col">{k === 'byUnit' ? 'Đơn vị' : 'Địa bàn'}</th><th scope="col">HKD nợ</th><th scope="col">Tổng nợ thuế</th><th scope="col">Quá hạn</th></tr></thead>
                 <tbody>{d[k].map((u) => <tr key={u.name}><th scope="row">{u.name}</th><td>{num(u.hkd)}</td><td>{money(u.amount)}</td><td>{money(u.overdue)}</td></tr>)}</tbody>
               </table></TopRows>
             )}
