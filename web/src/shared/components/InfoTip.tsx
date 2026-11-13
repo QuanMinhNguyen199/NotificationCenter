@@ -2,6 +2,14 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip } from 'radix-ui';
 
+// Chỉ mở tooltip theo focus khi người dùng đang di chuyển bằng phím Tab. Focus do chương trình chuyển
+// (popover, sheet, dialog tự focus phần tử đầu tiên; trả focus khi đóng) hoặc do bấm chuột thì bỏ qua.
+let keyboardNav = false;
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => { if (e.key === 'Tab') keyboardNav = true; }, true);
+  window.addEventListener('pointerdown', () => { keyboardNav = false; }, true);
+}
+
 /**
  * Nút nhỏ mở tooltip giải thích. Chuột: mở khi rê vào, đóng khi rời (không cần bấm).
  * Bàn phím: mở khi focus, Esc để đóng. Màn cảm ứng không có hover nên chạm để mở/đóng.
@@ -14,7 +22,7 @@ export function HoverTip({ label, className, trigger, children }: {
   const touch = useRef(false);
   return (
     <Tooltip.Provider delayDuration={120} skipDelayDuration={0}>
-      <Tooltip.Root open={open} onOpenChange={setOpen}>
+      <Tooltip.Root open={open} onOpenChange={setOpen} disableHoverableContent>
         <Tooltip.Trigger asChild>
           <button
             type="button"
@@ -26,6 +34,8 @@ export function HoverTip({ label, className, trigger, children }: {
               if (touch.current) { e.preventDefault(); setOpen((o) => !o); }
             }}
             onClick={(e) => { if (touch.current) e.preventDefault(); }}
+            // preventDefault để Radix bỏ qua việc mở theo focus này.
+            onFocus={(e) => { if (!keyboardNav) e.preventDefault(); }}
           >
             {trigger}
           </button>

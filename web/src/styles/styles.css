@@ -1552,7 +1552,7 @@ html[data-bp="mobile"] ::-webkit-scrollbar { display: none; width: 0; height: 0;
 
 /* Nút tiện ích dùng icon: cùng chiều cao control, tối thiểu 44px trên thiết bị chạm. */
 :root .utility-icon { position: relative; width: var(--ctl, 40px); height: var(--ctl, 40px); min-width: var(--ctl, 40px); padding: 0; flex: none; }
-.utility-tooltip { z-index: 1100; max-width: min(280px, calc(100vw - 32px)); padding: 6px 10px; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; box-shadow: var(--float-shadow); }
+.utility-tooltip { z-index: 1100; max-width: min(280px, calc(100vw - 32px)); padding: 6px 10px; border-radius: 6px; background: var(--tooltip-bg); color: var(--surface); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; box-shadow: var(--float-shadow); }
 @media (max-width: 1199px), (pointer: coarse) {
   :root .utility-icon { width: 44px; height: 44px; min-width: 44px; }
 }
@@ -1722,11 +1722,11 @@ html[data-bp="mobile"] ::-webkit-scrollbar { display: none; width: 0; height: 0;
 @media (pointer: coarse) { .info-tip { width: 36px; height: 36px; margin: -10px -8px; } }
 .info-tip__content {
   z-index: 1100; max-width: min(320px, calc(100vw - 24px)); padding: 8px 12px; border-radius: 8px;
-  background: var(--text); color: var(--surface); font-size: 13px; font-weight: 400; line-height: 1.5; text-align: left;
+  background: var(--tooltip-bg); color: var(--surface); font-size: 13px; font-weight: 400; line-height: 1.5; text-align: left;
   box-shadow: var(--shadow-card-hover);
 }
 .info-tip__content b { font-weight: 600; }
-.info-tip__arrow { fill: var(--text); }
+.info-tip__arrow { fill: var(--tooltip-bg); }
 @media (prefers-reduced-motion: no-preference) {
   .info-tip__content[data-state="delayed-open"], .info-tip__content[data-state="instant-open"] { animation: info-tip-in var(--dur-fast, 0.12s) ease-out; }
 }
@@ -1766,3 +1766,17 @@ html[data-bp="mobile"] ::-webkit-scrollbar { display: none; width: 0; height: 0;
 /* Mobile, ô phụ: nhãn chảy như chữ thường để icon Đề xuất đi liền sau từ cuối */
 :root .shell--mobile .hkd-kpis--lead > .hkd-kpi:not(.hkd-kpi--primary) .kpi__label { display: block; }
 :root .shell--mobile .hkd-kpi:not(.hkd-kpi--primary) .kpi__label > .proto--tip { display: inline-flex; vertical-align: -5px; }
+
+/* Nền tooltip (màu chữ chính, như trước); icon ⓘ màu xanh để nhận ra là chỗ xem giải thích (13/11/2026). */
+:root { --tooltip-bg: var(--text); }
+:root .info-tip { color: var(--info-ink); }
+:root .info-tip:hover, :root .info-tip[data-state="delayed-open"], :root .info-tip[data-state="instant-open"] { color: var(--info-ink); background: var(--info-bg); }
+/* Ô chính cao 2 hàng: canh nội dung giữa theo chiều dọc, số lớn hơn để không hụt khoảng trống dưới */
+@media (min-width: 768px) {
+  :root .hkd-kpis--lead > .hkd-kpi--primary { justify-content: center; gap: 8px; }
+  :root .kpis--lead > .kpi--lead { align-content: center; }
+  :root .hkd-kpis--lead > .hkd-kpi--primary .kpi__value, :root .kpis--lead > .kpi--lead .kpi__value { font-size: 44px; }
+}
+@media (min-width: 768px) { :root .kpis--lead > .kpi--lead { grid-template-rows: auto auto auto; align-content: center; } }
+/* Tooltip chỉ để đọc: không chặn click vào nội dung bên dưới */
+.info-tip__content { pointer-events: none; }
