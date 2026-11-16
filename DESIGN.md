@@ -13,7 +13,7 @@ colors:
   tint-200: "#F5BFCC"
   sidebar: "#B5002B"
   gold: "#FEDB00"
-  ground: "#F8FAFC"
+  ground: "#F8F8FF"
   surface: "#FFFFFF"
   border: "#E2E8F0"
   border-hover: "#94A3B8"
@@ -541,3 +541,11 @@ Theo yêu cầu người dùng: thao tác Tìm, Xuất/Tải Excel, Làm mới, 
 - **Thao tác:** nút mở chi tiết thông báo đặt cạnh danh tính hộ. Phân trang cân đối 44px / chỉ báo / 44px. Thanh Lưu/Gửi cách đều hai mép, nằm trên bottom nav, hai nút bằng nhau. Ô nhập 16px, tránh tự zoom khi nhập trên điện thoại.
 - **Bằng chứng kiểm tra:** browser giả lập 375px và 430px; kiểm tra mở bộ lọc, áp dụng kết quả gửi, mở thêm KPI và biểu đồ, desktop 1440px. Ảnh ở `.taste-skill/mobile-refresh`. Các kết quả này là kiểm tra giao diện, không phải thử nghiệm người dùng.
 - **Chưa xác nhận:** trải nghiệm bàn phím ảo và safe-area trên thiết bị thật; mức dễ dùng cần thử nhiệm vụ tìm lỗi gửi, tìm hộ quá hạn và nhận ca. Không chốt thêm quyền lãnh đạo tổ trong lượt chỉnh mobile này.
+
+## Nền app Ghost White, giữ thẻ trắng (16/11/2026)
+
+- **Yêu cầu người dùng:** cân nhắc bỏ trắng tinh, chọn trong Vista White, Ivory, Lavender, Bold White, Snow, Ghost White, Casual White, Sporty White, Alabaster. Sau khi thử Sporty White `#F0F1F6`, người dùng thấy nền hơi tối và muốn cảm giác trang trọng hơn.
+- **Quyết định (người dùng chọn):** nền app **Ghost White `#F8F8FF`** thay `#F8FAFC`; thẻ, panel, ô nhập, menu, drawer **giữ `#FFFFFF`**. Token: `--color-bg-app` trong styles.css, `C.ground` trong theme.ts. Nền tooltip và đường ngăn lát biểu đồ ECharts lấy `C.surface` thay cho `#fff` viết thẳng.
+- **Căn cứ:** so trên màn Thống kê 1440px (`.taste-skill/surface-compare/grid.png`, `.taste-skill/surface-compare2/grid.png`). Thẻ trắng sạch hơn Bold White `#FBFCFD` (khác biệt 1,03:1 nhưng làm thẻ hơi đục). Ghost White sáng, cùng tông lạnh với viền và chữ slate. Loại Sporty White vì tối; Vista White, Snow ngả hồng lẫn với tint-50 và banner đợt gửi; Ivory, Casual White ngả kem (Casual White hợp bộ đỏ vàng nhưng lệch tông viền slate, người dùng không chọn); Lavender ngả tím, đục khi cạnh đỏ.
+- **Đo được:** thẻ trắng tách khỏi nền 1,06:1 (nền cũ 1,05:1); phân tách thẻ dựa vào viền 1px và bóng nhẹ đã có. Chữ muted `#5B6578` 5,55:1, secondary 7,17:1, brand-ink `#950023` 8,63:1 trên nền mới.
+- **Chưa kiểm chứng:** nhận định thẩm mỹ trên ảnh chụp, chưa xem trên màn hình văn phòng thật. Biến `bg/ground` trong Figma chưa cập nhật.

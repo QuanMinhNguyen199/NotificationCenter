@@ -31,7 +31,7 @@ export function TrendChart({ s, day, onPickDay, onShowList, emptyText }: { s?: S
         trigger: 'axis',
         triggerOn: mobile ? 'click' : 'mousemove|click',
         axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(225,29,72,0.05)' } },
-        backgroundColor: '#fff',
+        backgroundColor: C.surface,
         borderColor: C.border,
         textStyle: { color: C.text, fontSize: 12, fontFamily: 'Inter Variable, Inter, sans-serif' },
         formatter: (items: { dataIndex: number }[]) => {

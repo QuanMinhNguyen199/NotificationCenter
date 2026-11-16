@@ -1,6 +1,6 @@
 // Màu dùng trong ECharts (SVG không đọc biến CSS); giữ khớp với token trong styles.css.
 // Token (03/11/2026): brand theo logo Thuế thành phố Hà Nội — đỏ Pantone 199 C #D50032, vàng Pantone 108 C #FEDB00;
-// nền #F8FAFC, bề mặt trắng, viền #E2E8F0, chữ #0F172A / #5B6578 (muted tối hơn từ 11/11/2026 để đạt AA trên nền tint).
+// nền #F8F8FF (Ghost White, từ 16/11/2026), bề mặt trắng, viền #E2E8F0, chữ #0F172A / #5B6578 (muted tối hơn từ 11/11/2026 để đạt AA trên nền tint).
 // Chrome trung tính; màu ngữ nghĩa dành cho trạng thái và dữ liệu cần chú ý.
 export const C = {
   brand: '#D50032',
@@ -14,7 +14,7 @@ export const C = {
   tint50: '#FDF0F3',
   tint100: '#FAE0E6',
   tint200: '#F5BFCC',
-  ground: '#F8FAFC',
+  ground: '#F8F8FF',
   surface: '#FFFFFF',
   border: '#E2E8F0',
   rule: '#F1F5F9',

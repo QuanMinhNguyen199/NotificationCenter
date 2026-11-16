@@ -13,7 +13,7 @@
   --color-brand-active: #950023;   /* 199 C + 30% đen — chữ trắng 9,1:1 */
   --color-brand-subtle: #FDF0F3;   /* 199 C 6% trên trắng */
   --color-brand-gold: #FEDB00;     /* Pantone 108 C — chỉ dùng trên nền đỏ đậm, không làm chữ trên nền sáng */
-  --color-bg-app: #F8FAFC;
+  --color-bg-app: #F8F8FF;   /* Ghost White (16/11/2026), thay #F8FAFC; thẻ giữ trắng */
   --color-bg-card: #FFFFFF;
   --color-border-card: #E2E8F0;
   --color-border-card-hover: #94A3B8;
@@ -1123,7 +1123,9 @@ a { text-decoration: none; }
 
 /* Đầu trang con (Tạo lần gửi): nút quay lại dạng viền + tên màn, tách rõ khỏi thẻ bên dưới. */
 .sub-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.sub-head__title { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.3; }
+/* Tiêu đề trang theo thang DESIGN.md: 24px (650), 20px trên mobile. */
+.sub-head__title { margin: 0; font-size: 24px; font-weight: 650; line-height: 1.25; letter-spacing: -0.015em; }
+@media (max-width: 767px) { .sub-head__title { font-size: 20px; } }
 
 /* Đầu thẻ thiết lập trải hết chiều rộng để công tắc căn theo mép phải của thẻ. */
 .set-row__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

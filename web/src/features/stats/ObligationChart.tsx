@@ -53,7 +53,7 @@ export function ObligationChart({
       tooltip: {
         trigger: 'item',
         triggerOn: mobile ? 'click' : 'mousemove|click',
-        backgroundColor: '#fff',
+        backgroundColor: C.surface,
         borderColor: C.border,
         textStyle: { color: C.text, fontSize: 12, fontFamily: 'Inter Variable, Inter, sans-serif' },
         // Nhãn trục dùng cú pháp rich text ({name|…}); tooltip lấy tên loại từ KINDS để không lộ cú pháp đó.
@@ -93,7 +93,7 @@ export function ObligationChart({
         // Thanh theo tỷ lệ dải hàng để không để hở lớn khi vùng vẽ cao lên.
         barWidth: '58%',
         barMaxWidth: mobile ? 32 : 44,
-        itemStyle: { color: o.color, borderColor: '#fff', borderWidth: 2 },
+        itemStyle: { color: o.color, borderColor: C.surface, borderWidth: 2 },
         label: {
           show: true,
           color: o.ink,

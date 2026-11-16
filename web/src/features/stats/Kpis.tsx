@@ -73,12 +73,10 @@ const NS: Partial<Record<KpiKey, { ns: StatsParams['ns']; nd: StatsParams['nd'] 
   failed: { ns: 'FAILED', nd: 'all' },
 };
 
-export function Kpis({ s, p, onPick, unused, stale, keys, labels }: {
+export function Kpis({ s, p, onPick, unused, stale, keys }: {
   s?: Summary; p: StatsParams; stale?: boolean; onPick: (k: KpiKey, f?: { ns: StatsParams['ns']; nd: StatsParams['nd'] }) => void; unused?: string;
   /** Chỉ hiện các ô này (mặc định cả 7). */
   keys?: KpiKey[];
-  /** Đổi nhãn theo màn, ví dụ phân biệt với "thời gian phản hồi của cán bộ" trên màn lãnh đạo. */
-  labels?: Partial<Record<KpiKey, string>>;
 }) {
   const defs = keys ? DEFS.filter((d) => keys.includes(d.key)) : DEFS;
   return (
@@ -94,7 +92,7 @@ export function Kpis({ s, p, onPick, unused, stale, keys, labels }: {
         const missing = v === null || !!unused;
         const note = unused ? '' : s ? d.note(s) : '';
         const info = s && d.info ? d.info(s) : '';
-        const label = labels?.[d.key] ?? d.label;
+        const label = d.label;
         const cut = label.lastIndexOf(' ');
         const head = cut < 0 ? '' : label.slice(0, cut + 1); // giữ dấu cách cuối
         const tail = cut < 0 ? label : label.slice(cut + 1);

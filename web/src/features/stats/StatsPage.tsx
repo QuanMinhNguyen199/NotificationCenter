@@ -122,7 +122,6 @@ export default function StatsPage() {
       ) : (
         <Kpis
           keys={leader ? ['total', 'sent', 'failed', 'response'] : undefined}
-          labels={leader ? { response: 'Thời gian giao thông báo trung bình' } : undefined}
           stale={summary.isPlaceholderData}
           s={s}
           p={p}

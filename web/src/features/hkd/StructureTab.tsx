@@ -59,7 +59,7 @@ export function StructureTab({ scope, dim, setDim }: { scope: string; dim: Dimen
                   stack: 'hkd',
                   barWidth: '58%',
                   barMaxWidth: 28,
-                  itemStyle: { color: COMPLIANCE_COLOR[c], borderColor: '#fff', borderWidth: 1 },
+                  itemStyle: { color: COMPLIANCE_COLOR[c], borderColor: C.surface, borderWidth: 1 },
                   label: { show: true, color: COMPLIANCE_INK[c], fontSize: 11, fontWeight: 600, formatter: (e: { value: number; dataIndex: number }) => (e.value / Math.max(d.rows[e.dataIndex].total, 1) > (mobile ? 0.22 : 0.09) ? num(e.value) : '') },
                   data: d.rows.map((r) => r.counts[c]),
                 })),
