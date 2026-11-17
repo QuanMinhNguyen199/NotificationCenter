@@ -44,7 +44,7 @@ const METRICS: Record<MetricKey, Metric> = {
   accepted: { label: 'Tờ khai tiếp nhận thành công', value: (u) => u.accepted, fmt: (v) => num(Math.round(v)) },
   okRate: { label: 'Tỷ lệ xử lý thành công', value: (u) => u.okRate * 100, fmt: (v) => pct(v, 100) },
   avgHours: { label: 'Thời gian phản hồi trung bình', value: (u) => u.avgHours, fmt: (v) => hours(v), lowerBetter: true },
-  users: { label: 'Người dùng ứng dụng (HKD)', value: (u) => u.users, fmt: (v) => num(Math.round(v)) },
+  users: { label: 'Người dùng app HKD', value: (u) => u.users, fmt: (v) => num(Math.round(v)) },
 };
 const METRIC_KEYS = Object.keys(METRICS) as MetricKey[];
 
@@ -71,7 +71,8 @@ function KpiRow({ data, error, onRetry }: { data?: CityData; error: boolean; onR
       {/* Thất bại = 100% − thành công: gộp vào một ô để không lặp số. */}
       <Kpi label="Xử lý thành công" value={own ? rate(own.okRate) : sk} note={own && data && `Thất bại ${rate(own.failRate)} · ${rank('okRate')}; trung bình thành phố ${rate(data.avg.okRate)}`} />
       <Kpi label="Thời gian phản hồi trung bình của cán bộ" value={own ? hours(own.avgHours) : sk} note={own && data && `${rank('avgHours')}; trung bình thành phố ${hours(data.avg.avgHours)}`} />
-      <Kpi label="Người dùng ứng dụng" value={own ? num(own.users) : sk} note={own && `HKD đã đăng ký, ${pct(own.users, own.hkd)} trên ${num(own.hkd)} HKD`} />
+      {/* Tổng người dùng ứng dụng HKD; không quy ra tỷ lệ trên tổng HKD hay số đăng ký iHanoi. */}
+      <Kpi label="Tổng số người dùng app HKD" value={own ? num(own.users) : sk} />
     </KpiStrip>
   );
 }
@@ -144,7 +145,7 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
     downloadXlsx(`so-sanh-25-thue-co-so-${AS_OF}`, [
       [`So sánh 25 Thuế cơ sở, ${dmy(PERIOD_FROM)} – ${dmy(AS_OF)}`, 'Dữ liệu giả lập'],
       [],
-      ['Đơn vị', 'Tờ khai tiếp nhận', 'Tiếp nhận thành công', 'Tỷ lệ xử lý thành công (%)', 'Tỷ lệ nộp tờ khai (%)', 'Phản hồi TB (giờ)', 'Người dùng ứng dụng', 'Tổng HKD'],
+      ['Đơn vị', 'Tờ khai tiếp nhận', 'Tiếp nhận thành công', 'Tỷ lệ xử lý thành công (%)', 'Tỷ lệ nộp tờ khai (%)', 'Phản hồi TB (giờ)', 'Người dùng app HKD', 'Tổng HKD'],
       ...ranked(data.units, 'fileRate').map((u) => [u.name, u.received, u.accepted, +(u.okRate * 100).toFixed(1), +(u.fileRate * 100).toFixed(1), +u.avgHours.toFixed(1), u.users, u.hkd]),
     ]);
   };
@@ -155,7 +156,7 @@ function CityCompare({ data, error, onRetry }: { data?: CityData; error: boolean
     { key: 'okRate', label: 'Tỷ lệ XL thành công', sort: (u) => u.okRate, render: (u) => rate(u.okRate), desc: true },
     { key: 'fileRate', label: 'Tỷ lệ nộp tờ khai', sort: (u) => u.fileRate, render: (u) => rate(u.fileRate), desc: true },
     { key: 'avgHours', label: 'Phản hồi trung bình', sort: (u) => u.avgHours, render: (u) => hours(u.avgHours) },
-    { key: 'users', label: 'Người dùng', sort: (u) => u.users, render: (u) => num(u.users), desc: true },
+    { key: 'users', label: 'Người dùng app HKD', sort: (u) => u.users, render: (u) => num(u.users), desc: true },
   ];
 
   return (
