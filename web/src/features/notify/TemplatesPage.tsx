@@ -41,7 +41,7 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
       const t = changed ? await saveDraft({ id: template?.id, ...form }, user.name) : template!;
       return publishDraft(t.id, reason.trim(), user.name);
     },
-    onSuccess: (t) => (qc.invalidateQueries({ queryKey: ['templates'] }), toast.success(`Đã xuất bản ${t.name}, phiên bản ${publishedOf(t)!.version}.`), onClose()),
+    onSuccess: (t) => (qc.invalidateQueries({ queryKey: ['templates'] }), toast.success(`Đã áp dụng mẫu tin ${t.name}.`), onClose()),
   });
   const insert = (v: string) => setForm({ ...form, body: `${form.body}{${v}}` });
 
@@ -49,7 +49,7 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
     <div className="sheet__footer">
       <Button variant="outline" onClick={onClose}>Đóng</Button>
       <Button variant="outline" disabled={!changed} loading={save.isPending} onClick={() => (setShown(true), !invalid && save.mutate())}>Lưu nháp</Button>
-      <Button disabled={!changed && !draft} onClick={() => (setShown(true), !invalid && setPublishing(true))}>Xuất bản</Button>
+      <Button disabled={!changed && !draft} onClick={() => (setShown(true), !invalid && setPublishing(true))}>Áp dụng</Button>
     </div>
   );
 
@@ -57,7 +57,7 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
     <Overlay open onClose={onClose} title={template ? template.name : 'Mẫu tin mới'} width={720} footer={footer}>
       <div className="tpl-edit">
         <div className="acct-form">
-          {readOnly && <Feedback severity="info" title="Chỉ lãnh đạo cơ sở soạn và xuất bản mẫu tin." />}
+          {readOnly && <Feedback severity="info" title="Chỉ lãnh đạo cơ sở soạn và áp dụng mẫu tin." />}
           <div className="field">
             <label className="field__label" htmlFor="tpl-name">Tên mẫu</label>
             <Input id="tpl-name" value={form.name} disabled={readOnly} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={shown && !!errors.name} />
@@ -90,17 +90,23 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
           <PushPreview title={fillSample(form.title) || 'Tiêu đề'} body={fillSample(form.body) || 'Nội dung thông báo'} />
           {template && (
             <>
-              <p className="field__label tpl-edit__versions">Phiên bản</p>
-              <ol className="timeline">
-                {template.versions.map((v) => (
-                  <li key={`${v.version}-${v.status}`}>
-                    <time>v{v.version}</time>
-                    <span>
-                      {v.status === 'DRAFT' ? 'Bản nháp' : v === publishedOf(template) ? 'Đang dùng' : 'Đã xuất bản'}
-                      <small>{v.by}, {dmyhm(v.at)}{v.reason ? `: ${v.reason}` : ''}</small>
-                    </span>
-                  </li>
-                ))}
+              <p className="field__label tpl-edit__versions">Lịch sử thay đổi</p>
+              {/* Mỗi lần: số lần, trạng thái; dòng 1 là nội dung thay đổi, dòng 2 là người và thời điểm. */}
+              <ol className="tpl-history">
+                {template.versions.map((v) => {
+                  const draftV = v.status === 'DRAFT';
+                  const current = v === publishedOf(template);
+                  return (
+                    <li key={`${v.version}-${v.status}`}>
+                      <div className="tpl-history__head">
+                        <span className="tpl-history__n">Lần {v.version}</span>
+                        {draftV ? <StatusPill tone="warning">Bản nháp</StatusPill> : current ? <StatusPill tone="success">Đang áp dụng</StatusPill> : <StatusPill tone="neutral">Đã thay thế</StatusPill>}
+                      </div>
+                      <p className="tpl-history__what">{v.reason || (draftV ? 'Đang soạn, chưa áp dụng' : 'Không ghi lý do')}</p>
+                      <p className="tpl-history__who">{v.by} · {dmyhm(v.at)}</p>
+                    </li>
+                  );
+                })}
               </ol>
             </>
           )}
@@ -111,16 +117,16 @@ function Editor({ template, onClose }: { template: Template | null; onClose: () 
           open
           width={520}
           onClose={() => setPublishing(false)}
-          title="Xuất bản mẫu tin?"
+          title="Áp dụng mẫu tin này?"
           footer={
             <div className="sheet__footer">
               <Button variant="outline" onClick={() => setPublishing(false)}>Quay lại</Button>
-              <Button loading={publish.isPending} disabled={!reason.trim()} onClick={() => publish.mutate()}>Xuất bản</Button>
+              <Button loading={publish.isPending} disabled={!reason.trim()} onClick={() => publish.mutate()}>Áp dụng</Button>
             </div>
           }
         >
           <div className="acct-form">
-            <Feedback severity="info" title="Lần gửi mới dùng phiên bản này. Lần gửi đã tạo giữ nội dung cũ; phiên bản đã xuất bản không sửa được." />
+            <Feedback severity="info" title="Lần gửi mới sẽ dùng nội dung này. Lần gửi đã tạo giữ nội dung cũ. Nội dung đã áp dụng không sửa lại được; muốn đổi thì tạo lần thay đổi mới." />
             <div className="field">
               <label className="field__label" htmlFor="tpl-reason">Lý do thay đổi (bắt buộc)</label>
               <TextareaField id="tpl-reason" rows={3} maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -168,8 +174,8 @@ export default function TemplatesPage() {
                     <span className="tpl-row__purpose">{t.purpose}</span>
                   </span>
                   <span className="tpl-row__meta">
-                    {pub ? <StatusPill tone="success">Đang dùng v{pub.version}</StatusPill> : <StatusPill tone="neutral">Chưa xuất bản</StatusPill>}
-                    {draft && <StatusPill tone="warning">Có bản nháp</StatusPill>}
+                    {pub ? <StatusPill tone="success">Đang áp dụng</StatusPill> : <StatusPill tone="neutral">Chưa áp dụng</StatusPill>}
+                    {pub && draft && <StatusPill tone="warning">Có thay đổi chưa áp dụng</StatusPill>}
                   </span>
                 </button>
               </li>

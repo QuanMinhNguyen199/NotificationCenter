@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { CircleCheck, Info, TriangleAlert } from 'lucide-react';
+import { useId, useLayoutEffect, useRef, useState, type ComponentProps, type KeyboardEvent, type ReactNode } from 'react';
+import { Check, ChevronDown, CircleCheck, Info, TriangleAlert } from 'lucide-react';
 import { vi } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/shared/ui/button';
@@ -10,7 +10,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/shared/ui/sheet';
 import { Textarea } from '@/shared/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
+import { Input } from '@/shared/ui/input';
 import { Calendar } from '@/shared/ui/calendar';
 import { useBreakpoint } from '@/shared/lib/useMedia';
 import { useHideNavWhile } from '@/shared/lib/overlay';
@@ -48,15 +49,128 @@ export function GroupedSelect({ value, onValueChange, groups, prefix, className,
   </Select>;
 }
 
+/** Mốc gợi ý trong danh sách: mỗi 30 phút. Gõ tay vẫn nhận mọi phút 00–59. */
+const TIME_STEPS = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+
+/** Đọc giờ người dùng gõ: "2", "2h", "230", "0230", "2:30", "2h30", "2 30", "14.15", "2 giờ 30" → "HH:MM". Không hợp lệ → null. */
+export function parseTime(raw: string): string | null {
+  const s = raw.trim().toLowerCase().replace(/giờ|g/g, 'h').replace(/phút|p/g, '').trim();
+  if (!s) return null;
+  let h: number, m: number;
+  const sep = /^(\d{1,2})\s*[:h.\s]\s*(\d{1,2})?$/.exec(s);
+  if (sep) { h = +sep[1]; m = sep[2] ? +sep[2] : 0; }
+  else if (/^\d{1,4}$/.test(s)) { h = +(s.length <= 2 ? s : s.slice(0, -2)); m = s.length <= 2 ? 0 : +s.slice(-2); }
+  else return null;
+  if (h > 23 || m > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * Ô giờ 24h dạng combobox: gõ tự do hoặc chọn trong danh sách mỗi 30 phút.
+ * Chuẩn hóa khi rời ô hoặc Enter; gõ sai thì giữ chữ, báo lỗi tại chỗ, không đổi giá trị đang có.
+ * ↑↓ chọn trong danh sách, Enter chọn, Esc đóng và trả về giá trị cũ.
+ */
 export function TimeSelect({ value, onValueChange, label, id, ...props }: {
   value: string; onValueChange: (value: string) => void; label: string; id?: string; 'aria-invalid'?: boolean; 'aria-describedby'?: string;
 }) {
-  const [hour, minute] = value.split(':');
-  const options = (count: number, step = 1) => Array.from({ length: count }, (_, n) => { const value = String(n * step).padStart(2, '0'); return { value, label: value }; });
-  return <div className="time-select">
-    <ChoiceSelect id={id} value={hour} onValueChange={(h) => onValueChange(`${h}:${minute}`)} options={options(24)} aria-label={`${label}, giờ (24 giờ)`} {...props} />
-    <span aria-hidden="true">:</span>
-    <ChoiceSelect value={minute} onValueChange={(m) => onValueChange(`${hour}:${m}`)} options={options(12, 5)} aria-label={`${label}, phút`} {...props} />
+  const uid = useId();
+  const inputId = id ?? `${uid}-in`, listId = `${uid}-list`, errId = `${uid}-err`;
+  const [text, setText] = useState(value);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const [bad, setBad] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [lastValue, setLastValue] = useState(value);
+  // Giá trị từ ngoài đổi (hủy thay đổi, tải lại) thì ô hiện theo, trừ khi đang gõ dở.
+  if (value !== lastValue) { setLastValue(value); if (!typing) { setText(value); setBad(false); } }
+
+  const digits = text.replace(/\D/g, '');
+  const filtered = typing && digits ? TIME_STEPS.filter((t) => t.startsWith(text.trim()) || t.startsWith(`0${text.trim()}`) || t.replace(':', '').startsWith(digits.padStart(2, '0'))) : [];
+  const options = filtered.length ? filtered : TIME_STEPS;
+
+  useLayoutEffect(() => {
+    if (open && active >= 0) listRef.current?.querySelector<HTMLElement>(`#${CSS.escape(`${listId}-${active}`)}`)?.scrollIntoView({ block: 'nearest' });
+  }, [open, active, listId]);
+
+  const openList = () => {
+    const at = options.indexOf(value);
+    setActive(at >= 0 ? at : options.findIndex((t) => t > value));
+    setOpen(true);
+  };
+  const choose = (t: string) => { setText(t); setBad(false); setTyping(false); setOpen(false); if (t !== value) onValueChange(t); };
+  const commit = () => {
+    if (!text.trim()) { setText(value); setBad(false); setTyping(false); return; }
+    const t = parseTime(text);
+    if (t) choose(t); else { setBad(true); setTyping(false); }
+  };
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) { openList(); return; }
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      setActive((a) => Math.min(options.length - 1, Math.max(0, (a < 0 ? (step > 0 ? -1 : options.length) : a) + step)));
+    } else if (e.key === 'Enter') {
+      if (e.nativeEvent.isComposing) return;
+      e.preventDefault();
+      if (open && active >= 0 && options[active]) choose(options[active]); else commit();
+    } else if (e.key === 'Escape') {
+      if (open || typing) { e.preventDefault(); e.stopPropagation(); }
+      setOpen(false); setText(value); setBad(false); setTyping(false);
+    }
+  };
+  const describedBy = [props['aria-describedby'], bad ? errId : null].filter(Boolean).join(' ') || undefined;
+
+  return <div className="time-combo" ref={wrap}>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div className="time-combo__box">
+          <Input
+            ref={input}
+            id={inputId}
+            role="combobox"
+            aria-label={id ? undefined : label}
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
+            aria-invalid={bad || props['aria-invalid'] || undefined}
+            aria-describedby={describedBy}
+            inputMode="numeric"
+            autoComplete="off"
+            spellCheck={false}
+            enterKeyHint="done"
+            maxLength={10}
+            value={text}
+            onChange={(e) => { setText(e.target.value); setTyping(true); if (bad) setBad(false); if (!open) setOpen(true); setActive(-1); }}
+            onClick={() => (open ? setOpen(false) : openList())}
+            onKeyDown={onKey}
+            onBlur={(e) => { if (!wrap.current?.contains(e.relatedTarget as Node)) { commit(); setOpen(false); } }}
+            className="time-combo__input"
+          />
+          <button type="button" tabIndex={-1} className="time-combo__toggle" aria-label={`Mở danh sách giờ cho ${label}`}
+            onMouseDown={(e) => e.preventDefault()} onClick={() => { input.current?.focus(); if (open) setOpen(false); else openList(); }}>
+            <ChevronDown aria-hidden="true" />
+          </button>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent align="start" sideOffset={4} className="time-combo__pop"
+        onOpenAutoFocus={(e) => e.preventDefault()} onCloseAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => { if (wrap.current?.contains(e.target as Node)) e.preventDefault(); }}>
+        <ul id={listId} role="listbox" aria-label={label} ref={listRef} className="time-combo__list">
+          {options.map((t, i) => (
+            <li key={t} id={`${listId}-${i}`} role="option" aria-selected={t === value}
+              className={`time-combo__opt${i === active ? ' is-active' : ''}`}
+              onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(i)} onClick={() => choose(t)}>
+              {t}{t === value && <Check aria-hidden="true" />}
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+    {bad && <span className="field__error time-combo__err" id={errId} aria-live="polite">Nhập giờ dạng 02:30, từ 00:00 đến 23:59.</span>}
   </div>;
 }
 

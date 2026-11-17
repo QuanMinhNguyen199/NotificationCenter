@@ -14,6 +14,9 @@ function parse(): Route {
   const [p, q = ''] = raw.split('?');
   // Link của mục Lãnh đạo bị thêm nhầm mở lại Thống kê theo quyền tài khoản.
   if (p === '/lanh-dao') return { path: '/thong-ke', params: new URLSearchParams(q) };
+  // Link dạng đường dẫn tới trang sửa quyền (#/tai-khoan/<id>) mở cùng trang với #/tai-khoan?sua=<id>.
+  const acct = /^\/tai-khoan\/([^/]+)$/.exec(p);
+  if (acct) { const sp = new URLSearchParams(q); sp.set('sua', decodeURIComponent(acct[1])); return { path: '/tai-khoan', params: sp }; }
   // '/cau-hinh' là đường dẫn cũ của màn Thiết lập (đổi tên 04/11/2026), giữ để link cũ vẫn mở đúng màn.
   // Chuyển tuyến đang tạm ẩn (lib/features.ts): link cũ mở về Thống kê.
   const known: RoutePath[] = ['/quan-ly-hkd', '/gui-thong-bao', '/mau-tin', '/kenh-gui', '/thiet-lap', '/tai-khoan', ...(FEATURES.routing ? ['/chuyen-tuyen' as const] : [])];

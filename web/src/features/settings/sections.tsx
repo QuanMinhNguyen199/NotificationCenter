@@ -143,7 +143,7 @@ function revenueSections(ctx: Ctx): Section[] {
               <th className="num">
                 Số tiền
               </th>
-              <th>Hiệu lực</th>
+              <th className="num">Hiệu lực</th>
             </tr>
           </thead>
           <tbody>

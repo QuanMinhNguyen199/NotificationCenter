@@ -175,7 +175,7 @@ export function Composer({ onDone, onBack }: { onDone: (id: string) => void; onB
               <OptionGroup aria-label="Nguồn nội dung" value={mode} onValueChange={(v) => setMode(v as 'template' | 'free')} options={[{ value: 'template', label: 'Theo mẫu tin' }, { value: 'free', label: 'Tự soạn' }]} />
             )}
             {mode === 'template' ? (
-              !tq.data ? <Skel w="100%" h={60} /> : published.length === 0 ? <BlockEmpty>Chưa có mẫu tin đã xuất bản.</BlockEmpty> : (
+              !tq.data ? <Skel w="100%" h={60} /> : published.length === 0 ? <BlockEmpty>Chưa có mẫu tin nào đang áp dụng.</BlockEmpty> : (
                 <div className="field">
                   <label className="field__label" htmlFor="tpl-pick">Mẫu tin</label>
                   <ChoiceSelect id="tpl-pick" value={tpl!.id} onValueChange={setTplId} options={published.map((t) => ({ value: t.id, label: `${t.name} (v${publishedOf(t)!.version})` }))} className="choice-select--full" />

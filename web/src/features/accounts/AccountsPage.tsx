@@ -1,11 +1,12 @@
-import { ChoiceSelect, DialogFrame, Feedback, OptionGroup } from '@/shared/components/Controls';
+import { ChoiceSelect, Feedback } from '@/shared/components/Controls';
 import { DataTable, type DataColumns } from '@/shared/components/DataTable';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
 import { Switch } from '@/shared/ui/switch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, Search } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, ArrowRight, ChevronRight, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { fetchAccounts, updateAccount, type AccountPatch, type AccountRow } from '@/shared/api/mockApi';
 import { BlockEmpty, BlockError, Skel } from '@/shared/components/Blocks';
@@ -15,6 +16,8 @@ import { TEAMS } from '@/shared/data/org';
 import { ROLE_LABEL, teamName, usePermissions, useStaff } from '@/shared/demo/useDemo';
 import { num } from '@/shared/lib/format';
 import { useBreakpoint } from '@/shared/lib/useMedia';
+import { useGuard } from '@/shared/lib/guardContext';
+import { useRoute } from '@/shared/lib/router';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
@@ -49,11 +52,24 @@ function impactLines(a: AccountRow, next: AccountPatch) {
   return lines;
 }
 
-function EditAccount({ account, actorId, onClose }: { account: AccountRow; actorId: string; onClose: () => void }) {
+/** Vai trò được gán ở màn này và việc mỗi vai trò thấy được, nói bằng hệ quả chứ không bằng tên quyền. */
+const ROLE_OPTIONS: { value: AccountPatch['role']; desc: string }[] = [
+  { value: 'officer', desc: 'Xem thống kê và thông báo của NNT mình phụ trách.' },
+  { value: 'team', desc: 'Xem thống kê cả tổ và danh sách tài khoản của tổ. Mỗi tổ một lãnh đạo tổ.' },
+];
+
+/**
+ * Trang sửa quyền một tài khoản (#/tai-khoan?sua=<id>). Trang riêng thay cho hộp thoại để chạy ổn khi nhúng trong iframe.
+ * Bố cục như màn Tạo lần gửi: bên trái ba mục cần chọn, bên phải khối "Thay đổi" so sánh trước/sau, hệ quả và nút lưu.
+ */
+function EditAccount({ account, actorId, onBack }: { account: AccountRow; actorId: string; onBack: () => void }) {
   const bp = useBreakpoint();
   const qc = useQueryClient();
-  const [draft, setDraft] = useState<AccountPatch>({ role: account.role === 'team' ? 'team' : 'officer', team: account.team ?? TEAMS[0].id, active: account.active });
+  const { setGuard, confirmLeave } = useGuard();
+  const initial: AccountPatch = { role: account.role === 'team' ? 'team' : 'officer', team: account.team ?? TEAMS[0].id, active: account.active };
+  const [draft, setDraft] = useState<AccountPatch>(initial);
   const lines = impactLines(account, draft);
+  const dirty = lines.length > 0;
   // Mỗi tổ một lãnh đạo tổ: báo ngay khi chọn, không đợi tới lúc lưu.
   const lead = useStaff().find((s) => s.id !== account.id && s.active && s.role === 'team' && s.team === draft.team);
   const leadTaken = draft.role === 'team' && draft.active && !!lead;
@@ -63,66 +79,169 @@ function EditAccount({ account, actorId, onClose }: { account: AccountRow; actor
       // Đổi tổ hoặc vai trò làm đổi phạm vi số liệu, nên tải lại mọi số liệu.
       qc.invalidateQueries();
       toast.success(`Đã cập nhật quyền của ${account.name}.`);
-      onClose();
+      setGuard(null);
+      onBack();
     },
   });
 
-  const footer = (
-    <div className="sheet__footer">
-      <Button variant="outline" size={bp === 'mobile' ? 'lg' : undefined} onClick={onClose}>
-        Quay lại
-      </Button>
-      <Button size={bp === 'mobile' ? 'lg' : undefined} disabled={!lines.length || leadTaken} loading={m.isPending} onClick={() => m.mutate()}>
-        Lưu thay đổi
-      </Button>
-    </div>
-  );
+  // Rời trang khi còn thay đổi chưa lưu thì hỏi lại (dùng chung cơ chế với màn Tạo lần gửi).
+  useEffect(() => {
+    setGuard({ dirty: dirty && !m.isSuccess, discard: () => {} });
+    return () => setGuard(null);
+  }, [dirty, m.isSuccess, setGuard]);
+
+  const leave = () => confirmLeave(onBack);
+  const size = bp === 'mobile' ? 'lg' : undefined;
+
+  // Chỉ liệt kê mục đổi; mục giữ nguyên không cần nhắc lại.
+  const diff = [
+    draft.role !== initial.role && { k: 'Vai trò', from: ROLE_LABEL[initial.role], to: ROLE_LABEL[draft.role] },
+    draft.team !== initial.team && { k: 'Tổ', from: teamName(initial.team), to: teamName(draft.team) },
+    draft.active !== initial.active && { k: 'Đăng nhập', from: initial.active ? 'Cho phép' : 'Tạm khóa', to: draft.active ? 'Cho phép' : 'Tạm khóa' },
+  ].filter(Boolean) as { k: string; from: string; to: string }[];
 
   return (
-    <DialogFrame open title={`Quyền của ${account.name}`} onClose={onClose} footer={footer} width={560}>
-      <div className="acct-form">
-        <div className="field">
-          <span className="field__label" aria-hidden="true">Vai trò</span>
-          <OptionGroup
-            aria-label="Vai trò"
-            value={draft.role}
-            block={bp === 'mobile'}
-            onValueChange={(role) => setDraft({ ...draft, role })}
-            options={[
-              { value: 'officer', label: ROLE_LABEL.officer },
-              { value: 'team', label: ROLE_LABEL.team },
-            ]}
-          />
+    <div className="acct-edit">
+      <header className="sub-head">
+        <Button variant="outline" size="icon" onClick={leave} aria-label="Quay lại danh sách tài khoản" title="Quay lại danh sách tài khoản">
+          <ArrowLeft aria-hidden="true" />
+        </Button>
+        <div className="acct-edit__head">
+          <h1 className="sub-head__title">{account.name}</h1>
+          <p className="page-head__sub page-meta">
+            <span>{account.username}</span>
+            <span>
+              {ROLE_LABEL[account.role]}, {teamName(account.team)}
+            </span>
+            {account.taxpayers > 0 && <span className="num">{num(account.taxpayers)} NNT phụ trách</span>}
+            <Status active={account.active} />
+          </p>
         </div>
-        <div className="field">
-          <label className="field__label" htmlFor="acct-team">Tổ</label>
-          <ChoiceSelect id="acct-team" value={draft.team} onValueChange={(team) => setDraft({ ...draft, team })} options={TEAMS.map((t) => ({ value: t.id, label: t.name }))} className="choice-select--full" />
+      </header>
+
+      <form
+        className="compose acct-edit__body"
+        aria-label={`Sửa quyền của ${account.name}`}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (dirty && !leadTaken && !m.isPending) m.mutate();
+        }}
+      >
+        <div className="compose__form">
+          <section className="set-row__panel" aria-labelledby="acct-role-h">
+            <div className="acct-sec__head">
+              <h2 className="set-row__title" id="acct-role-h">Vai trò</h2>
+              <p className="set-row__desc">Quyết định {account.name} xem được số liệu của ai.</p>
+            </div>
+            <RadioGroup className="acct-roles" aria-labelledby="acct-role-h" value={draft.role} onValueChange={(v) => setDraft({ ...draft, role: v as AccountPatch['role'] })}>
+              {ROLE_OPTIONS.map((o) => (
+                <label key={o.value} className="acct-role" htmlFor={`acct-role-${o.value}`}>
+                  <RadioGroupItem value={o.value} id={`acct-role-${o.value}`} className="acct-role__radio" />
+                  <span className="acct-role__text">
+                    <span className="acct-role__title">
+                      {ROLE_LABEL[o.value]}
+                      {o.value === initial.role && <span className="acct-role__now">Hiện tại</span>}
+                    </span>
+                    <span className="acct-role__desc">{o.desc}</span>
+                  </span>
+                </label>
+              ))}
+            </RadioGroup>
+          </section>
+
+          <section className="set-row__panel" aria-labelledby="acct-team-h">
+            <div className="acct-sec__head">
+              <h2 className="set-row__title" id="acct-team-h">Tổ</h2>
+              <p className="set-row__desc">NNT do {account.name} phụ trách đi theo tổ được chọn.</p>
+            </div>
+            <div className="field acct-team">
+              <label className="sr-only" htmlFor="acct-team">Tổ</label>
+              <ChoiceSelect id="acct-team" value={draft.team} onValueChange={(team) => setDraft({ ...draft, team })} options={TEAMS.map((t) => ({ value: t.id, label: t.name }))} className="choice-select--full" />
+              <p className="field__help">{lead ? `Lãnh đạo tổ: ${lead.name}` : 'Tổ chưa có lãnh đạo tổ.'}</p>
+            </div>
+            {leadTaken && (
+              <Feedback severity="warning" title={`${teamName(draft.team)} đã có lãnh đạo tổ là ${lead!.name}.`} description={`Chuyển ${lead!.name} về Cán bộ trước, hoặc chọn tổ khác.`} />
+            )}
+          </section>
+
+          <section className="set-row__panel" aria-labelledby="acct-active-h">
+            <h2 className="sr-only" id="acct-active-h">Đăng nhập</h2>
+            <div className="switch-row">
+              <label className="switch-row__label set-row__title" htmlFor="acct-active">Cho phép đăng nhập</label>
+              <Switch id="acct-active" checked={draft.active} onCheckedChange={(active) => setDraft({ ...draft, active })} />
+              <p className="switch-row__desc">Tắt để tạm khóa tài khoản. Lịch sử thao tác và NNT đang giao được giữ nguyên.</p>
+            </div>
+          </section>
         </div>
-        <div className="switch-row">
-          <label className="switch-row__label" htmlFor="acct-active">Cho phép đăng nhập</label>
-          <Switch id="acct-active" checked={draft.active} onCheckedChange={(active) => setDraft({ ...draft, active })} />
-          <p className="switch-row__desc">Tắt để tạm khóa tài khoản; lịch sử thao tác được giữ nguyên.</p>
-        </div>
-        {leadTaken ? (
-          <Feedback severity="warning" title={`${teamName(draft.team)} đã có lãnh đạo tổ là ${lead!.name}.`} description={`Chuyển ${lead!.name} về Cán bộ trước, hoặc chọn tổ khác.`} />
-        ) : lines.length > 0 ? (
-          <Feedback
-            severity={draft.active ? 'info' : 'warning'}
-            title="Sau khi lưu"
-            description={
-              <ul className="acct-impact">
-                {lines.map((l) => (
-                  <li key={l}>{l}</li>
-                ))}
-              </ul>
-            }
-          />
-        ) : (
-          <p className="chart-note">Chưa có thay đổi.</p>
-        )}
-        {m.error && <Feedback severity="warning" title={m.error.message} />}
-      </div>
-    </DialogFrame>
+
+        <aside className="compose__preview acct-summary" aria-labelledby="acct-sum-h">
+          <section className="set-row__panel">
+            <h2 className="set-row__title" id="acct-sum-h">Thay đổi</h2>
+            <div aria-live="polite" className="acct-summary__live">
+              {dirty ? (
+                <>
+                  <dl className="acct-diff">
+                    {diff.map((d) => (
+                      <div key={d.k} className="acct-diff__row">
+                        <dt>{d.k}</dt>
+                        <dd>
+                          <span className="acct-diff__from">{d.from}</span>
+                          <ArrowRight className="acct-diff__arrow" aria-label="thành" />
+                          <span className="acct-diff__to">{d.to}</span>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="acct-summary__impact">
+                    <h3 className="acct-summary__sub">Sau khi lưu</h3>
+                    <ul className="acct-impact">
+                      {lines.map((l) => (
+                        <li key={l}>{l}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <p className="chart-note">Chưa có thay đổi. Chọn vai trò, tổ hoặc trạng thái đăng nhập để xem hệ quả trước khi lưu.</p>
+              )}
+            </div>
+            {m.error && <Feedback severity="warning" title={m.error.message} />}
+            <div className="acct-edit__actions">
+              <Button type="submit" size={size} disabled={!dirty || leadTaken} loading={m.isPending}>
+                Lưu thay đổi
+              </Button>
+              <Button type="button" variant="outline" size={size} onClick={leave}>
+                Hủy
+              </Button>
+            </div>
+            {leadTaken && <p className="field__help">Chưa lưu được: {teamName(draft.team)} đã có lãnh đạo tổ.</p>}
+          </section>
+        </aside>
+      </form>
+    </div>
+  );
+}
+
+/** Link sửa tới tài khoản không có hoặc không được sửa: nói rõ lý do, cho quay lại danh sách. */
+function EditUnavailable({ message, onBack }: { message: string; onBack: () => void }) {
+  return (
+    <div className="acct-edit">
+      <header className="sub-head">
+        <Button variant="outline" size="icon" onClick={onBack} aria-label="Quay lại danh sách tài khoản" title="Quay lại danh sách tài khoản">
+          <ArrowLeft aria-hidden="true" />
+        </Button>
+        <h1 className="sub-head__title">Sửa quyền</h1>
+      </header>
+      <BlockEmpty
+        action={
+          <Button variant="outline" onClick={onBack}>
+            Về danh sách tài khoản
+          </Button>
+        }
+      >
+        {message}
+      </BlockEmpty>
+    </div>
   );
 }
 
@@ -206,10 +325,30 @@ export default function AccountsPage() {
   const team = role === 'team' ? user.team : null;
   const q = useQuery({ queryKey: ['accounts', team], queryFn: () => fetchAccounts(team), enabled: canViewAccounts });
   const [query, setQuery] = useState('');
-  const [editing, setEditing] = useState<AccountRow | null>(null);
+  const { params, navigate } = useRoute();
+  const editId = params.get('sua');
+  const toList = () => navigate('/tai-khoan');
 
   if (!canViewAccounts) {
     return <><h1 className="sr-only">Tài khoản</h1><BlockEmpty>Màn Tài khoản chỉ dành cho lãnh đạo cơ sở và lãnh đạo tổ.</BlockEmpty></>;
+  }
+
+  // Sửa quyền là một trang riêng có địa chỉ (#/tai-khoan?sua=<id>), không phải hộp thoại.
+  if (editId) {
+    if (q.isError) return <BlockError message="Không tải được tài khoản." onRetry={() => q.refetch()} />;
+    if (!q.data) return <div className="acct-edit"><Skel w="100%" h={320} /></div>;
+    const target = q.data.find((a) => a.id === editId);
+    const why = !canEditAccounts
+      ? 'Tài khoản của bạn chỉ được xem, không sửa quyền.'
+      : !target
+        ? 'Không tìm thấy tài khoản này trong phạm vi bạn quản lý.'
+        : target.id === user.id
+          ? 'Không tự đổi quyền của chính mình.'
+          : target.role === 'base'
+            ? 'Tài khoản lãnh đạo cơ sở do cấp trên cấp, không đổi ở đây.'
+            : '';
+    if (why || !target) return <EditUnavailable message={why} onBack={toList} />;
+    return <EditAccount key={target.id} account={target} actorId={user.id} onBack={toList} />;
   }
 
   const rows = (q.data ?? []).filter((a) => !query || norm(a.name).includes(norm(query)) || a.username.includes(norm(query)));
@@ -259,10 +398,9 @@ export default function AccountsPage() {
           Không có tài khoản khớp “{query}”.
         </BlockEmpty>
       ) : (
-        groups.map((g) => <Group key={g.id} title={g.title} rows={g.rows} canEdit={canEditAccounts} actorId={user.id} onEdit={setEditing} />)
+        groups.map((g) => <Group key={g.id} title={g.title} rows={g.rows} canEdit={canEditAccounts} actorId={user.id} onEdit={(a) => navigate('/tai-khoan', { sua: a.id })} />)
       )}
 
-      {editing && <EditAccount account={editing} actorId={user.id} onClose={() => setEditing(null)} />}
     </div>
   );
 }

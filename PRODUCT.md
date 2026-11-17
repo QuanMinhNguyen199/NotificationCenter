@@ -28,7 +28,7 @@ Bối cảnh: cán bộ thuế làm việc trên máy bàn tại cơ quan, đôi
 
 - Chi tiết, xem trước, lịch sử, xác nhận mở bằng drawer/modal/overlay trong hai màn; không có trang phụ.
 - **Đăng nhập (09/11/2026, mock):** màn chia đôi (cột thương hiệu đỏ brand / cột form); nhận 3 tài khoản xem thử, mật khẩu bất kỳ; chọn tài khoản xem thử là vào luôn. Chuyển cảnh sang trang chủ: logo + tên gom vào giữa (560ms) → chờ ≥1,6s kèm ba chấm, tới khi trang chủ tải xong → logo bay về đúng hộp logo thật (620ms) → lớp che đỏ `#B5002B` mở lỗ tròn từ tâm logo (980ms). Đăng xuất (chiều ngược): lớp che khép lỗ tròn về tâm logo trên trang chủ (720ms) → logo bay về hộp logo màn đăng nhập (620ms), màn đăng nhập hiện dần; tổng ~1,4s, không có pha chờ. Giảm chuyển động: chỉ fade. Thời lượng theo yêu cầu, chưa kiểm chứng với người dùng; khi nối Keycloak/OIDC cần xác định lại điểm bắt đầu chuyển cảnh.
-- Thông báo tự động (Engagement) dùng mẫu cố định, chỉ xem trước. Gửi chủ động dùng màn Mẫu tin: soạn nháp → xuất bản phiên bản (05/11/2026).
+- Thông báo tự động (Engagement) dùng mẫu cố định, chỉ xem trước. Gửi chủ động dùng màn Mẫu tin: soạn nháp → áp dụng (05/11/2026).
 - Giờ Việt Nam, số `10.000`, ngày `dd/MM/yyyy`, giờ 24h.
 
 ## Capabilities and Constraints
@@ -47,7 +47,7 @@ Bối cảnh: cán bộ thuế làm việc trên máy bàn tại cơ quan, đôi
 Engagement (rà soát nghĩa vụ, tự lập đợt) là hệ thống nghiệp vụ gửi qua Notification Center; ba màn mới thuộc giao diện Notification Center:
 
 - **Gửi thông báo:** chọn người nhận (nhóm NNT theo điều kiện / cả tổ / từng NNT) → kênh → mẫu tin hoặc tự soạn → xem trước (số gửi, số bỏ qua kèm lý do, chia lô 100 NNT) → gửi; theo dõi tiến độ từng kênh, từng người nhận, từng lần thử; hủy phần chưa gửi. Bấm gửi lại dùng cùng khóa, không tạo lần gửi trùng.
-- **Mẫu tin:** nháp → xuất bản (bắt buộc lý do); phiên bản đã xuất bản không sửa; lần gửi đã tạo giữ nội dung cũ.
+- **Mẫu tin:** nháp → áp dụng (bắt buộc lý do); nội dung đã áp dụng không sửa lại; lần gửi đã tạo giữ nội dung cũ. Chữ trên giao diện (16/11/2026): trạng thái Đang áp dụng / Chưa áp dụng / Có thay đổi chưa áp dụng; khối "Lịch sử thay đổi" ghi Lần N + Đang áp dụng / Đã thay thế / Bản nháp, dòng đầu là nội dung thay đổi, dòng sau là người và thời điểm; nút "Áp dụng". Cùng bộ từ với Lịch sử thay đổi ở Thiết lập.
 - **Kênh gửi:** Hộp thư, iHanoi đang hoạt động; Email, Zalo chưa kết nối. Lãnh đạo cơ sở tạm dừng / ngắt khẩn cấp (bắt buộc lý do); ngắt khẩn cấp hủy tin đang chờ, không tự chuyển kênh.
 - **Quyền:** lãnh đạo cơ sở gửi toàn cơ sở, được tự soạn, sửa mẫu và kênh; lãnh đạo tổ gửi trong tổ mình theo mẫu, chỉ xem mẫu và kênh; cán bộ chỉ xem các lần gửi có NNT mình phụ trách.
 - **"Đã tiếp nhận" thay "Đã giao":** iHanoi chưa xác minh có xác nhận tin đã tới máy, nên mức cao nhất là "đã tiếp nhận". Tin "chưa rõ" (hết giờ chờ) không tự gửi lại để tránh gửi trùng.
@@ -101,7 +101,7 @@ Vùng chạm ≥44px, input mobile ≥16px, tương phản ≥4.5:1, focus rõ, 
 Theo yêu cầu gộp chức năng trùng của người dùng, điều hướng còn 5 mục: Thống kê, Quản lý HKD, Thông báo, Thiết lập, Tài khoản (mục Tài khoản vẫn theo quyền).
 
 - **Thống kê:** chỉ số và xu hướng vận hành gửi; danh sách thông báo. Nút xem đợt mở tab Đợt tự động trong Thông báo; KPI NNT có thông báo mở danh sách nghĩa vụ trong Quản lý HKD, giữ phạm vi và kỳ.
-- **Thông báo:** ba tab Gửi chủ động / Đợt tự động / Thư viện mẫu. Gửi chủ động có form tạo và theo dõi kết quả; Đợt tự động giữ duyệt, tạm dừng, tiếp tục, hủy theo quyền; thư viện giữ nháp, xuất bản và lịch sử phiên bản. Chọn mẫu trong form Gửi chủ động; thư viện không có nút gửi. Hai loại gửi giữ trạng thái riêng vì luồng nghiệp vụ khác nhau.
+- **Thông báo:** ba tab Gửi chủ động / Đợt tự động / Thư viện mẫu. Gửi chủ động có form tạo và theo dõi kết quả; Đợt tự động giữ duyệt, tạm dừng, tiếp tục, hủy theo quyền; thư viện giữ nháp, áp dụng và lịch sử thay đổi. Chọn mẫu trong form Gửi chủ động; thư viện không có nút gửi. Hai loại gửi giữ trạng thái riêng vì luồng nghiệp vụ khác nhau.
 - **Quản lý HKD:** bổ sung Danh sách nghĩa vụ, chuyển cả biểu đồ nghĩa vụ từ Thống kê sang đây. Hiệu quả nhắc việc tập trung số HKD còn việc, đã nhắc, hoàn thành sau nhắc, theo loại/đơn vị/ngưỡng; bỏ biểu đồ và cột kết quả truyền thông báo lặp với Thống kê.
 - **Thiết lập:** hai tab Quy tắc nhắc tự động / Kênh gửi; quyền cũ giữ nguyên. Đổi sang Kênh gửi khi có quy tắc chưa lưu phải xác nhận bỏ thay đổi. Nhãn thao tác nêu phạm vi toàn kênh / đợt này / tạo đợt mới.
 - Link cũ Mẫu tin, Kênh gửi, Thống kê tab NNT/Đợt gửi vẫn mở nội dung tại vị trí mới, giữ bộ lọc.

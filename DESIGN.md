@@ -411,7 +411,7 @@ Thay các bảng màu trước trong file này. **Bằng chứng:** người dù
 
 **Quyết định triển khai:** dùng shadcn/ui cho Button, Select, Switch, Tabs, ToggleGroup, Badge, Alert, Dialog, Sheet, Calendar, Input, Textarea, Table; Sonner cho phản hồi thao tác, Lucide cho icon. Đã bỏ Ant Design và icon Ant khỏi dependency. Màu giữ đúng bộ Bright Red đã chốt phía trên. Sidebar nền `#B5002B` (Pantone 199 C pha 15% đen; chữ trắng 7,0:1) để tách khỏi nội dung, mục thường chữ trắng 85% kèm icon 16px (5,3:1), mục đang mở là ô trắng đặc chữ và icon `#950023` (9,1:1); không dùng vàng trong chữ sidebar (người dùng thấy đỏ đậm + vàng khó nhìn, 04/11/2026); vàng Pantone 108 C chỉ có trong logo và viền 2px quanh logo; logo biểu trưng Thuế thành phố Hà Nội có viền trắng 2px (03/11/2026 theo yêu cầu người dùng; nền `#EF4444` đã thử và bị loại vì chữ trắng chỉ 3,8:1). Nút chính nền Pantone 199 C `#D50032` (chữ trắng 5,4:1). Theo token brand trong PRODUCT.md, không theo bảng màu cũ ở đầu file này. Canvas Slate 50.
 
-Các khối ghép dùng chung tại `web/src/shared/components/Controls.tsx` và `DataTable.tsx`. Giờ chọn theo hệ 24h; giờ và phút có nhãn riêng cho trình đọc màn hình. Bảng giữ phân trang phía API, số liệu căn phải; thông báo rỗng/lỗi vẫn có hành động phục hồi. Mobile dùng Sheet cho bộ lọc/xác nhận và giữ bản nháp qua các tab; panel chi tiết dùng Sheet bên phải, đóng trở về vị trí danh sách cũ.
+Các khối ghép dùng chung tại `web/src/shared/components/Controls.tsx` và `DataTable.tsx`. Giờ theo hệ 24h, một ô vừa gõ vừa chọn (xem "Ô giờ gõ hoặc chọn (16/11/2026)"). Bảng giữ phân trang phía API, số liệu căn phải; thông báo rỗng/lỗi vẫn có hành động phục hồi. Mobile dùng Sheet cho bộ lọc/xác nhận và giữ bản nháp qua các tab; panel chi tiết dùng Sheet bên phải, đóng trở về vị trí danh sách cũ.
 
 **Chưa xác nhận:** chưa có thử nghiệm người dùng. Kiểm chứng tiếp bằng nhiệm vụ lọc thông báo, đổi giờ gửi rồi lưu, và tạm dừng/tiếp tục đợt gửi với đúng vai trò.
 
@@ -549,3 +549,23 @@ Theo yêu cầu người dùng: thao tác Tìm, Xuất/Tải Excel, Làm mới, 
 - **Căn cứ:** so trên màn Thống kê 1440px (`.taste-skill/surface-compare/grid.png`, `.taste-skill/surface-compare2/grid.png`). Thẻ trắng sạch hơn Bold White `#FBFCFD` (khác biệt 1,03:1 nhưng làm thẻ hơi đục). Ghost White sáng, cùng tông lạnh với viền và chữ slate. Loại Sporty White vì tối; Vista White, Snow ngả hồng lẫn với tint-50 và banner đợt gửi; Ivory, Casual White ngả kem (Casual White hợp bộ đỏ vàng nhưng lệch tông viền slate, người dùng không chọn); Lavender ngả tím, đục khi cạnh đỏ.
 - **Đo được:** thẻ trắng tách khỏi nền 1,06:1 (nền cũ 1,05:1); phân tách thẻ dựa vào viền 1px và bóng nhẹ đã có. Chữ muted `#5B6578` 5,55:1, secondary 7,17:1, brand-ink `#950023` 8,63:1 trên nền mới.
 - **Chưa kiểm chứng:** nhận định thẩm mỹ trên ảnh chụp, chưa xem trên màn hình văn phòng thật. Biến `bg/ground` trong Figma chưa cập nhật.
+
+## Lịch thông báo: một luồng đọc (16/11/2026)
+
+- **Yêu cầu người dùng:** tab Lịch thông báo khó nhìn, cần dễ thao tác và không phân tán luồng thị giác; người dùng chính là cán bộ trung niên. Lượt 2: bản chỉ có chữ và số trông quá trơn, danh sách quá dài, bấm ngày xong không biết đang xem gì.
+- **Vấn đề trên bản gốc:** ba lớp mã hóa cùng lúc (nền ô ba mức hồng, thanh 7 màu theo loại, chú giải 7 màu); cột chi tiết cuộn riêng; chữ phụ 12–13px.
+- **Quyết định:**
+  - Ô lịch: ngày 15px, số tin 20px, nền trắng (cuối tuần nền ground). Một thanh mật độ 6px **một màu**: tint-200 cho ngày thường, đỏ brand cho ngày cao điểm (≥ 2/3 ngày nhiều nhất tháng). Bỏ chú giải và thanh 7 màu.
+  - Ngày đang chọn và đầu khối chi tiết dùng cùng nền tint-50 và viền 2px brand-ink; tiêu đề ghi rõ "Lịch gửi ngày …" kèm tổng tin và số loại.
+  - Khối chi tiết: hàng nút loại (tên ngắn + số), mỗi lần chỉ liệt kê hộ của một loại, mặc định loại nhiều tin nhất; 5 hộ đầu, "Hiện thêm" 20 hộ mỗi lần. Không cuộn lồng; lưới tháng sticky trên desktop.
+  - Hàng hộ: cột giờ cố định, tên 15px đậm, lý do 14px; tin theo sự kiện không có cột giờ (tiêu đề nhóm ghi "Gửi ngay khi có kết quả"). Đoạn kênh gửi nằm trong ⓘ cạnh tiêu đề. Chữ tối thiểu 14px (trừ nhãn Hôm nay/Nghỉ lễ 12px).
+- **Chưa kiểm chứng:** chưa thử với cán bộ. Nhiệm vụ đề xuất: "tìm ngày nhiều tin nhất tuần tới và xem hộ nào bị nhắc quá hạn mức 3"; đo tỷ lệ hoàn thành, thời gian và việc người dùng nói đúng ngày, đúng loại đang xem.
+
+## Ô giờ gõ hoặc chọn (16/11/2026)
+
+- **Yêu cầu người dùng:** bỏ cặp ô giờ : phút tách đôi; một ô vừa chọn vừa gõ tự do.
+- **Quyết định:** `TimeSelect` (shared/components/Controls.tsx) là combobox: ô chữ `role="combobox"` + danh sách gợi ý mỗi 30 phút (48 mốc, mở sẵn ở giá trị hiện tại, giá trị đang chọn có dấu ✓). Gõ được mọi phút 00–59; nhận "230", "0230", "2:30", "2h30", "2 30", "14.15", "7" và chuẩn hóa thành HH:MM khi rời ô hoặc Enter. Gõ sai: giữ chữ đã gõ, viền lỗi, câu "Nhập giờ dạng 02:30, từ 00:00 đến 23:59." dưới ô, không đổi giá trị đang có; ô trống khi rời thì trả về giá trị cũ. ↑↓ chọn trong danh sách, Enter chọn, Esc đóng và trả giá trị cũ. Ô rộng tối đa 200px; mục danh sách 36px (44px dưới 1200px hoặc màn chạm); bàn phím số trên điện thoại.
+- **Áp dụng:** giờ rà soát, quét bù, bắt đầu/kết thúc gửi (Thiết lập), giờ hiệu lực khi lưu thiết lập.
+- **Giả định chưa xác nhận:** nghiệp vụ chưa nói có ràng buộc bước phút; hiện nhận mọi phút. Nếu cần bội số 5 phút, thêm kiểm tra khi rời ô.
+- **Kiểm chứng:** đã thử trên trình duyệt (gõ 7 kiểu, gõ sai, ↑↓ + Enter). Chưa thử trình đọc màn hình thật và bàn phím ảo trên thiết bị.
+

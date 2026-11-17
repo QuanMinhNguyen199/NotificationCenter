@@ -3,6 +3,7 @@ import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { BlockEmpty, BlockError, Panel, Skel } from '@/shared/components/Blocks';
 import { ChoiceSelect } from '@/shared/components/Controls';
+import { InfoTip } from '@/shared/components/InfoTip';
 import { ProtoBadge } from '@/shared/components/Proto';
 import { StatusPill } from '@/shared/components/Status';
 import { Button } from '@/shared/ui/button';
@@ -84,7 +85,6 @@ export function NotificationCalendar() {
             ? <>{monthLabel(ym)} chưa có {typeName} dự kiến trong phạm vi {scope.toLowerCase()}.</>
             : <><b>{num(stats.total)}</b> {typeName} dự kiến trong {monthLabel(ym).toLowerCase()}, gửi tới <b>{num(stats.households)}</b> hộ ({scope}){stats.moved > 0 && <>; <b>{num(stats.moved)}</b> tin được dời vì rơi vào ngày nghỉ lễ</>}.</>}
         </p>
-        <Legend filter={filter} />
         {stats.total === 0 ? (
           <BlockEmpty action={filter !== 'all' ? <Button variant="outline" size="sm" onClick={() => setFilter('all')}>Xem tất cả loại</Button> : undefined}>
             Không có ngày nào có lịch gửi. Thử tháng khác{filter !== 'all' ? ' hoặc bỏ lọc loại' : ''}.
@@ -107,34 +107,12 @@ export function NotificationCalendar() {
   return (
     <Panel
       id="nt-cal-title"
-      title={<span className="nt-title">Lịch thông báo theo ngày<ProtoBadge note="Hạn rơi vào thứ Bảy, Chủ nhật hoặc ngày lễ được lùi sang ngày làm việc kế tiếp. Ngày nghỉ lễ không gửi tin theo khung giờ: nhắc hạn và nhắc chữ ký số gửi trước kỳ nghỉ, loại khác gửi sau kỳ nghỉ. Cuối tuần vẫn gửi. Danh sách ngày lễ là dữ liệu giả lập." /></span>}
+      title={<span className="nt-title">Lịch thông báo theo ngày<InfoTip label="Kênh và giờ gửi">Tất cả gửi qua thông báo đẩy iHanoi. Loại theo khung giờ gửi trong {INITIAL_CONFIG.sendStart}–{INITIAL_CONFIG.sendEnd} của ngày dự kiến; loại theo sự kiện gửi ngay khi có kết quả.</InfoTip><ProtoBadge note="Hạn rơi vào thứ Bảy, Chủ nhật hoặc ngày lễ được lùi sang ngày làm việc kế tiếp. Ngày nghỉ lễ không gửi tin theo khung giờ: nhắc hạn và nhắc chữ ký số gửi trước kỳ nghỉ, loại khác gửi sau kỳ nghỉ. Cuối tuần vẫn gửi. Danh sách ngày lễ là dữ liệu giả lập." /></span>}
       className="nt-panel"
     >
       {head}
-      <p className="nt-channel">Tất cả gửi qua thông báo đẩy iHanoi. Loại theo khung giờ gửi trong {INITIAL_CONFIG.sendStart}–{INITIAL_CONFIG.sendEnd} của ngày dự kiến; loại theo sự kiện gửi ngay khi có kết quả.</p>
       {body}
     </Panel>
-  );
-}
-
-function Legend({ filter }: { filter: Filter }) {
-  const list = filter === 'all' ? TYPES : [TYPE[filter]];
-  return (
-    <div className="chart-legend nt-legend" aria-hidden="true">
-      {list.map((t) => <span key={t.id}><i className="swatch" style={{ background: t.color }} /> {t.short}</span>)}
-    </div>
-  );
-}
-
-/** Thanh tỷ lệ theo loại trong một ngày (trang trí, số đọc được trong aria-label và danh sách). */
-function MixBar({ day, filter }: { day: PlanDay; filter: Filter }) {
-  const total = countOf(day, filter);
-  if (!total) return null;
-  const list = filter === 'all' ? TYPES.filter((t) => day.byType[t.id]) : [TYPE[filter]];
-  return (
-    <span className="nt-mix" aria-hidden="true">
-      {list.map((t) => <i key={t.id} style={{ background: t.color, flexGrow: day.byType[t.id] }} />)}
-    </span>
   );
 }
 
@@ -162,7 +140,6 @@ function MonthGrid({ days, filter, max, selected, onSelect }: { days: PlanDay[];
     e.preventDefault();
     ref.current?.querySelector<HTMLButtonElement>(`[data-i="${next}"]`)?.focus();
   };
-  const level = (n: number) => (!n || !max ? 0 : n / max > 0.66 ? 3 : n / max > 0.33 ? 2 : 1);
   return (
     <div className="nt-grid-wrap">
       <div className="nt-week" aria-hidden="true">{WEEK.map((w, i) => <span key={w} className={i >= 5 ? 'is-weekend' : undefined}>{w}</span>)}</div>
@@ -175,7 +152,7 @@ function MonthGrid({ days, filter, max, selected, onSelect }: { days: PlanDay[];
               key={day.date}
               type="button"
               data-i={i}
-              className={`nt-cell nt-heat-${level(n)}${day.off ? ` nt-cell--${day.off.kind}` : ''}${day.date === selected ? ' is-selected' : ''}${day.date === TODAY ? ' is-today' : ''}`}
+              className={`nt-cell${n ? '' : ' is-empty'}${i + lead >= 0 && (i + lead) % 7 >= 5 ? ' is-weekend' : ''}${day.off ? ` nt-cell--${day.off.kind}` : ''}${day.date === selected ? ' is-selected' : ''}${day.date === TODAY ? ' is-today' : ''}`}
               title={day.off?.kind === 'holiday' ? `Nghỉ lễ: ${day.off.name}` : undefined}
               aria-pressed={day.date === selected}
               aria-label={ariaFor(day, filter)}
@@ -183,7 +160,8 @@ function MonthGrid({ days, filter, max, selected, onSelect }: { days: PlanDay[];
             >
               <span className="nt-cell__day">{+day.date.slice(8, 10)}{day.date === TODAY && <span className="nt-today">Hôm nay</span>}{day.off?.kind === 'holiday' && <OffTag />}</span>
               <span className="nt-cell__count">{n ? num(n) : '–'}</span>
-              <MixBar day={day} filter={filter} />
+              {/* Thanh mật độ một màu: dài theo tỷ lệ với ngày nhiều tin nhất tháng; ngày cao điểm (≥ 2/3) màu đậm. */}
+              <span className={`nt-load${n && max && n / max >= 2 / 3 ? ' is-peak' : ''}`} aria-hidden="true"><i style={{ width: `${n && max ? Math.max(6, Math.round((n / max) * 100)) : 0}%` }} /></span>
             </button>
           );
         })}
@@ -213,7 +191,7 @@ function Agenda({ days, entries, filter, selected, onSelect }: { days: PlanDay[]
               <span className="nt-agenda__count">{num(countOf(day, filter))}</span>
               <ChevronDown className="nt-agenda__chev" aria-hidden="true" />
               <span className="nt-agenda__mix" aria-hidden="true">
-                {top.map((t) => <span key={t.id}><i className="swatch" style={{ background: t.color }} /> {t.short} {num(day.byType[t.id])}</span>)}
+                {top.map((t) => <span key={t.id}>{t.short} <b>{num(day.byType[t.id])}</b></span>)}
               </span>
             </button>
             {open && <div id={panelId} className="nt-agenda__panel"><DayDetail key={`${day.date}-${filter}`} date={day.date} off={day.off} entries={entries[day.date] ?? []} filter={filter} compact /></div>}
@@ -236,15 +214,22 @@ function OffTag() {
 }
 
 function DayDetail({ date, off, entries, filter, compact }: { date: string; off?: PlanDay['off']; entries: PlanEntry[]; filter: Filter; compact?: boolean }) {
-  const [shown, setShown] = useState<Partial<Record<NotiType, number>>>({});
   const rows = filter === 'all' ? entries : entries.filter((e) => e.type === filter);
   const groups = TYPES.map((t) => ({ t, list: rows.filter((e) => e.type === t.id) })).filter((g) => g.list.length);
+  // Mỗi lần chỉ liệt kê hộ của một loại; mặc định loại nhiều tin nhất trong ngày.
+  const [picked, setPicked] = useState<NotiType | null>(null);
+  const [limit, setLimit] = useState(compact ? FIRST_COMPACT : FIRST);
+  const top = groups.reduce<(typeof groups)[number] | undefined>((a, g) => (!a || g.list.length > a.list.length ? g : a), undefined);
+  const active = groups.find((g) => g.t.id === picked) ?? top;
+  const choose = (id: NotiType) => { setPicked(id); setLimit(compact ? FIRST_COMPACT : FIRST); };
+  const rest = active ? active.list.length - limit : 0;
+  const listId = `nt-list-${date}`;
   return (
     <div className="nt-day">
       {!compact && (
         <div className="nt-day__head">
-          <h3>{dayLabel(date)}/{date.slice(0, 4)}</h3>
-          <span className="nt-day__total">{num(rows.length)} thông báo</span>
+          <h3>Lịch gửi ngày {weekdayLong(date)}, {date.slice(8, 10)}/{date.slice(5, 7)}/{date.slice(0, 4)}</h3>
+          <span className="nt-day__total"><b>{num(rows.length)}</b> thông báo{groups.length > 1 ? `, ${groups.length} loại` : ''}</span>
         </div>
       )}
       {off && (
@@ -255,42 +240,48 @@ function DayDetail({ date, off, entries, filter, compact }: { date: string; off?
         </p>
       )}
       {!rows.length && <BlockEmpty>Không có thông báo dự kiến trong ngày này.</BlockEmpty>}
-      {groups.map(({ t, list }) => {
-        const limit = shown[t.id] ?? (compact ? FIRST_COMPACT : FIRST);
-        const rest = list.length - limit;
-        const hid = `nt-g-${date}-${t.id}`;
-        return (
-          <section key={t.id} className="nt-group" aria-labelledby={hid}>
-            <h4 id={hid} className="nt-group__title">
-              <i className="swatch" style={{ background: t.color }} aria-hidden="true" />
-              {t.label} <span className="nt-group__count">({num(list.length)})</span>
-              {t.id === 'overdue' && <ProtoBadge note={<>Mức quá hạn: {SEVERITY.map((s) => `${s.label} ${s.level === 3 ? `trên ${s.from - 1}` : `${s.from}–${s.to}`} ngày, nhắc ${s.every} ngày/lần`).join('; ')}.</>} />}
-              <span className="nt-group__mode">{t.mode === 'window' ? 'Theo khung giờ' : 'Gửi ngay theo sự kiện'}</span>
+      {active && (
+        <>
+          {groups.length > 1 && (
+            <div className="nt-types-pick" role="group" aria-label="Chọn loại thông báo để xem danh sách hộ">
+              {groups.map(({ t, list }) => (
+                <button key={t.id} type="button" className="nt-type-btn" aria-pressed={t.id === active.t.id} aria-controls={listId} onClick={() => choose(t.id)}>
+                  <span>{t.short}</span>
+                  <b>{num(list.length)}</b>
+                </button>
+              ))}
+            </div>
+          )}
+          <section className="nt-group" id={listId} aria-labelledby={`${listId}-h`} aria-live="polite">
+            <h4 id={`${listId}-h`} className="nt-group__title">
+              {active.t.label} <span className="nt-group__count">({num(active.list.length)} hộ)</span>
+              {active.t.id === 'overdue' && <ProtoBadge note={<>Mức quá hạn: {SEVERITY.map((s) => `${s.label} ${s.level === 3 ? `trên ${s.from - 1}` : `${s.from}–${s.to}`} ngày, nhắc ${s.every} ngày/lần`).join('; ')}.</>} />}
+              <span className="nt-group__mode">{active.t.mode === 'window' ? `Gửi theo khung giờ ${INITIAL_CONFIG.sendStart}–${INITIAL_CONFIG.sendEnd}` : 'Gửi ngay khi có kết quả'}</span>
             </h4>
             <ul className="nt-rows">
-              {list.slice(0, limit).map((e) => (
-                <li key={e.id} className="nt-row">
-                  <div className="nt-row__main">
-                    <span className="nt-row__name">{e.name}</span>
-                    <span className="nt-row__mst">MST {e.mst}</span>
-                  </div>
-                  <div className="nt-row__meta">
-                    <span className="nt-row__time">{e.time ?? 'Khi có kết quả'}</span>
-                    <span className="nt-row__reason">{e.reason}</span>
-                    {e.level && <StatusPill tone={LEVEL_TONE[e.level]}>Mức {e.level}</StatusPill>}
-                    {e.movedFrom && <span className="nt-row__moved">Dời từ {dayLabel(e.movedFrom)} (nghỉ lễ)</span>}
+              {active.list.slice(0, limit).map((e) => (
+                <li key={e.id} className={`nt-row${e.time ? '' : ' nt-row--event'}`}>
+                  {e.time && <span className="nt-row__time">{e.time}</span>}
+                  <div className="nt-row__body">
+                    <div className="nt-row__main">
+                      <span className="nt-row__name">{e.name}</span>
+                      <span className="nt-row__mst">MST {e.mst}</span>
+                      {e.level && <StatusPill tone={LEVEL_TONE[e.level]}>Mức {e.level}</StatusPill>}
+                    </div>
+                    <p className="nt-row__reason">{e.reason}</p>
+                    {e.movedFrom && <p className="nt-row__moved">Dời từ {dayLabel(e.movedFrom)} (nghỉ lễ)</p>}
                   </div>
                 </li>
               ))}
             </ul>
             {rest > 0 && (
-              <Button variant="outline" size="sm" className="nt-more" onClick={() => setShown((s) => ({ ...s, [t.id]: limit + MORE }))}>
+              <Button variant="outline" size="sm" className="nt-more" onClick={() => setLimit((l) => l + MORE)}>
                 Hiện thêm {num(Math.min(MORE, rest))} hộ <span className="nt-more__rest">(còn {num(rest)})</span>
               </Button>
             )}
           </section>
-        );
-      })}
+        </>
+      )}
     </div>
   );
 }
